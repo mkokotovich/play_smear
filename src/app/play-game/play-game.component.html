@@ -2,11 +2,11 @@
   Welcome to the game
 </p>
 <div>
-    Display my hand
+    <app-hand>Loading cards</app-hand>
 </div>
-<div *ngIf="displayHand == false">
+<div *ngIf="enterBid == true">
     <app-bid (notifyBid)='receiveBid($event)'>Preparing to bid</app-bid>
 </div>
-<div *ngIf="displayHand == true">
+<div *ngIf="enterBid == false">
     <app-play-hand>Loading next hand</app-play-hand>
 </div>

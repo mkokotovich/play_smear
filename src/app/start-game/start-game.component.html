@@ -1,3 +1,12 @@
-<p>
-  <a routerLink="/play" routerLinkActive="active">Start a new game</a>
-</p>
+<div>
+    <h1>{{title}}</h1>
+    <p>{{welcome_message}}</p>
+</div>
+<div>
+    How many players do you want to play with?
+    <input [(ngModel)]="numPlayers" placeholder="2">
+</div>
+<br>
+<div>
+    <button class="btn btn-lg" (click)="startGame()">Start new game</button>
+</div>

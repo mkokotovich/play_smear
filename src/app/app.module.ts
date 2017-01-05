@@ -10,6 +10,7 @@ import { StartGameComponent } from './start-game/start-game.component';
 import { BidComponent } from './bid/bid.component';
 import { PlayHandComponent } from './play-hand/play-hand.component';
 import { PlayGameComponent } from './play-game/play-game.component';
+import { HandComponent } from './hand/hand.component';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import { PlayGameComponent } from './play-game/play-game.component';
     StartGameComponent,
     BidComponent,
     PlayHandComponent,
-    PlayGameComponent
+    PlayGameComponent,
+    HandComponent
   ],
   imports: [
     AlertModule.forRoot(),
