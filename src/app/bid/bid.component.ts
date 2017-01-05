@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-bid',
@@ -7,9 +7,17 @@ import { Component, OnInit } from '@angular/core';
 })
 export class BidComponent implements OnInit {
 
-  constructor() { }
+    @Output() notifyBid: EventEmitter<number> = new EventEmitter<number>();
 
-  ngOnInit() {
-  }
+    bid: number;
+
+    submit_bid(event) {
+        console.log("bid submitted: " + this.bid)
+        this.notifyBid.emit(this.bid);
+    }
+    constructor() { }
+
+    ngOnInit() {
+    }
 
 }

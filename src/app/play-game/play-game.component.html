@@ -1,3 +1,12 @@
 <p>
-  play-game works!
+  Welcome to the game
 </p>
+<div>
+    Display my hand
+</div>
+<div *ngIf="displayHand == false">
+    <app-bid (notifyBid)='receiveBid($event)'>Preparing to bid</app-bid>
+</div>
+<div *ngIf="displayHand == true">
+    <app-play-hand>Loading next hand</app-play-hand>
+</div>
