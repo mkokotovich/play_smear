@@ -25,7 +25,9 @@ export class PlayGameComponent implements OnInit {
 
     ngOnInit() {
         // Use the gameID from the start page to ask for hand
+        this.handService.setGameStatus("Waiting for cards to be dealt");
         this.getInitialHand();
+        this.handService.setGameStatus("Waiting for bids");
     }
 
 }

@@ -17,6 +17,7 @@ export class BidComponent implements OnInit {
         console.log("bid submitted: " + this.bid);
         this.handService.declareBid(this.bid);
         this.handService.allowSelections(true);
+        this.handService.setGameStatus("Waiting for cards to be played");
     }
 
     ngOnInit() {

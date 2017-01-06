@@ -10,6 +10,7 @@ export class HandService {
     private cards: Observable<Card[]>;
     private selectedCard: Card;
     private allowSelection: boolean;
+    private gameStatusMessage: string;
 
     constructor(private smearApiService :SmearApiService) {
         this.allowSelection = false;
@@ -54,4 +55,11 @@ export class HandService {
         this.allowSelection = selections;
     }
 
+    setGameStatus(message: string):void {
+        this.gameStatusMessage = message;
+    }
+
+    getGameStatus(): string {
+        return this.gameStatusMessage;
+    }
 }

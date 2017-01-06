@@ -16,6 +16,7 @@ import { PlayHandComponent } from './play-hand/play-hand.component';
 import { PlayGameComponent } from './play-game/play-game.component';
 import { SmearApiService } from './smear-api.service';
 import { StartGameComponent } from './start-game/start-game.component';
+import { GameStatusComponent } from './game-status/game-status.component';
 
 @NgModule({
   declarations: [
@@ -24,7 +25,8 @@ import { StartGameComponent } from './start-game/start-game.component';
     BidComponent,
     PlayHandComponent,
     PlayGameComponent,
-    HandComponent
+    HandComponent,
+    GameStatusComponent
   ],
   imports: [
     AppRoutingModule,
