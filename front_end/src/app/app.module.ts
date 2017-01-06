@@ -10,6 +10,7 @@ import { AppRoutingModule } from './app-routing.module';
 
 import { AppComponent } from './app.component';
 import { BidComponent } from './bid/bid.component';
+import { GameService } from './game.service';
 import { HandComponent } from './hand/hand.component';
 import { HandService } from './hand.service';
 import { PlayHandComponent } from './play-hand/play-hand.component';
@@ -34,7 +35,7 @@ import { GameStatusComponent } from './game-status/game-status.component';
     FormsModule,
     HttpModule
   ],
-  providers: [SmearApiService, HandService],
+  providers: [SmearApiService, HandService, GameService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

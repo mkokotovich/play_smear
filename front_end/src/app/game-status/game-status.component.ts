@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
+import { GameService } from '../game.service';
 import { HandService } from '../hand.service';
 import { SmearApiService } from '../smear-api.service';
 
@@ -9,12 +10,16 @@ import { SmearApiService } from '../smear-api.service';
   styleUrls: ['./game-status.component.css']
 })
 export class GameStatusComponent implements OnInit {
+    //Local copy just for easy of use
+    private numPlayers: number;
 
     constructor(private handService: HandService,
+                private gameService: GameService,
                 private smearApiService: SmearApiService) {
     }
 
     ngOnInit() {
+        this.numPlayers = this.gameService.getNumPlayers();
     }
 
 }
