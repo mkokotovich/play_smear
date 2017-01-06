@@ -14,14 +14,14 @@ import { PlayHandComponent } from '../play-hand/play-hand.component';
 export class PlayGameComponent implements OnInit {
 
     enterBid:boolean;
-    hand: HandComponent;
+    initialCards: Card[];
 
     constructor() { 
         this.enterBid = true;
     }
 
     getInitialHand() {
-        this.hand = new HandComponent(CARDS);
+        this.initialCards = CARDS;
     }
 
     receiveBid(bid:number):void {

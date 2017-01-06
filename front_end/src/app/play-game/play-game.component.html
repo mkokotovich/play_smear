@@ -2,7 +2,7 @@
   Welcome to the game
 </p>
 <div>
-    <app-hand>Loading cards</app-hand>
+    <app-hand [cards]='initialCards'>Loading cards</app-hand>
 </div>
 <div *ngIf="enterBid == true">
     <app-bid (notifyBid)='receiveBid($event)'>Preparing to bid</app-bid>
