@@ -1,5 +1,11 @@
 <div>
+    <app-hand>Loading cards for placing bid</app-hand>
+</div>
+<div>
     Please enter your bid:
     <input [(ngModel)]="bid" placeholder="0">
-    <button (click)="submit_bid()">Bid</button>
+    <button type="button" class="btn btn-default"
+        (click)="submit_bid()">
+        Bid
+    </button>
 </div>

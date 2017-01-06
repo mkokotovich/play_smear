@@ -1,4 +1,7 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+
+import { Card } from '../common/card';
+import { HandService } from '../hand.service';
 
 @Component({
   selector: 'app-bid',
@@ -6,16 +9,15 @@ import { Component, OnInit, Output, EventEmitter } from '@angular/core';
   styleUrls: ['./bid.component.css']
 })
 export class BidComponent implements OnInit {
+    private bid: number;
 
-    @Output() notifyBid: EventEmitter<number> = new EventEmitter<number>();
+    constructor(private handService: HandService) { }
 
-    bid: number;
-
-    submit_bid(event) {
-        console.log("bid submitted: " + this.bid)
-        this.notifyBid.emit(this.bid);
+    submit_bid() {
+        console.log("bid submitted: " + this.bid);
+        this.handService.declareBid(this.bid);
+        this.handService.allowSelections(true);
     }
-    constructor() { }
 
     ngOnInit() {
     }

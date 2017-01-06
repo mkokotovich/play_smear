@@ -1,12 +1,9 @@
 <p>
   Welcome to the game
 </p>
-<div>
-    <app-hand [cards]='initialCards'>Loading cards</app-hand>
+<div *ngIf="handService.isBidding() == true">
+    <app-bid>Preparing to bid</app-bid>
 </div>
-<div *ngIf="enterBid == true">
-    <app-bid (notifyBid)='receiveBid($event)'>Preparing to bid</app-bid>
-</div>
-<div *ngIf="enterBid == false">
+<div *ngIf="handService.isBidding() == false">
     <app-play-hand>Loading next hand</app-play-hand>
 </div>

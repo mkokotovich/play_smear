@@ -1,5 +1,6 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { Card } from '../common/card';
+import { HandService } from '../hand.service';
 
 @Component({
   selector: 'app-hand',
@@ -7,14 +8,11 @@ import { Card } from '../common/card';
   styleUrls: ['./hand.component.css']
 })
 export class HandComponent implements OnInit {
-    @Input()
-    cards: Card[];
-    selectedCard: Card;
-
-    constructor() { }
+    constructor(private handService: HandService) { 
+    }
 
     onSelect(card: Card):void {
-        this.selectedCard = card;
+        this.handService.selectCard(card);
     }
 
     ngOnInit() {

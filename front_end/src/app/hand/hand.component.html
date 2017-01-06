@@ -2,8 +2,8 @@
     Your hand:
     <div class="hand">
         <button type="button" class="btn btn-default smearcard"
-            *ngFor="let card of cards | async"
-            [class.selected]="card === selectedCard"
+            *ngFor="let card of handService.getCards() | async"
+            [class.selected]="card === handService.getSelectedCard()"
             (click)="onSelect(card)">
             {{card.value}} <br> {{card.suit}}
         </button>
