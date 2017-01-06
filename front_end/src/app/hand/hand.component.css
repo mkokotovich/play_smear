@@ -1,0 +1,9 @@
+.selected {
+    background-color: #CFD8DC !important;
+    color: black;
+}
+.smearcard {
+    margin: 3px;
+    height: 250px;
+    width: 150px;
+}

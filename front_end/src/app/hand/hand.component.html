@@ -1,8 +1,11 @@
 <div>
-    Display the cards
-    <ul class="cards">
-        <li *ngFor="let card of cards">
-            Card: {{card.abbrev()}}
-        </li>
-    </ul>
+    Your hand:
+    <div class="hand">
+        <button type="button" class="btn btn-default smearcard"
+            *ngFor="let card of cards | async"
+            [class.selected]="card === selectedCard"
+            (click)="onSelect(card)">
+            {{card.value}} <br> {{card.suit}}
+        </button>
+    </div>
 </div>

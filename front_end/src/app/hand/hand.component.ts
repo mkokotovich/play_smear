@@ -1,6 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Card } from '../common/card';
-import { CARDS } from '../common/mock-cards';
 
 @Component({
   selector: 'app-hand',
@@ -10,8 +9,13 @@ import { CARDS } from '../common/mock-cards';
 export class HandComponent implements OnInit {
     @Input()
     cards: Card[];
+    selectedCard: Card;
 
     constructor() { }
+
+    onSelect(card: Card):void {
+        this.selectedCard = card;
+    }
 
     ngOnInit() {
     }

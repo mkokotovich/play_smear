@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { Observable } from 'rxjs/Rx';
 
 import { BidComponent } from '../bid/bid.component';
 import { Card } from '../common/card';
-import { CARDS } from '../common/mock-cards';
 import { HandComponent } from '../hand/hand.component';
 import { PlayHandComponent } from '../play-hand/play-hand.component';
+import { SmearApiService } from '../smear-api.service';
 
 @Component({
   selector: 'app-play-game',
@@ -14,18 +15,23 @@ import { PlayHandComponent } from '../play-hand/play-hand.component';
 export class PlayGameComponent implements OnInit {
 
     enterBid:boolean;
-    initialCards: Card[];
+    initialCards: Observable<Card[]>;
 
-    constructor() { 
+    constructor(private smearApiService: SmearApiService) { 
         this.enterBid = true;
     }
 
     getInitialHand() {
-        this.initialCards = CARDS;
+        this.initialCards = this.smearApiService.getInitialHand();
+    }
+
+    sendBid(bid: number) {
+        //this.smearApiService.sendBid(bid).then(cards => this.initialCards = cards);
     }
 
     receiveBid(bid:number):void {
         //Send bid to server using a service
+        this.sendBid(bid);
         //Wait for first trick to come back
         this.enterBid = false;
     }
