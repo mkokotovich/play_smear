@@ -44,7 +44,7 @@ def start_game():
     # TODO: Start a smear game with numPlayer players, using username for the name of player0
     # TODO: Capture the names of other players
     other_players = []
-    for i in range(1, numPlayers+1):
+    for i in range(1, numPlayers):
         other_players.append("player{}".format(i))
 
     # Return result
