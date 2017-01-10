@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Rx';
 
 import { SmearApiService } from './smear-api.service';
-import { Card } from './common/card';
+import { Card } from './model/card';
 
 @Injectable()
 export class HandService {

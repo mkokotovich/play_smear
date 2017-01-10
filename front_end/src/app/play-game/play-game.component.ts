@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs/Rx';
 
 import { BidComponent } from '../bid/bid.component';
-import { Card } from '../common/card';
+import { Card } from '../model/card';
 import { HandComponent } from '../hand/hand.component';
 import { HandService } from '../hand.service';
 import { PlayHandComponent } from '../play-hand/play-hand.component';

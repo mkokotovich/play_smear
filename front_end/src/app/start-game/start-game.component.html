@@ -1,12 +1,21 @@
 <div>
     <h1>{{title}}</h1>
-    <p>{{welcome_message}}</p>
+    <p>{{welcomeMessage}}</p>
+</div>
+<div>
+    What is your username?
+    <input [(ngModel)]="gameStartInput.username" placeholder="username" required>
 </div>
 <div>
     How many players do you want to play with?
-    <input [(ngModel)]="numPlayers" placeholder="2">
+    <input [(ngModel)]="gameStartInput.numPlayers" placeholder="2" required>
 </div>
+
 <br>
 <div>
-    <button class="btn btn-lg" (click)="startGame()">Start new game</button>
+    <button class="btn btn-lg"
+            (click)="startGame()"
+            [disabled]="!gameStartInputIsValid()">
+            Start new game
+    </button>
 </div>

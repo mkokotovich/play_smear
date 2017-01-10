@@ -1,9 +1,11 @@
 from flask import Flask, abort, request
+from flask_cors import CORS, cross_origin
 import json
 import threading
 from pysmear import smear_engine_api
 
 app = Flask(__name__)
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 g_game_id = 0
 g_game_id_lock = threading.Lock()
@@ -46,7 +48,11 @@ def get_value_from_params(params, key, abort_if_absent=True):
 
 
 # Checks on the status of a game
-# Returns the game id
+# Input (data from url):
+#  game_id    - String - ID of game to check on
+# Return (json data):
+#  ready        - String/bool  - If the game is ready to start (all players have joined)
+#  player_names - list of strings  - if ready == True, this will be a list of all players in the game
 @app.route("/api/game/startstatus/<game_id>/", methods=["GET"])
 def game_start_status(game_id):
     global g_engines
@@ -60,7 +66,11 @@ def game_start_status(game_id):
 
 
 # Starts a new game
-# Returns the game id
+# Input (json data from post):
+#  numPlayers - Integer - number of players in the game
+#  username   - String  - name of the player
+# Return (json data):
+#  game_id    - String  - Id of the game to be used in future API calls
 @app.route("/api/game/start/", methods=["POST"])
 def start_game():
     global g_engines

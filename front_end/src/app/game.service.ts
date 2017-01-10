@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { Player } from './common/player';
+import { Player } from './model/player';
 
 @Injectable()
 export class GameService {
@@ -13,9 +13,9 @@ export class GameService {
     setNumPlayers(numPlayers: number):void {
         this.numPlayers = numPlayers;
         this.players = new Array<Player>();
-        this.players.push(new Player("you", true));
+        this.players.push(new Player("you", 0, true));
         for (var i = 1; i < this.numPlayers; i++) {
-            this.players.push(new Player("player"+i, false));
+            this.players.push(new Player("player"+i, 0, false));
         }
     }
 
