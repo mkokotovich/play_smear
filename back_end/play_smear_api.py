@@ -1,13 +1,27 @@
 from flask import Flask, abort, request
 import json
+import threading
+from pysmear import smear_engine_api
 
 app = Flask(__name__)
 
-global_game_id = 0
-def generate_game_id():
-    global global_game_id
-    global_game_id += 1
-    return str(global_game_id)
+g_game_id = 0
+g_game_id_lock = threading.Lock()
+g_engines = {}
+
+
+def create_game_and_return_id():
+    global g_game_id_lock
+    global g_game_id
+    game_id = None
+    g_game_id_lock.acquire()
+    try:
+        g_game_id += 1
+        game_id = str(g_game_id)
+    finally:
+        g_game_id_lock.release()
+    g_engines[game_id] = smear_engine_api.SmearEngineApi(debug=True)
+    return game_id
 
 
 def get_params_or_abort(request):
@@ -31,24 +45,41 @@ def get_value_from_params(params, key, abort_if_absent=True):
     return value
 
 
-@app.route("/api/startgame/", methods=["POST"])
+# Checks on the status of a game
+# Returns the game id
+@app.route("/api/game/startstatus/<game_id>/", methods=["GET"])
+def game_start_status(game_id):
+    global g_engines
+    player_names = []
+    ret = {}
+    ret["ready"] = g_engines[game_id].all_players_added()
+    if ret["ready"]:
+        player_names = g_engines[game_id].get_player_names()
+    ret["player_names"] = player_names
+    return json.dumps(ret)
+
+
+# Starts a new game
+# Returns the game id
+@app.route("/api/game/start/", methods=["POST"])
 def start_game():
+    global g_engines
     # Read input
     params = get_params_or_abort(request)
     numPlayers = int(get_value_from_params(params, "numPlayers"))
     username = get_value_from_params(params, "username")
 
     # Perform game-related logic
-    game_id = generate_game_id()
+    game_id = create_game_and_return_id()
     app.logger.debug("Starting game {} with {} players using username: {}".format(game_id, numPlayers, username))
-    # TODO: Start a smear game with numPlayer players, using username for the name of player0
-    # TODO: Capture the names of other players
-    other_players = []
+    g_engines[game_id].create_new_game(num_players=numPlayers)
+    g_engines[game_id].add_player(player_id=username, interactive=True)
     for i in range(1, numPlayers):
-        other_players.append("player{}".format(i))
+        new_player = "player{}".format(i)
+        app.logger.debug("Adding player {} to game {}".format(new_player, game_id))
+        g_engines[game_id].add_player(player_id=new_player, interactive=False)
 
     # Return result
     ret = {}
     ret["game_id"] = game_id
-    ret["other_players"] = other_players
     return json.dumps(ret)
