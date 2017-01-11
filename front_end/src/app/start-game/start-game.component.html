@@ -1,35 +1,39 @@
 <div>
-    <h1>{{title}}</h1>
+    <h2>{{title}}</h2>
     <p>{{welcomeMessage}}</p>
     <p>{{errorMessage}}</p>
 </div>
-<div>
-    <p>Don't have an existing game to join? Create one here</p>
-    <div>
-        How many players do you want to play with?
-        <input [(ngModel)]="gameCreateInput.numPlayers" placeholder="2" required>
-    </div>
+<div class="card bg-faded">
+    <div class="card-block">
+        <h4 class="card-title">Don't have an existing game to join? Create one here first</h4>
+        <div class="card-text">
+            How many players do you want to play with?
+            <input [(ngModel)]="gameCreateInput.numPlayers" placeholder="2">
 
-    <button class="btn btn-lg"
-            (click)="createGame()"
-            [disabled]="!gameCreateInputIsValid()">
-        Create new game
-    </button>
+            <button class="btn"
+                    (click)="createGame()"
+                    [disabled]="!gameCreateInputIsValid()">
+                Create new game
+            </button>
+        </div>
+    </div>
 </div>
 <br>
-<div>
-    <div>
-        Game ID to join:
-        <input [(ngModel)]="gameJoinInput.game_id" required>
+<div class="card bg-faded">
+    <div class="card-block">
+        <h4 class="card-title">Join an existing game</h4>
+        <div class="card-text">
+            <div>
+                Game ID to join:
+                <input [(ngModel)]="gameJoinInput.game_id">
+                What is your username?
+                <input [(ngModel)]="gameJoinInput.username" placeholder="username">
+                <button class="btn"
+                        (click)="joinGame()"
+                        [disabled]="!gameJoinInputIsValid()">
+                    Join game
+                </button>
+            </div>
+        </div>
     </div>
-    <div>
-        What is your username?
-        <input [(ngModel)]="gameJoinInput.username" placeholder="username" required>
-    </div>
-
-    <button class="btn btn-lg"
-            (click)="joinGame()"
-            [disabled]="!gameJoinInputIsValid()">
-            Join game
-    </button>
 </div>

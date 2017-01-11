@@ -17,10 +17,10 @@ export class StartGameComponent implements OnInit {
     private gameCreateInput = new GameCreateInput(0);
     private gameJoinInput = new GameJoinInput("", "");
     private welcomeMessage = "";
+    private errorMessage = "";
     private disableCreateButton = false;
     private disableJoinButton = false;
     private title = "Start or join a game";
-    private errorMessage = "";
 
     constructor(private router: Router,
                 private gameService: GameService,
@@ -36,11 +36,12 @@ export class StartGameComponent implements OnInit {
 
     createGame() {
         this.welcomeMessage = "Waiting for game to start..."
+        this.errorMessage = "";
         this.disableCreateButton = true;
         // Send numPlayers to server to start a game, retreive a gameID?
         this.smearApiService.gameCreate(this.gameCreateInput)
                             .subscribe( gameId => this.gameIsCreated(gameId),
-                                        err => { this.errorMessage = <any>err; console.log(err); });
+                                        err => this.handleStartError(err, "Unable to create game, make sure you have a valid number of players and try again"));
 
     }
 
@@ -51,22 +52,31 @@ export class StartGameComponent implements OnInit {
 
     joinGame() {
         this.welcomeMessage = "Joining game..."
+        this.errorMessage = "";
         this.disableJoinButton = true;
         this.gameService.setGameInfo(this.gameJoinInput.game_id, this.gameJoinInput.username);
         this.smearApiService.gameJoin(this.gameJoinInput)
                             .subscribe( gameId => this.checkGameStatus(gameId),
-                                        err => { this.errorMessage = <any>err; console.log(err); });
+                                        err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
     }
 
     checkGameStatus(gameId: GameId) {
         this.smearApiService.getGameStartStatus(gameId)
                             .subscribe( gameStartStatus => this.gameIsReady(gameStartStatus),
-                                        err => { this.errorMessage = <any>err; console.log(err); });
+                                        err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
     }
 
     gameIsReady(gameStartStatus: GameStartStatus) {
         this.gameService.setPlayers(gameStartStatus.numPlayers, gameStartStatus.players);
         this.router.navigate(['/play']);
+    }
+
+    handleStartError(err: any, message: string) {
+        this.welcomeMessage = message;
+        this.errorMessage = <any>err;
+        console.log(err);
+        this.disableCreateButton = false;
+        this.disableJoinButton = false;
     }
 
     ngOnInit() {

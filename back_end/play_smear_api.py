@@ -13,13 +13,15 @@ g_game_id_lock = threading.Lock()
 g_engines = {}
 
 
-def generate_error(status_id, message):
+def generate_error(status_id, message, error_code=500):
+    app.logger.error("Returning error: {} ({})".format(message, status_id))
     status = {}
     status["status_id"] = status_id
     status["message"] = message
     ret = {}
     ret["status"] = status
-    return json.dumps(ret)
+    ret["error"] = message
+    return json.dumps(ret), error_code
 
 
 def generate_return_string(data):
@@ -118,6 +120,10 @@ def join_game():
     game_id = get_value_from_params(params, "game_id")
     username = get_value_from_params(params, "username")
 
+    # Check input
+    if game_id not in g_engines:
+        return generate_error(4, "Could not find game {}".format(game_id))
+
     # Perform game-related logic
     if g_engines[game_id].all_players_added():
         # Game is already full
@@ -146,7 +152,14 @@ def create_game():
     global g_engines
     # Read input
     params = get_params_or_abort(request)
-    numPlayers = int(get_value_from_params(params, "numPlayers"))
+    numPlayerInput = get_value_from_params(params, "numPlayers")
+    numPlayers = 0
+    try:
+        numPlayers = int(numPlayerInput)
+        if numPlayers < 2 or numPlayers > 8:
+            raise ValueError("Invalid number of players")
+    except ValueError:
+        return generate_error(3, "Invalid number of players {}, must be between 2 and 8".format(numPlayerInput))
 
     # Perform game-related logic
     game_id = create_game_and_return_id()
