@@ -2,6 +2,7 @@ from flask import Flask, abort, request
 from flask_cors import CORS, cross_origin
 import json
 import threading
+import time
 from pysmear import smear_engine_api
 
 app = Flask(__name__)
@@ -10,6 +11,24 @@ cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 g_game_id = 0
 g_game_id_lock = threading.Lock()
 g_engines = {}
+
+
+def generate_error(status_id, message):
+    status = {}
+    status["status_id"] = status_id
+    status["message"] = message
+    ret = {}
+    ret["status"] = status
+    return json.dumps(ret)
+
+
+def generate_return_string(data):
+    status = {}
+    status["status_id"] = 0
+    ret = {}
+    ret["status"] = status
+    ret["data"] = data
+    return json.dumps(ret)
 
 
 def create_game_and_return_id():
@@ -48,48 +67,93 @@ def get_value_from_params(params, key, abort_if_absent=True):
 
 
 # Checks on the status of a game
-# Input (data from url):
+# Input (json data from post):
 #  game_id    - String - ID of game to check on
+#  blocking   - boolean - if true, don't return until game is ready to start
 # Return (json data):
 #  ready        - String/bool  - If the game is ready to start (all players have joined)
+#  num_players  - int     - if ready == True, this will be the number of players in the game
 #  player_names - list of strings  - if ready == True, this will be a list of all players in the game
-@app.route("/api/game/startstatus/<game_id>/", methods=["GET"])
-def game_start_status(game_id):
+@app.route("/api/game/startstatus/", methods=["POST"])
+def game_start_status():
     global g_engines
+
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    blocking = get_value_from_params(params, "blocking")
+
     player_names = []
-    ret = {}
-    ret["ready"] = g_engines[game_id].all_players_added()
-    if ret["ready"]:
+    data = {}
+    data["ready"] = g_engines[game_id].all_players_added()
+    if blocking:
+        sleep_interval = 5
+        time_waited = 0
+        timeout_after = 600
+        while not data["ready"] and time_waited < timeout_after:
+            #sleep and check again
+            time.sleep(sleep_interval)
+            time_waited += sleep_interval
+            data["ready"] = g_engines[game_id].all_players_added()
+        if time_waited >= timeout_after:
+            return generate_error(2, "Game {} took too long, giving up. Create a new game and try again".format(game_id))
+
+    if data["ready"]:
         player_names = g_engines[game_id].get_player_names()
-    ret["player_names"] = player_names
-    return json.dumps(ret)
+    data["num_players"] = len(player_names)
+    data["player_names"] = player_names
+    return generate_return_string(data)
 
 
-# Starts a new game
+# join a game
 # Input (json data from post):
-#  numPlayers - Integer - number of players in the game
-#  username   - String  - name of the player
-# Return (json data):
-#  game_id    - String  - Id of the game to be used in future API calls
-@app.route("/api/game/start/", methods=["POST"])
-def start_game():
+#  game_id  - string - ID of game to join
+#  username - string - username to use
+# Return - nothing
+@app.route("/api/game/join/", methods=["POST"])
+def join_game():
     global g_engines
     # Read input
     params = get_params_or_abort(request)
-    numPlayers = int(get_value_from_params(params, "numPlayers"))
+    game_id = get_value_from_params(params, "game_id")
     username = get_value_from_params(params, "username")
 
     # Perform game-related logic
-    game_id = create_game_and_return_id()
-    app.logger.debug("Starting game {} with {} players using username: {}".format(game_id, numPlayers, username))
-    g_engines[game_id].create_new_game(num_players=numPlayers)
+    if g_engines[game_id].all_players_added():
+        # Game is already full
+        num_players = g_engines[game_id].get_number_of_players()
+        return generate_error(1, "Game {} is already full, contains {} players".format(game_id, num_players))
+
     g_engines[game_id].add_player(player_id=username, interactive=True)
-    for i in range(1, numPlayers):
+    num_players = g_engines[game_id].get_number_of_players()
+    for i in range(1, num_players):
         new_player = "player{}".format(i)
         app.logger.debug("Adding player {} to game {}".format(new_player, game_id))
         g_engines[game_id].add_player(player_id=new_player, interactive=False)
 
     # Return result
-    ret = {}
-    ret["game_id"] = game_id
-    return json.dumps(ret)
+    data = {}
+    data["game_id"] = game_id
+    return generate_return_string(data)
+
+# creates a new game
+# Input (json data from post):
+#  numPlayers - Integer - number of players in the game
+# Return (json data):
+#  game_id    - String  - Id of the game to be used in future API calls
+@app.route("/api/game/create/", methods=["POST"])
+def create_game():
+    global g_engines
+    # Read input
+    params = get_params_or_abort(request)
+    numPlayers = int(get_value_from_params(params, "numPlayers"))
+
+    # Perform game-related logic
+    game_id = create_game_and_return_id()
+    app.logger.debug("Starting game {} with {} players".format(game_id, numPlayers))
+    g_engines[game_id].create_new_game(num_players=numPlayers)
+
+    # Return result
+    data = {}
+    data["game_id"] = game_id
+    return generate_return_string(data)

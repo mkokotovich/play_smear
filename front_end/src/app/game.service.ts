@@ -7,15 +7,21 @@ export class GameService {
 
     private numPlayers: number;
     private players: Player[];
+    private username: string;
+    private gameId: string;
 
     constructor() { }
 
-    setNumPlayers(numPlayers: number):void {
+    setGameInfo(gameId: string, username: string):void {
+        this.gameId = gameId;
+        this.username = username;
+    }
+
+    setPlayers(numPlayers: number, playerList: string[]):void {
         this.numPlayers = numPlayers;
         this.players = new Array<Player>();
-        this.players.push(new Player("you", 0, true));
-        for (var i = 1; i < this.numPlayers; i++) {
-            this.players.push(new Player("player"+i, 0, false));
+        for (var i = 0; i < this.numPlayers; i++) {
+            this.players.push(new Player(playerList[i], 0, this.username == playerList[i]));
         }
     }
 

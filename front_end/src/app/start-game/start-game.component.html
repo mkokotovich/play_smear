@@ -1,21 +1,35 @@
 <div>
     <h1>{{title}}</h1>
     <p>{{welcomeMessage}}</p>
+    <p>{{errorMessage}}</p>
 </div>
 <div>
-    What is your username?
-    <input [(ngModel)]="gameStartInput.username" placeholder="username" required>
-</div>
-<div>
-    How many players do you want to play with?
-    <input [(ngModel)]="gameStartInput.numPlayers" placeholder="2" required>
-</div>
+    <p>Don't have an existing game to join? Create one here</p>
+    <div>
+        How many players do you want to play with?
+        <input [(ngModel)]="gameCreateInput.numPlayers" placeholder="2" required>
+    </div>
 
+    <button class="btn btn-lg"
+            (click)="createGame()"
+            [disabled]="!gameCreateInputIsValid()">
+        Create new game
+    </button>
+</div>
 <br>
 <div>
+    <div>
+        Game ID to join:
+        <input [(ngModel)]="gameJoinInput.game_id" required>
+    </div>
+    <div>
+        What is your username?
+        <input [(ngModel)]="gameJoinInput.username" placeholder="username" required>
+    </div>
+
     <button class="btn btn-lg"
-            (click)="startGame()"
-            [disabled]="!gameStartInputIsValid()">
-            Start new game
+            (click)="joinGame()"
+            [disabled]="!gameJoinInputIsValid()">
+            Join game
     </button>
 </div>

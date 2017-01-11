@@ -8,7 +8,9 @@ import 'rxjs/add/operator/catch';
 
 import { Card } from './model/card';
 import { GameId } from './model/game-id';
-import { GameStartInput } from './model/game-start-input';
+import { GameCreateInput } from './model/game-create-input';
+import { GameJoinInput } from './model/game-join-input';
+import { GameStartStatusInput } from './model/game-start-status-input';
 import { GameStartStatus } from './model/game-start-status';
 import { CARDS } from './model/mock-cards';
 
@@ -17,8 +19,9 @@ export class SmearApiService {
     private initialCardsUrl = 'api/getinitial';
     private serverAddress = "localhost:5000";
     private baseUrl = "http://" + this.serverAddress + '/api/';
-    private gameStartUrl = this.baseUrl + "game/start/";
-    private gameStartStatusBaseUrl = this.baseUrl + "game/startstatus/";
+    private gameCreateUrl = this.baseUrl + "game/create/";
+    private gameJoinUrl = this.baseUrl + "game/join/";
+    private gameStartStatusUrl = this.baseUrl + "game/startstatus/";
 
     constructor(private http: Http) { }
 
@@ -33,24 +36,53 @@ export class SmearApiService {
         //.catch(this.handleError);
     }
 
-    getGameStartStatus(game_id: GameId): Observable<GameStartStatus> {
-        return this.http.get(this.gameStartStatusBaseUrl + game_id.gameId)
-                        .map((res:Response) => res.json())
-                        .catch((error:any) => Observable.throw(error.json().error || 'Server error'));
+    getGameStartStatus(gameId: GameId): Observable<GameStartStatus> {
+        let data = new GameStartStatusInput(gameId.game_id, true);
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.gameStartStatusUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
     }
 
-    gameStart(data: GameStartInput): Observable<GameId> {
+    gameCreate(data: GameCreateInput): Observable<GameId> {
         //let bodyString = JSON.stringify(data);
         let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
-        return this.http.post(this.gameStartUrl, data, options)
-                        .map((res:Response) => res.json())
-                        .catch((error:any) => Observable.throw(error.json().error || 'Server error'));
+        return this.http.post(this.gameCreateUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
     }
 
-    private handleError(error: any): Promise<any> {
-        console.error('An error occurred', error); // for demo purposes only
-        return Promise.reject(error.message || error);
+    gameJoin(data: GameJoinInput): Observable<GameId> {
+        //let bodyString = JSON.stringify(data);
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.gameJoinUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
+    }
+
+    private extractData(res: Response) {
+        let body = res.json();
+        console.debug(body);
+        return body.data || { };
+    }
+
+    private handleError (error: Response | any) {
+        // In a real world app, we might use a remote logging infrastructure
+        let errMsg: string;
+        if (error instanceof Response) {
+            const body = error.json() || '';
+            const err = body.error || JSON.stringify(body);
+            errMsg = `${error.status} - ${error.statusText || ''} ${err}`;
+        } else {
+            errMsg = error.message ? error.message : error.toString();
+        }
+        console.error(errMsg);
+        return Observable.throw(errMsg);
     }
 }

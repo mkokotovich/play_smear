@@ -1,5 +1,5 @@
 export class GameId {
     constructor(
-        public gameId: string) {
+        public game_id: string) {
     }
 }
