@@ -170,3 +170,32 @@ def create_game():
     data = {}
     data["game_id"] = game_id
     return generate_return_string(data)
+
+# Receive the deal for the next hand
+# Input (json data from post):
+#  game_id  - string - ID of game we're playing
+#  username - string - username of player
+# Return (json data):
+#  cards    - array of cards - player "username"s hand
+@app.route("/api/hand/deal/", methods=["POST"])
+def get_next_deal():
+    global g_engines
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    username = get_value_from_params(params, "username")
+
+    # Check input
+    if game_id not in g_engines:
+        return generate_error(4, "Could not find game {}".format(game_id))
+    if username not in g_engines[game_id].get_player_names():
+        return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
+
+    # Perform game-related logic
+    # cards = g_engines[game_id].get_next_deal() 
+
+    # Return result
+    data = {}
+    #data["cards"] = cards
+    return generate_return_string(data)
+
