@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import { Player } from './model/player';
+import { GameId } from './model/game-id';
 
 @Injectable()
 export class GameService {
@@ -8,12 +9,12 @@ export class GameService {
     private numPlayers: number;
     private players: Player[];
     private username: string;
-    private gameId: string;
+    private gameId: GameId;
 
     constructor() { }
 
     setGameInfo(gameId: string, username: string):void {
-        this.gameId = gameId;
+        this.gameId = new GameId(gameId);
         this.username = username;
     }
 
@@ -27,6 +28,10 @@ export class GameService {
 
     getPlayers(): Player[] {
         return this.players;
+    }
+
+    getGameId(): GameId {
+        return this.gameId;
     }
 
     getNumPlayers(): number {

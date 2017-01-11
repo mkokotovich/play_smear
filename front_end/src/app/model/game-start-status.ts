@@ -1,7 +1,7 @@
 export class GameStartStatus {
     constructor(
         public ready: boolean,
-        public numPlayers: number,
-        public players: string[]) {
+        public num_players: number,
+        public player_names: string[]) {
     }
 }

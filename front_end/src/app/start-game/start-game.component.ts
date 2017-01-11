@@ -67,7 +67,7 @@ export class StartGameComponent implements OnInit {
     }
 
     gameIsReady(gameStartStatus: GameStartStatus) {
-        this.gameService.setPlayers(gameStartStatus.numPlayers, gameStartStatus.players);
+        this.gameService.setPlayers(gameStartStatus.num_players, gameStartStatus.player_names);
         this.router.navigate(['/play']);
     }
 
