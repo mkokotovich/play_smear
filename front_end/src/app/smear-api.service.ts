@@ -6,13 +6,13 @@ import { Observable } from 'rxjs/Rx';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 
+import { BidInfo } from './model/bid-info';
 import { Card } from './model/card';
 import { GameId } from './model/game-id';
 import { GameCreateInput } from './model/game-create-input';
 import { GameAndUser } from './model/game-and-user';
 import { GameStartStatusInput } from './model/game-start-status-input';
 import { GameStartStatus } from './model/game-start-status';
-import { CARDS } from './model/mock-cards';
 
 @Injectable()
 export class SmearApiService {
@@ -23,19 +23,9 @@ export class SmearApiService {
     private gameJoinUrl = this.baseUrl + "game/join/";
     private gameStartStatusUrl = this.baseUrl + "game/startstatus/";
     private handDealUrl = this.baseUrl + "hand/deal/";
+    private handGetBidInfoUrl = this.baseUrl + "hand/getbidinfo/";
 
     constructor(private http: Http) { }
-
-    getInitialHand(): Observable<Card[]> {
-        //let initialHand$ = this.http.get(`${this.baseUrl}/gethand`, {headers: this.getHeaders()})
-        //.map(mapCards);
-        //return initialHand$
-        return Observable.of(CARDS);
-        //return this.http.get(this.initialCardsUrl)
-        //.toPromise()
-        //.then(response => response.json().data as Card[])
-        //.catch(this.handleError);
-    }
 
     getGameStartStatus(gameId: GameId): Observable<GameStartStatus> {
         let data = new GameStartStatusInput(gameId.game_id, true);
@@ -70,6 +60,15 @@ export class SmearApiService {
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
         return this.http.post(this.handDealUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
+    }
+
+    handGetBidInfo(data: GameAndUser): Observable<BidInfo> {
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.handGetBidInfoUrl, data, options)
                         .map(this.extractData)
                         .catch(this.handleError);
     }

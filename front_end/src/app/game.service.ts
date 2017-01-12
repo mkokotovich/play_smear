@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Player } from './model/player';
 import { GameId } from './model/game-id';
 import { GameAndUser } from './model/game-and-user';
+import { HandService } from './hand.service';
 
 @Injectable()
 export class GameService {
@@ -13,7 +14,12 @@ export class GameService {
     private gameId: GameId;
     private gameAndUser = new GameAndUser("", "");
 
-    constructor() { }
+    constructor(private handService: HandService) { }
+
+    manageGame() {
+        this.handService.setGameInfo(this.gameAndUser);
+        this.handService.startNewHand();
+    }
 
     setGameInfo(gameId: string, username: string):void {
         this.gameId = new GameId(gameId);

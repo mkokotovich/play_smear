@@ -200,3 +200,30 @@ def get_next_deal():
     data = cards
     return generate_return_string(data)
 
+
+# Return the bid info for the player
+# Input (json data from post):
+#  game_id  - string - ID of game we're playing
+#  username - string - username of player
+# Return (json data):
+#  bid_info - information pertaining to the current bid
+@app.route("/api/hand/getbidinfo/", methods=["POST"])
+def get_bid_info():
+    global g_engines
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    username = get_value_from_params(params, "username")
+
+    # Check input
+    if game_id not in g_engines:
+        return generate_error(4, "Could not find game {}".format(game_id))
+    if username not in g_engines[game_id].get_player_names():
+        return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
+
+    # Perform game-related logic
+    bid_info = g_engines[game_id].get_bid_info_for_player(username) 
+
+    # Return result, bid_info dict should be the top-level data
+    data = bid_info
+    return generate_return_string(data)

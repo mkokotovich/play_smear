@@ -2,9 +2,10 @@
     <app-hand>Loading cards for placing bid</app-hand>
 </div>
 <div>
-    Please enter your bid:
+    <p> {{ handService.getBidMessage() }} </p>
     <input [(ngModel)]="bid" placeholder="0">
     <button type="button" class="btn btn-default"
+        [disabled]="!handService.allowBid"
         (click)="submit_bid()">
         Bid
     </button>

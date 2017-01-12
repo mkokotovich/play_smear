@@ -1,5 +1,5 @@
 <div>
-    Your hand:
+    <p>{{handService.getHandMessage()}}</p>
     <div class="hand">
         <button type="button" class="btn btn-default smearcard"
             *ngFor="let card of handService.getCards()"
