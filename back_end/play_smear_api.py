@@ -196,8 +196,7 @@ def get_next_deal():
     # Perform game-related logic
     cards = g_engines[game_id].get_hand_for_player(username) 
 
-    # Return result
-    data = {}
-    data["cards"] = cards
+    # Return result, cards list should be at the root of data
+    data = cards
     return generate_return_string(data)
 

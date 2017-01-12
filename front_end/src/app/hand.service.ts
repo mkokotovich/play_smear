@@ -1,18 +1,19 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Rx';
 
 import { SmearApiService } from './smear-api.service';
+import { GameService } from './game.service';
 import { Card } from './model/card';
 
 @Injectable()
 export class HandService {
     private bidding: boolean;
-    private cards: Observable<Card[]>;
+    private cards: Card[];
     private selectedCard: Card;
     private allowSelection: boolean;
     private gameStatusMessage: string;
 
-    constructor(private smearApiService :SmearApiService) {
+    constructor(private smearApiService :SmearApiService,
+                private gameService: GameService) {
         this.allowSelection = false;
         this.bidding = true;
     }
@@ -27,10 +28,17 @@ export class HandService {
     }
   
     getInitialHand(): void {
-        this.cards = this.smearApiService.getInitialHand();
+        this.smearApiService.handDeal(this.gameService.getGameAndUser())
+                            .subscribe( cards => this.cards = cards,
+                                        err => this.handleHandError(err, "Unable to retrieve cards"));
     }
 
-    getCards(): Observable<Card[]> {
+    handleHandError(err: any, message: string) {
+        this.gameStatusMessage = message + <string>err;
+        console.log(err);
+    }
+
+    getCards(): Card[] {
         return this.cards;
     }
 

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 
 import { Player } from './model/player';
 import { GameId } from './model/game-id';
+import { GameAndUser } from './model/game-and-user';
 
 @Injectable()
 export class GameService {
@@ -10,12 +11,14 @@ export class GameService {
     private players: Player[];
     private username: string;
     private gameId: GameId;
+    private gameAndUser = new GameAndUser("", "");
 
     constructor() { }
 
     setGameInfo(gameId: string, username: string):void {
         this.gameId = new GameId(gameId);
-        this.username = username;
+        this.gameAndUser.game_id = gameId;
+        this.gameAndUser.username = username;
     }
 
     setPlayers(numPlayers: number, playerList: string[]):void {
@@ -28,6 +31,10 @@ export class GameService {
 
     getPlayers(): Player[] {
         return this.players;
+    }
+
+    getGameAndUser(): GameAndUser {
+        return this.gameAndUser;
     }
 
     getGameId(): GameId {

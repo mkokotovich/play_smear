@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { GameService } from '../game.service';
 import { SmearApiService } from '../smear-api.service';
 import { GameCreateInput } from '../model/game-create-input';
-import { GameJoinInput } from '../model/game-join-input';
+import { GameAndUser } from '../model/game-and-user';
 import { GameStartStatus } from '../model/game-start-status';
 import { GameId } from '../model/game-id';
 
@@ -15,7 +15,7 @@ import { GameId } from '../model/game-id';
 })
 export class StartGameComponent implements OnInit {
     private gameCreateInput = new GameCreateInput(0);
-    private gameJoinInput = new GameJoinInput("", "");
+    private gameAndUser = new GameAndUser("", "");
     private welcomeMessage = "";
     private errorMessage = "";
     private disableCreateButton = false;
@@ -31,7 +31,7 @@ export class StartGameComponent implements OnInit {
     }
 
     gameJoinInputIsValid() {
-        return !this.disableJoinButton && this.gameJoinInput.game_id && this.gameJoinInput.username;
+        return !this.disableJoinButton && this.gameAndUser.game_id && this.gameAndUser.username;
     }
 
     createGame() {
@@ -46,16 +46,16 @@ export class StartGameComponent implements OnInit {
     }
 
     gameIsCreated(gameId: GameId) {
-        this.gameJoinInput.game_id = gameId.game_id;
-        this.welcomeMessage = "Game " + this.gameJoinInput.game_id + " created successfully";
+        this.gameAndUser.game_id = gameId.game_id;
+        this.welcomeMessage = "Game " + this.gameAndUser.game_id + " created successfully";
     }
 
     joinGame() {
         this.welcomeMessage = "Joining game..."
         this.errorMessage = "";
         this.disableJoinButton = true;
-        this.gameService.setGameInfo(this.gameJoinInput.game_id, this.gameJoinInput.username);
-        this.smearApiService.gameJoin(this.gameJoinInput)
+        this.gameService.setGameInfo(this.gameAndUser.game_id, this.gameAndUser.username);
+        this.smearApiService.gameJoin(this.gameAndUser)
                             .subscribe( gameId => this.checkGameStatus(gameId),
                                         err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
     }

@@ -25,9 +25,9 @@
         <div class="card-text">
             <div>
                 Game ID to join:
-                <input [(ngModel)]="gameJoinInput.game_id">
+                <input [(ngModel)]="gameAndUser.game_id">
                 What is your username?
-                <input [(ngModel)]="gameJoinInput.username" placeholder="username">
+                <input [(ngModel)]="gameAndUser.username" placeholder="username">
                 <button class="btn"
                         (click)="joinGame()"
                         [disabled]="!gameJoinInputIsValid()">

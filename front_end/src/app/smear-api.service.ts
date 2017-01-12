@@ -9,7 +9,7 @@ import 'rxjs/add/operator/catch';
 import { Card } from './model/card';
 import { GameId } from './model/game-id';
 import { GameCreateInput } from './model/game-create-input';
-import { GameJoinInput } from './model/game-join-input';
+import { GameAndUser } from './model/game-and-user';
 import { GameStartStatusInput } from './model/game-start-status-input';
 import { GameStartStatus } from './model/game-start-status';
 import { CARDS } from './model/mock-cards';
@@ -22,6 +22,7 @@ export class SmearApiService {
     private gameCreateUrl = this.baseUrl + "game/create/";
     private gameJoinUrl = this.baseUrl + "game/join/";
     private gameStartStatusUrl = this.baseUrl + "game/startstatus/";
+    private handDealUrl = this.baseUrl + "hand/deal/";
 
     constructor(private http: Http) { }
 
@@ -47,7 +48,6 @@ export class SmearApiService {
     }
 
     gameCreate(data: GameCreateInput): Observable<GameId> {
-        //let bodyString = JSON.stringify(data);
         let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
@@ -56,12 +56,20 @@ export class SmearApiService {
                         .catch(this.handleError);
     }
 
-    gameJoin(data: GameJoinInput): Observable<GameId> {
-        //let bodyString = JSON.stringify(data);
+    gameJoin(data: GameAndUser): Observable<GameId> {
         let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
         return this.http.post(this.gameJoinUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
+    }
+
+    handDeal(data: GameAndUser): Observable<Array<Card>> {
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.handDealUrl, data, options)
                         .map(this.extractData)
                         .catch(this.handleError);
     }
