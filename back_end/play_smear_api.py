@@ -102,6 +102,8 @@ def game_start_status():
 
     if data["ready"]:
         player_names = g_engines[game_id].get_player_names()
+        g_engines[game_id].start_game()
+        
     data["num_players"] = len(player_names)
     data["player_names"] = player_names
     return generate_return_string(data)
@@ -192,10 +194,10 @@ def get_next_deal():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
     # Perform game-related logic
-    # cards = g_engines[game_id].get_next_deal() 
+    cards = g_engines[game_id].get_hand_for_player(username) 
 
     # Return result
     data = {}
-    #data["cards"] = cards
+    data["cards"] = cards
     return generate_return_string(data)
 

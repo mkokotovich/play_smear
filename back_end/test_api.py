@@ -153,5 +153,42 @@ class PlaySmearGameStartStatusTest(PlaySmearTest):
         num_players = params["num_players"]
         self.assertEqual(num_players, self.numPlayers)
 
+
+
+class PlaySmearHandDealTest(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        smear.app.config['TESTING'] = True
+        self.url = "/api/hand/deal/"
+        self.numPlayers = 3
+        data = { "numPlayers": self.numPlayers }
+        params = self.post_data_and_return_data("/api/game/create/", data)
+        self.game_id = params["game_id"]
+        self.username = "matt"
+        data = { "game_id": self.game_id, "username": self.username }
+        params = self.post_data_and_return_data("/api/game/join/", data)
+        data = { "game_id": self.game_id, "blocking": True }
+        params = self.post_data_and_return_data("/api/game/startstatus/", data)
+
+    def tearDown(self):
+        pass
+
+    def test_hand_deal_get(self):
+        rv = self.app.get(self.url)
+        self.assertIn(b'The method is not allowed', rv.get_data())
+
+    def test_hand_deal_post_empty_json(self):
+        rv = self.app.post(self.url, follow_redirects=True)
+        self.assertIn(b'this server could not understand', rv.get_data())
+
+    def test_hand_deal_returns_list_of_cards(self):
+        data = { "game_id": self.game_id, "username": self.username }
+        params = self.post_data_and_return_data(self.url, data)
+        self.assertIn("cards", params)
+        cards = params["cards"]
+        self.assertEquals(6, len(cards))
+
+
 if __name__ == '__main__':
     unittest.main()
