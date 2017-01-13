@@ -231,6 +231,27 @@ class PlaySmearHandGetBidInfoTest(PlaySmearTest):
             self.assertEquals(value, params[key])
 
 
+class PlaySmearHandSubmitBid(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        self.url = "/api/hand/submitbid/"
+        self.data = { "game_id": self.game_id, "username": self.username, "bid": 3 }
+        self.create_default_mock_engine()
+
+    def tearDown(self):
+        pass
+
+    def test_hand_get_bid_info_get(self):
+        rv = self.app.get(self.url)
+        self.assertIn(b'The method is not allowed', rv.get_data())
+
+    def test_hand_get_bid_info_returns_bid_info(self):
+        self.add_return_value_to_engine_function("submit_bid_for_player", None)
+        params = self.post_data_and_return_data(self.url, self.data)
+        #TODO: assert that submit_bid_for_player was called correctly
+
+
 
 if __name__ == '__main__':
     unittest.main()

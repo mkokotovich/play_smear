@@ -24,7 +24,7 @@ def generate_error(status_id, message, error_code=500):
     return json.dumps(ret), error_code
 
 
-def generate_return_string(data):
+def generate_return_string(data=None):
     status = {}
     status["status_id"] = 0
     ret = {}
@@ -227,3 +227,42 @@ def get_bid_info():
     # Return result, bid_info dict should be the top-level data
     data = bid_info
     return generate_return_string(data)
+
+
+# Submit player's bid
+# Input (json data from post):
+#  game_id  - string - ID of game we're playing
+#  username - string - username of player
+#  bid      - int    - player's bid
+# Return (json data):
+#  nothing, just status
+@app.route("/api/hand/submitbid/", methods=["POST"])
+def submit_bid():
+    global g_engines
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    username = get_value_from_params(params, "username")
+    bid_input = str(get_value_from_params(params, "bid"))
+    bid = 0
+
+    # Check input
+    if bid_input.lower() == "pass":
+        bid = 0
+    else:
+        try:
+            bid = int(bid_input)
+            if bid < 0 or bid == 1 or bid > 5:
+                raise ValueError("Invalid bid")
+        except ValueError:
+            return generate_error(6, "Invalid bid: {}, bid must be between 2 and 5, or 0 for a pass".format(bid))
+    if game_id not in g_engines:
+        return generate_error(4, "Could not find game {}".format(game_id))
+    if username not in g_engines[game_id].get_player_names():
+        return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
+
+    # Perform game-related logic
+    g_engines[game_id].submit_bid_for_player(username, bid) 
+
+    # Return success
+    return generate_return_string()
