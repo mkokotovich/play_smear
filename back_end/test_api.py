@@ -1,14 +1,21 @@
 import os
 import play_smear_api as smear
 import unittest
+from mock import patch, MagicMock
 import tempfile
 import json
+from pysmear import smear_engine_api
 
-
+# Class with common tools
 class PlaySmearTest(unittest.TestCase):
 
     def setUp(self):
         self.app = smear.app.test_client()
+        smear.app.config['TESTING'] = True
+        smear.app.config['LOGGER_HANDLER_POLICY'] = "never"
+        self.game_id = "1"
+        self.username = "matt"
+        self.numPlayers = 3
 
     def post_data_and_return_data(self, url, data):
         rv = self.app.post(url,
@@ -36,12 +43,23 @@ class PlaySmearTest(unittest.TestCase):
         self.assertIn("data", result)
         return result["data"]
 
+    def create_default_mock_engine(self):
+        m = MagicMock()
+        attrs = {'get_player_names.return_value':[ self.username, "user1", "user2" ]}
+        m.configure_mock(**attrs)
+        smear.g_engines[self.game_id] = m
+
+    def add_return_value_to_engine_function(self, function_name, ret):
+        attrs = { "{}.return_value".format(function_name): ret }
+        smear.g_engines[self.game_id].configure_mock(**attrs)
+
+
+
 
 class PlaySmearGameCreateTest(PlaySmearTest):
 
     def setUp(self):
         PlaySmearTest.setUp(self)
-        smear.app.config['TESTING'] = True
         self.url = "/api/game/create/"
 
     def tearDown(self):
@@ -60,7 +78,7 @@ class PlaySmearGameCreateTest(PlaySmearTest):
         self.assertIn(b'this server could not understand', rv.get_data())
 
     def test_game_create_returns_gameid(self):
-        data = { "numPlayers": 3 }
+        data = { "numPlayers": self.numPlayers }
         params = self.post_data_and_return_data(self.url, data)
         self.assertIn("game_id", params)
         game_id = params["game_id"]
@@ -72,13 +90,9 @@ class PlaySmearGameJoinTest(PlaySmearTest):
 
     def setUp(self):
         PlaySmearTest.setUp(self)
-        smear.app.config['TESTING'] = True
         self.url = "/api/game/join/"
-        self.numPlayers = 3
-        data = { "numPlayers": self.numPlayers }
-        params = self.post_data_and_return_data("/api/game/create/", data)
-        self.game_id = params["game_id"]
-        self.username = "matt"
+        self.create_default_mock_engine()
+        self.data = { "game_id": self.game_id, "username": self.username }
 
     def tearDown(self):
         pass
@@ -92,13 +106,16 @@ class PlaySmearGameJoinTest(PlaySmearTest):
         self.assertIn(b'this server could not understand', rv.get_data())
 
     def test_game_join_returns_success(self):
-        data = { "game_id": self.game_id, "username": self.username }
-        params = self.post_data_and_return_data(self.url, data)
+        self.add_return_value_to_engine_function("all_players_added", False)
+        self.add_return_value_to_engine_function("get_number_of_players", self.numPlayers)
+        params = self.post_data_and_return_data(self.url, self.data)
         self.assertIn("game_id", params)
         tmp_game_id = params["game_id"]
         self.assertEquals(tmp_game_id, self.game_id)
 
     def test_game_join_when_already_full_returns_error(self):
+        self.add_return_value_to_engine_function("all_players_added", False)
+        self.add_return_value_to_engine_function("get_number_of_players", self.numPlayers)
         data = { "game_id": self.game_id, "username": self.username }
         # Join the first time
         params = self.post_data_and_return_data(self.url, data)
@@ -106,6 +123,7 @@ class PlaySmearGameJoinTest(PlaySmearTest):
         tmp_game_id = params["game_id"]
         self.assertEquals(tmp_game_id, self.game_id)
         # Join again with a different username
+        self.add_return_value_to_engine_function("all_players_added", True)
         data = { "game_id": self.game_id, "username": "I_want_to_play_too" }
         status = self.post_data_and_return_status(self.url, data)
         self.assertIn("status_id", status)
@@ -118,15 +136,9 @@ class PlaySmearGameStartStatusTest(PlaySmearTest):
 
     def setUp(self):
         PlaySmearTest.setUp(self)
-        smear.app.config['TESTING'] = True
         self.url = "/api/game/startstatus/"
-        self.numPlayers = 3
-        data = { "numPlayers": self.numPlayers }
-        params = self.post_data_and_return_data("/api/game/create/", data)
-        self.game_id = params["game_id"]
-        self.username = "matt"
-        data = { "game_id": self.game_id, "username": self.username }
-        params = self.post_data_and_return_data("/api/game/join/", data)
+        self.create_default_mock_engine()
+        self.data = { "game_id": self.game_id, "blocking": True }
 
     def tearDown(self):
         pass
@@ -140,8 +152,8 @@ class PlaySmearGameStartStatusTest(PlaySmearTest):
         self.assertIn(b'this server could not understand', rv.get_data())
 
     def test_game_startstatus_returns_player_names(self):
-        data = { "game_id": self.game_id, "blocking": True }
-        params = self.post_data_and_return_data(self.url, data)
+        self.add_return_value_to_engine_function("all_players_added", True)
+        params = self.post_data_and_return_data(self.url, self.data)
         self.assertIn("ready", params)
         ready = params["ready"]
         self.assertTrue(ready)
@@ -159,17 +171,9 @@ class PlaySmearHandDealTest(PlaySmearTest):
 
     def setUp(self):
         PlaySmearTest.setUp(self)
-        smear.app.config['TESTING'] = True
         self.url = "/api/hand/deal/"
-        self.numPlayers = 3
-        data = { "numPlayers": self.numPlayers }
-        params = self.post_data_and_return_data("/api/game/create/", data)
-        self.game_id = params["game_id"]
-        self.username = "matt"
-        data = { "game_id": self.game_id, "username": self.username }
-        params = self.post_data_and_return_data("/api/game/join/", data)
-        data = { "game_id": self.game_id, "blocking": True }
-        params = self.post_data_and_return_data("/api/game/startstatus/", data)
+        self.create_default_mock_engine()
+        self.data = { "game_id": self.game_id, "username": self.username }
 
     def tearDown(self):
         pass
@@ -183,11 +187,49 @@ class PlaySmearHandDealTest(PlaySmearTest):
         self.assertIn(b'this server could not understand', rv.get_data())
 
     def test_hand_deal_returns_list_of_cards(self):
-        data = { "game_id": self.game_id, "username": self.username }
-        params = self.post_data_and_return_data(self.url, data)
-        self.assertIn("cards", params)
-        cards = params["cards"]
-        self.assertEquals(6, len(cards))
+        cards = [ 
+                { "suit":"spades", "value": "2" },
+                { "suit":"clubs", "value": "3" },
+                { "suit":"diamonds", "value": "4" },
+                { "suit":"hearts", "value": "5" },
+                { "suit":"spades", "value": "10" },
+                { "suit":"spades", "value": "Ace" }
+                ]
+
+        self.add_return_value_to_engine_function("get_hand_for_player", cards)
+        ret_cards = self.post_data_and_return_data(self.url, self.data)
+        self.assertEquals(6, len(ret_cards))
+        for i in range(0, 6):
+            self.assertEquals(cards[i], ret_cards[i])
+
+
+class PlaySmearHandGetBidInfoTest(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        self.url = "/api/hand/getbidinfo/"
+        self.data = { "game_id": self.game_id, "username": self.username }
+        self.create_default_mock_engine()
+
+    def tearDown(self):
+        pass
+
+    def test_hand_get_bid_info_get(self):
+        rv = self.app.get(self.url)
+        self.assertIn(b'The method is not allowed', rv.get_data())
+
+    def test_hand_get_bid_info_returns_bid_info(self):
+        bid_info = { 
+                'force_two': False,
+                'current_bid': 2,
+                'bidder': "user01"
+                }
+        self.add_return_value_to_engine_function("get_bid_info_for_player", bid_info)
+        params = self.post_data_and_return_data(self.url, self.data)
+        for key, value in bid_info.items():
+            self.assertIn(key, params)
+            self.assertEquals(value, params[key])
+
 
 
 if __name__ == '__main__':
