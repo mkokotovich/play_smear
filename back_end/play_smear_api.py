@@ -266,3 +266,30 @@ def submit_bid():
 
     # Return success
     return generate_return_string()
+
+
+# Find out who the high bidder is, and what the bid is (not including trump, though)
+# Input (json data from post):
+#  game_id  - string - ID of game we're playing
+# Return (json data):
+#  username - string - username of player with the high bid
+#  bid      - int    - the high bid
+@app.route("/api/hand/gethighbid/", methods=["POST"])
+def get_high_bid():
+    global g_engines
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+
+    # Check input
+    if game_id not in g_engines:
+        return generate_error(4, "Could not find game {}".format(game_id))
+
+    # Perform game-related logic
+    high_bid, username = g_engines[game_id].get_high_bid() 
+
+    # Return the high bid
+    data = {}
+    data["high_bid"] = high_bid
+    data["high_bidder"] = username
+    return generate_return_string(data)

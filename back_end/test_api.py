@@ -53,6 +53,10 @@ class PlaySmearTest(unittest.TestCase):
         attrs = { "{}.return_value".format(function_name): ret }
         smear.g_engines[self.game_id].configure_mock(**attrs)
 
+    def assert_engine_function_called_with(self, function_name, *args, **kwargs):
+        function = getattr(smear.g_engines[self.game_id], function_name)
+        function.assert_called_with(*args, **kwargs)
+
 
 
 
@@ -226,6 +230,7 @@ class PlaySmearHandGetBidInfoTest(PlaySmearTest):
                 }
         self.add_return_value_to_engine_function("get_bid_info_for_player", bid_info)
         params = self.post_data_and_return_data(self.url, self.data)
+        self.assert_engine_function_called_with("get_bid_info_for_player", self.username)
         for key, value in bid_info.items():
             self.assertIn(key, params)
             self.assertEquals(value, params[key])
@@ -236,21 +241,48 @@ class PlaySmearHandSubmitBid(PlaySmearTest):
     def setUp(self):
         PlaySmearTest.setUp(self)
         self.url = "/api/hand/submitbid/"
-        self.data = { "game_id": self.game_id, "username": self.username, "bid": 3 }
+        self.bid = 3
+        self.data = { "game_id": self.game_id, "username": self.username, "bid": self.bid }
         self.create_default_mock_engine()
 
     def tearDown(self):
         pass
 
-    def test_hand_get_bid_info_get(self):
+    def test_hand_submit_bid_get(self):
         rv = self.app.get(self.url)
         self.assertIn(b'The method is not allowed', rv.get_data())
 
-    def test_hand_get_bid_info_returns_bid_info(self):
+    def test_hand_submit_bid_returns_success(self):
         self.add_return_value_to_engine_function("submit_bid_for_player", None)
         params = self.post_data_and_return_data(self.url, self.data)
-        #TODO: assert that submit_bid_for_player was called correctly
+        self.assert_engine_function_called_with("submit_bid_for_player", self.username, self.bid)
 
+
+class PlaySmearHandGetHighBid(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        self.url = "/api/hand/gethighbid/"
+        self.high_bid = 4
+        self.high_bidder = "bidder"
+        self.data = { "game_id": self.game_id }
+        self.create_default_mock_engine()
+
+    def tearDown(self):
+        pass
+
+    def test_hand_get_high_bid_get(self):
+        rv = self.app.get(self.url)
+        self.assertIn(b'The method is not allowed', rv.get_data())
+
+    def test_hand_get_high_bid_returns_correct_high_bid_and_bidder(self):
+        self.add_return_value_to_engine_function("get_high_bid", (self.high_bid, self.high_bidder))
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assert_engine_function_called_with("get_high_bid")
+        self.assertIn("high_bid", params)
+        self.assertEqual(params["high_bid"], self.high_bid)
+        self.assertIn("high_bidder", params)
+        self.assertEqual(params["high_bidder"], self.high_bidder)
 
 
 if __name__ == '__main__':
