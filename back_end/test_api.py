@@ -199,12 +199,15 @@ class PlaySmearHandDealTest(PlaySmearTest):
                 { "suit":"spades", "value": "10" },
                 { "suit":"spades", "value": "Ace" }
                 ]
-
+        hand_id = 0
         self.add_return_value_to_engine_function("get_hand_for_player", cards)
-        ret_cards = self.post_data_and_return_data(self.url, self.data)
+        self.add_return_value_to_engine_function("get_hand_id", hand_id)
+        params = self.post_data_and_return_data(self.url, self.data)
+        ret_cards = params["cards"]
         self.assertEquals(6, len(ret_cards))
         for i in range(0, 6):
             self.assertEquals(cards[i], ret_cards[i])
+        self.assertEquals(hand_id, params["hand_id"])
 
 
 class PlaySmearHandGetBidInfoTest(PlaySmearTest):
@@ -265,7 +268,8 @@ class PlaySmearHandGetHighBid(PlaySmearTest):
         self.url = "/api/hand/gethighbid/"
         self.high_bid = 4
         self.high_bidder = "bidder"
-        self.data = { "game_id": self.game_id }
+        self.hand_id = 0
+        self.data = { "game_id": self.game_id, "hand_id": self.hand_id }
         self.create_default_mock_engine()
 
     def tearDown(self):
@@ -278,13 +282,48 @@ class PlaySmearHandGetHighBid(PlaySmearTest):
     def test_hand_get_high_bid_returns_correct_high_bid_and_bidder(self):
         self.add_return_value_to_engine_function("get_high_bid", (self.high_bid, self.high_bidder))
         params = self.post_data_and_return_data(self.url, self.data)
-        self.assert_engine_function_called_with("get_high_bid")
+        self.assert_engine_function_called_with("get_high_bid", self.hand_id)
         self.assertIn("game_id", params)
         self.assertEqual(params["game_id"], self.game_id)
         self.assertIn("username", params)
         self.assertEqual(params["username"], self.high_bidder)
         self.assertIn("bid", params)
         self.assertEqual(params["bid"], self.high_bid)
+
+
+class PlaySmearHandGetTrump(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        self.url = "/api/hand/gettrump/"
+        self.trump = "Spades"
+        self.data = { "game_id": self.game_id, "username": self.username, "trump": self.trump }
+        self.create_default_mock_engine()
+
+    def tearDown(self):
+        pass
+
+    def test_hand_get_trump_get(self):
+        rv = self.app.get(self.url)
+        self.assertIn(b'The method is not allowed', rv.get_data())
+
+    def test_hand_get_trump_returns_correct_trump_with_empty_trump(self):
+        self.data["trump"] = ""
+        self.add_return_value_to_engine_function("get_trump", self.trump)
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assert_engine_function_called_with("get_trump")
+        self.assertIn("trump", params)
+        self.assertEqual(params["trump"], self.trump)
+
+    def test_hand_get_trump_returns_correct_trump_with_chosen_trump(self):
+        self.data["trump"] = self.trump
+        self.add_return_value_to_engine_function("submit_trump_for_player", True)
+        self.add_return_value_to_engine_function("get_trump", self.trump)
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assert_engine_function_called_with("submit_trump_for_player", self.username, self.trump)
+        self.assert_engine_function_called_with("get_trump")
+        self.assertIn("trump", params)
+        self.assertEqual(params["trump"], self.trump)
 
 
 class PlaySmearHandGetPlayingInfo(PlaySmearTest):

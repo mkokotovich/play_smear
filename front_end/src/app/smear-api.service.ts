@@ -11,9 +11,14 @@ import { BidInfo } from './model/bid-info';
 import { Card } from './model/card';
 import { GameId } from './model/game-id';
 import { GameCreateInput } from './model/game-create-input';
+import { GameAndHand } from './model/game-and-hand';
 import { GameAndUser } from './model/game-and-user';
 import { GameStartStatusInput } from './model/game-start-status-input';
 import { GameStartStatus } from './model/game-start-status';
+import { GetTrump } from './model/get-trump';
+import { HandInfo } from './model/hand-info';
+import { PlayingInfo } from './model/playing-info';
+import { Trump } from './model/trump';
 
 @Injectable()
 export class SmearApiService {
@@ -27,6 +32,9 @@ export class SmearApiService {
     private handGetBidInfoUrl = this.baseUrl + "hand/getbidinfo/";
     private handSubmitBidUrl = this.baseUrl + "hand/submitbid/";
     private handGetHighBidUrl = this.baseUrl + "hand/gethighbid/";
+    private handGetPlayingInfoUrl = this.baseUrl + "hand/getplayinginfo/";
+    private handGetTrumpUrl = this.baseUrl + "hand/gettrump/";
+    private handSubmitCardToPlayUrl = this.baseUrl + "hand/submitcard/";
 
     constructor(private http: Http) { }
 
@@ -58,7 +66,7 @@ export class SmearApiService {
                         .catch(this.handleError);
     }
 
-    handDeal(data: GameAndUser): Observable<Array<Card>> {
+    handDeal(data: GameAndUser): Observable<HandInfo> {
         let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
@@ -85,11 +93,38 @@ export class SmearApiService {
                         .catch(this.handleError);
     }
 
-    handGetHighBid(data: GameId): Observable<Bid> {
+    handGetHighBid(data: GameAndHand): Observable<Bid> {
         let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
         return this.http.post(this.handGetHighBidUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
+    }
+
+    handGetTrump(data: GetTrump): Observable<Trump> {
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.handGetTrumpUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
+    }
+
+    handGetPlayingInfo(data: GameAndUser): Observable<PlayingInfo> {
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.handGetPlayingInfoUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
+    }
+
+    handSubmitCardToPlay(data: Card): Observable<any> {
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.handSubmitCardToPlayUrl, data, options)
                         .map(this.extractData)
                         .catch(this.handleError);
     }

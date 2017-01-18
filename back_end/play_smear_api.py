@@ -174,12 +174,14 @@ def create_game():
     data["game_id"] = game_id
     return generate_return_string(data)
 
+
 # Receive the deal for the next hand
 # Input (json data from post):
 #  game_id  - string - ID of game we're playing
 #  username - string - username of player
 # Return (json data):
 #  cards    - array of cards - player "username"s hand
+#  hand_id  - string         - ID of the hand we're playing
 @app.route("/api/hand/deal/", methods=["POST"])
 def get_next_deal():
     global g_engines
@@ -196,9 +198,12 @@ def get_next_deal():
 
     # Perform game-related logic
     cards = g_engines[game_id].get_hand_for_player(username) 
+    hand_id = g_engines[game_id].get_hand_id() 
 
     # Return result, cards list should be at the root of data
-    data = cards
+    data = {}
+    data["cards"] = cards
+    data["hand_id"] = hand_id
     return generate_return_string(data)
 
 
@@ -274,6 +279,7 @@ def submit_bid():
 # Find out who the high bidder is, and what the bid is (not including trump, though)
 # Input (json data from post):
 #  game_id  - string - ID of game we're playing
+#  hand_id  - string - ID of hand we're playing
 # Return (json data):
 #  username - string - username of player with the high bid
 #  bid      - int    - the high bid
@@ -283,19 +289,58 @@ def get_high_bid():
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
+    hand_id = get_value_from_params(params, "hand_id")
 
     # Check input
     if game_id not in g_engines:
         return generate_error(4, "Could not find game {}".format(game_id))
 
     # Perform game-related logic
-    high_bid, username = g_engines[game_id].get_high_bid() 
+    high_bid, username = g_engines[game_id].get_high_bid(hand_id) 
 
     # Return the high bid
     data = {}
     data["game_id"] = game_id
     data["username"] = username
     data["bid"] = high_bid
+    return generate_return_string(data)
+
+
+# Submit what trump your bid is in
+# Input (json data from post):
+#  game_id  - string - ID of game we're playing
+#  username - string - username of player
+#  trump    - string - suit that username picks to be trump. May be empty if just querying for trump
+# Return (json data):
+#  trump    - string - suit that was picked to be trump
+@app.route("/api/hand/gettrump/", methods=["POST"])
+def submit_and_get_trump():
+    global g_engines
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    username = get_value_from_params(params, "username")
+    input_trump = get_value_from_params(params, "trump")
+    query_only = False
+
+    # Check input
+    if game_id not in g_engines:
+        return generate_error(4, "Could not find game {}".format(game_id))
+    if username not in g_engines[game_id].get_player_names():
+        return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
+    if input_trump == None or len(input_trump) == 0:
+        query_only = True
+
+    # Perform game-related logic
+    if not query_only:
+        valid_trump = g_engines[game_id].submit_trump_for_player(username, input_trump) 
+        if not valid_trump:
+            return generate_error(9, "Invalid trump selected: {}".format(input_trump))
+    trump = g_engines[game_id].get_trump() 
+
+    # Return the high bid
+    data = {}
+    data["trump"] = trump
     return generate_return_string(data)
 
 

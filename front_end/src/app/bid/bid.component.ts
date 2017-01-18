@@ -10,14 +10,18 @@ import { HandService } from '../hand.service';
 })
 export class BidComponent implements OnInit {
     private bid: number;
+    private trump: string;
 
     constructor(private handService: HandService) { }
 
     submit_bid() {
         console.log("bid submitted: " + this.bid);
         this.handService.declareBid(this.bid);
-        this.handService.allowSelections(true);
-        this.handService.setGameStatus("Waiting for cards to be played");
+    }
+
+    submit_trump() {
+        console.log("trump submitted: " + this.trump);
+        this.handService.submitTrump(this.trump);
     }
 
     ngOnInit() {

@@ -3,10 +3,19 @@
 </div>
 <div>
     <p> {{ handService.getBidMessage() }} </p>
-    <input [(ngModel)]="bid" placeholder="0">
-    <button type="button" class="btn btn-default"
-        [disabled]="!handService.allowBid"
-        (click)="submit_bid()">
-        Bid
-    </button>
+    <div *ngIf="handService.showBidInput == true">
+        <input [(ngModel)]="bid" placeholder="0">
+        <button type="button" class="btn btn-default"
+                              [disabled]="!handService.allowBid"
+                              (click)="submit_bid()">
+            Bid
+        </button>
+    </div>
+    <div *ngIf="handService.showTrumpInput == true">
+        <input [(ngModel)]="trump" placeholder="Enter your trump">
+        <button type="button" class="btn btn-default"
+                              (click)="submit_trump()">
+            Submit trump
+        </button>
+    </div>
 </div>
