@@ -29,6 +29,10 @@ export class HandService {
 
     setGameInfo(gameAndUser: GameAndUser): void {
         this.gameAndUser = gameAndUser;
+        this.allowSelection = false;
+        this.bidding = true;
+        this.allowBid = false;
+        this.handMessage = "Waiting for cards...";
     }
 
 

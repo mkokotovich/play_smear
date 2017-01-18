@@ -17,14 +17,15 @@ export class GameService {
     constructor(private handService: HandService) { }
 
     manageGame() {
-        this.handService.setGameInfo(this.gameAndUser);
         this.handService.startNewHand();
     }
 
+    //Also reset all globals
     setGameInfo(gameId: string, username: string):void {
         this.gameId = new GameId(gameId);
         this.gameAndUser.game_id = gameId;
         this.gameAndUser.username = username;
+        this.handService.setGameInfo(this.gameAndUser);
     }
 
     setPlayers(numPlayers: number, playerList: string[]):void {

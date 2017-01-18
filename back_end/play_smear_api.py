@@ -25,6 +25,7 @@ def generate_error(status_id, message, error_code=500):
 
 
 def generate_return_string(data=None):
+    app.logger.debug("Returning success with data: {}".format(str(data)))
     status = {}
     status["status_id"] = 0
     ret = {}
