@@ -253,7 +253,7 @@ class PlaySmearHandSubmitBid(PlaySmearTest):
         self.assertIn(b'The method is not allowed', rv.get_data())
 
     def test_hand_submit_bid_returns_success(self):
-        self.add_return_value_to_engine_function("submit_bid_for_player", None)
+        self.add_return_value_to_engine_function("submit_bid_for_player", True)
         params = self.post_data_and_return_data(self.url, self.data)
         self.assert_engine_function_called_with("submit_bid_for_player", self.username, self.bid)
 
@@ -285,6 +285,93 @@ class PlaySmearHandGetHighBid(PlaySmearTest):
         self.assertEqual(params["username"], self.high_bidder)
         self.assertIn("bid", params)
         self.assertEqual(params["bid"], self.high_bid)
+
+
+class PlaySmearHandGetPlayingInfo(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        self.url = "/api/hand/getplayinginfo/"
+        self.current_trick = [ 
+                { "suit":"Spades", "value": "2" },
+                { "suit":"Spades", "value": "Ace" }
+                ]
+        self.lead_suit = "Spades"
+        self.current_winning_card = { "suit": "Spades", "value": "Ace" }
+        self.playing_info = { 
+                "current_trick" : self.current_trick,
+                "current_winning_card": self.current_winning_card,
+                "lead_suit": self.lead_suit
+                }
+        self.data = { "game_id": self.game_id, "username": self.username }
+        self.create_default_mock_engine()
+
+    def tearDown(self):
+        pass
+
+    def test_hand_get_playing_info_get(self):
+        rv = self.app.get(self.url)
+        self.assertIn(b'The method is not allowed', rv.get_data())
+
+    def test_hand_get_playing_info_with_two_cards_in_trick(self):
+        self.add_return_value_to_engine_function("get_playing_info_for_player", self.playing_info)
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assert_engine_function_called_with("get_playing_info_for_player", self.username)
+        self.assertIn("current_trick", params)
+        self.assertEqual(params["current_trick"], self.current_trick)
+        self.assertIn("current_winning_card", params)
+        self.assertEqual(params["current_winning_card"], self.current_winning_card)
+        self.assertIn("lead_suit", params)
+        self.assertEqual(params["lead_suit"], self.lead_suit)
+
+    def test_hand_get_playing_info_when_no_cards_have_been_played(self):
+        empty_trick = []
+        empty_suit = ""
+        empty_winning_card = { "suit": "", "value": "" }
+        empty_playing_info = { 
+                "current_trick" : empty_trick,
+                "current_winning_card": empty_winning_card,
+                "lead_suit": empty_suit
+                }
+        self.add_return_value_to_engine_function("get_playing_info_for_player", empty_playing_info)
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assert_engine_function_called_with("get_playing_info_for_player", self.username)
+        self.assertIn("current_trick", params)
+        self.assertEqual(params["current_trick"], empty_trick)
+        self.assertIn("current_winning_card", params)
+        self.assertEqual(params["current_winning_card"], empty_winning_card)
+        self.assertIn("lead_suit", params)
+        self.assertEqual(params["lead_suit"], empty_suit)
+
+class PlaySmearHandSubmitCardToPlay(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        self.url = "/api/hand/submitcard/"
+        self.card_to_play = { "suit": "Spades", "value": "Ace" }
+        self.data = { "game_id": self.game_id, "username": self.username, "card_to_play": self.card_to_play }
+        self.create_default_mock_engine()
+
+    def tearDown(self):
+        pass
+
+    def test_hand_submit_card_to_play_get(self):
+        rv = self.app.get(self.url)
+        self.assertIn(b'The method is not allowed', rv.get_data())
+
+    def test_hand_submit_card_to_play_returns_success(self):
+        self.add_return_value_to_engine_function("submit_card_to_play_for_player", True)
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assert_engine_function_called_with("submit_card_to_play_for_player", self.username, self.card_to_play)
+
+    def test_hand_submit_card_to_play_with_invalid_card(self):
+        invalid_card_to_play = { "suite": "Spades", "number": "Ace" }
+        invalid_data = { "game_id": self.game_id, "username": self.username, "card_to_play": invalid_card_to_play }
+        status = self.post_data_and_return_status(self.url, invalid_data)
+        self.assertIn("status_id", status)
+        self.assertNotEquals(status["status_id"], 0)
+        self.assertIn("message", status)
+        self.assertIn("Improperly formatted card", status["message"])
 
 
 if __name__ == '__main__':

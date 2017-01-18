@@ -263,7 +263,9 @@ def submit_bid():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
     # Perform game-related logic
-    g_engines[game_id].submit_bid_for_player(username, bid) 
+    valid_bid = g_engines[game_id].submit_bid_for_player(username, bid) 
+    if not valid_bid:
+        return generate_error(6, "Invalid bid ({}) for {}, unable to submit bid".format(bid, username))
 
     # Return success
     return generate_return_string()
@@ -295,3 +297,69 @@ def get_high_bid():
     data["username"] = username
     data["bid"] = high_bid
     return generate_return_string(data)
+
+
+# Retrieve the information needed to play the next card
+# Input (json data from post):
+#  game_id  - string - ID of game we're playing
+#  username - string - username of player
+# Return (json data):
+#  current_trick        - list of cards - Cards that have been played so far, in order of play
+#  current_winning_card - card          - The card that is currently winning the trick
+#  lead_suit            - string        - The suit of the first card played
+@app.route("/api/hand/getplayinginfo/", methods=["POST"])
+def get_playing_info():
+    global g_engines
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    username = get_value_from_params(params, "username")
+
+    # Check input
+    if game_id not in g_engines:
+        return generate_error(4, "Could not find game {}".format(game_id))
+    if username not in g_engines[game_id].get_player_names():
+        return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
+
+
+    # Perform game-related logic
+    playing_info = g_engines[game_id].get_playing_info_for_player(username) 
+
+    # Return the playing_info
+    data = playing_info
+    return generate_return_string(data)
+
+
+# Choose which card to play
+# Input (json data from post):
+#  game_id  - string - ID of game we're playing
+#  username - string - username of player
+#  card - card - Card to play
+# Return (json data):
+#  current_trick        - list of cards - Cards that have been played so far, in order of play
+#  current_winning_card - card          - The card that is currently winning the trick
+#  lead_suit            - string        - The suit of the first card played
+@app.route("/api/hand/submitcard/", methods=["POST"])
+def submit_card_to_play():
+    global g_engines
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    username = get_value_from_params(params, "username")
+    card = get_value_from_params(params, "card_to_play")
+
+    # Check input
+    if game_id not in g_engines:
+        return generate_error(4, "Could not find game {}".format(game_id))
+    if username not in g_engines[game_id].get_player_names():
+        return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
+    if len(card.keys()) != 2 or "suit" not in card.keys() or "value" not in card.keys():
+        return generate_error(7, "Improperly formatted card: {}".format(str(card)))
+
+    # Perform game-related logic
+    valid_card = g_engines[game_id].submit_card_to_play_for_player(username, card) 
+    if not valid_card:
+        return generate_error(8, "Unable to play {} of {}, please pick another card".format(card["value"], card["suit"]))
+
+    # Return success
+    return generate_return_string()
