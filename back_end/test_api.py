@@ -279,10 +279,12 @@ class PlaySmearHandGetHighBid(PlaySmearTest):
         self.add_return_value_to_engine_function("get_high_bid", (self.high_bid, self.high_bidder))
         params = self.post_data_and_return_data(self.url, self.data)
         self.assert_engine_function_called_with("get_high_bid")
-        self.assertIn("high_bid", params)
-        self.assertEqual(params["high_bid"], self.high_bid)
-        self.assertIn("high_bidder", params)
-        self.assertEqual(params["high_bidder"], self.high_bidder)
+        self.assertIn("game_id", params)
+        self.assertEqual(params["game_id"], self.game_id)
+        self.assertIn("username", params)
+        self.assertEqual(params["username"], self.high_bidder)
+        self.assertIn("bid", params)
+        self.assertEqual(params["bid"], self.high_bid)
 
 
 if __name__ == '__main__':

@@ -6,6 +6,7 @@ import { Observable } from 'rxjs/Rx';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 
+import { Bid } from './model/bid';
 import { BidInfo } from './model/bid-info';
 import { Card } from './model/card';
 import { GameId } from './model/game-id';
@@ -24,6 +25,8 @@ export class SmearApiService {
     private gameStartStatusUrl = this.baseUrl + "game/startstatus/";
     private handDealUrl = this.baseUrl + "hand/deal/";
     private handGetBidInfoUrl = this.baseUrl + "hand/getbidinfo/";
+    private handSubmitBidUrl = this.baseUrl + "hand/submitbid/";
+    private handGetHighBidUrl = this.baseUrl + "hand/gethighbid/";
 
     constructor(private http: Http) { }
 
@@ -69,6 +72,24 @@ export class SmearApiService {
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
         return this.http.post(this.handGetBidInfoUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
+    }
+
+    handSubmitBid(data: Bid): Observable<any> {
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.handSubmitBidUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
+    }
+
+    handGetHighBid(data: GameId): Observable<Bid> {
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.handGetHighBidUrl, data, options)
                         .map(this.extractData)
                         .catch(this.handleError);
     }

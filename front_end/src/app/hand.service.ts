@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 
-import { SmearApiService } from './smear-api.service';
-import { GameAndUser } from './model/game-and-user';
-import { Card } from './model/card';
+import { Bid} from './model/bid';
 import { BidInfo } from './model/bid-info';
+import { Card } from './model/card';
+import { GameAndUser } from './model/game-and-user';
+import { GameId } from './model/game-id';
+import { SmearApiService } from './smear-api.service';
 
 @Injectable()
 export class HandService {
@@ -30,9 +32,25 @@ export class HandService {
     }
 
 
-    declareBid(bid: number): void {
-        //this.smearApiService.sendBid(bid).then(cards => this.hand = cards);
+    declareBid(bidNum: number): void {
+        let bid = new Bid(this.gameAndUser.game_id, this.gameAndUser.username, bidNum);
+        this.setGameStatus("Submitting bid");
+        this.smearApiService.handSubmitBid(bid)
+                            .subscribe( res => this.bidSubmitted(),
+                                        err => this.handleHandError(err, "Unable to submit bid"));
         this.bidding = false;
+    }
+
+    bidSubmitted(): void {
+        this.setGameStatus("Bid submitted successfully. Waiting to discover the high bidder");
+        let gameId = new GameId(this.gameAndUser.game_id);
+        this.smearApiService.handGetHighBid(gameId)
+                            .subscribe( bid => this.highBidReceived(bid),
+                                        err => this.handleHandError(err, "Unable to get the high bidder"));
+    }
+
+    highBidReceived(highBid: Bid): void {
+        this.setGameStatus("High bid received: " + highBid.username + " bid: " + highBid.bid);
     }
 
     isBidding(): boolean {

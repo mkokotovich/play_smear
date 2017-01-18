@@ -290,6 +290,7 @@ def get_high_bid():
 
     # Return the high bid
     data = {}
-    data["high_bid"] = high_bid
-    data["high_bidder"] = username
+    data["game_id"] = game_id
+    data["username"] = username
+    data["bid"] = high_bid
     return generate_return_string(data)
