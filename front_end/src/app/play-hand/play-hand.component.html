@@ -1,11 +1,13 @@
-<div *ngIf="handService.isCardSelected() == false">
-    Select a card to play
-</div>
-<div *ngIf="handService.isCardSelected() == true">
-    <button type="button" class="btn btn-default"
-        (click)="playSelectedCard()">
-    Play selected card
-    </button>
+<div *ngIf="handService.allowSelection">
+    <div *ngIf="handService.isCardSelected() == false">
+        Select a card to play
+    </div>
+    <div *ngIf="handService.isCardSelected() == true">
+        <button type="button" class="btn btn-default"
+                              (click)="playSelectedCard()">
+            Play selected card
+        </button>
+    </div>
 </div>
 <div>
     <app-hand>Loading cards</app-hand>
