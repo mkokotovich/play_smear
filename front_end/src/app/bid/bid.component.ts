@@ -10,7 +10,8 @@ import { HandService } from '../hand.service';
 })
 export class BidComponent implements OnInit {
     private bid: number;
-    private trump: string;
+    private selectedTrump: string;
+    private trumpChoices = [ "Spades", "Clubs", "Hearts", "Diamonds" ];
 
     constructor(private handService: HandService) { }
 
@@ -20,8 +21,8 @@ export class BidComponent implements OnInit {
     }
 
     submit_trump() {
-        console.log("trump submitted: " + this.trump);
-        this.handService.submitTrump(this.trump);
+        console.log("trump submitted: " + this.selectedTrump);
+        this.handService.submitTrump(this.selectedTrump);
     }
 
     ngOnInit() {

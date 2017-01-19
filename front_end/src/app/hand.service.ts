@@ -18,6 +18,7 @@ export class HandService {
     public showBidInput: boolean;
     public showTrumpInput: boolean;
     public allowBid: boolean;
+    public allowTrumpSelection: boolean;
     private cards: Card[];
     private selectedCard: Card;
     private allowSelection: boolean;
@@ -36,6 +37,7 @@ export class HandService {
         this.showBidInput = false;
         this.showTrumpInput = false;
         this.allowBid = false;
+        this.allowTrumpSelection = false;
         this.currentlyBidding = false;
         this.handMessage = "Waiting for cards...";
     }
@@ -46,6 +48,7 @@ export class HandService {
         this.showBidInput = false;
         this.showTrumpInput = false;
         this.allowBid = false;
+        this.allowTrumpSelection = false;
         this.currentlyBidding = true;
         this.handMessage = "Waiting for cards...";
     }
@@ -97,6 +100,7 @@ export class HandService {
     declareBid(bidNum: number): void {
         let bid = new Bid(this.gameAndUser.game_id, this.gameAndUser.username, bidNum);
         this.setGameStatus("Submitting bid");
+        this.setBidMessage("");
         this.smearApiService.handSubmitBid(bid)
                             .subscribe( res => this.bidSubmitted(),
                                         err => this.handleHandError(err, "Unable to submit bid"));
@@ -118,6 +122,7 @@ export class HandService {
             this.setGameStatus("Dealer was forced to take a two set");
         } else if (highBid.username == this.gameAndUser.username) {
             this.setGameStatus("You are the bidder, enter your choice for trump below");
+            this.allowTrumpSelection = true;
             this.showTrumpInput = true;
         } else {
             this.setGameStatus("Finding out what trump will be");
@@ -127,6 +132,7 @@ export class HandService {
 
     submitTrump(trump: string): void {
         this.setGameStatus("Submitting trump to be " + trump);
+        this.allowTrumpSelection = false;
         this.getOrSubmitTrump(trump);
     }
 

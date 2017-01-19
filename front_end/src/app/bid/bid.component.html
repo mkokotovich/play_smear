@@ -1,7 +1,4 @@
 <div>
-    <app-hand>Loading cards for placing bid</app-hand>
-</div>
-<div>
     <p> {{ handService.getBidMessage() }} </p>
     <div *ngIf="handService.showBidInput == true">
         <input [(ngModel)]="bid" placeholder="0">
@@ -12,10 +9,19 @@
         </button>
     </div>
     <div *ngIf="handService.showTrumpInput == true">
-        <input [(ngModel)]="trump" placeholder="Enter your trump">
+        <select [(ngModel)]="selectedTrump"
+                              [disabled]="!handService.allowTrumpSelection">
+            <option *ngFor="let trump of trumpChoices" value={{trump}}>
+                {{trump}}
+            </option>
+        </select>
         <button type="button" class="btn btn-default"
+                              [disabled]="selectedTrump == undefined || !handService.allowTrumpSelection"
                               (click)="submit_trump()">
             Submit trump
         </button>
     </div>
+</div>
+<div>
+    <app-hand>Loading cards for placing bid</app-hand>
 </div>
