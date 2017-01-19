@@ -6,6 +6,7 @@ import { Card } from './model/card';
 import { GameAndHand } from './model/game-and-hand';
 import { GameAndUser } from './model/game-and-user';
 import { GameId } from './model/game-id';
+import { GameUserCard } from './model/game-user-card';
 import { GetTrump } from './model/get-trump';
 import { HandInfo } from './model/hand-info';
 import { PlayingInfo } from './model/playing-info';
@@ -140,7 +141,7 @@ export class HandService {
         let getTrump = new GetTrump(this.gameAndUser.game_id, this.gameAndUser.username, trump);
         this.smearApiService.handGetTrump(getTrump)
                             .subscribe( trump => this.trumpReceived(trump),
-                                        err => this.handleHandError(err, "Unable to get the high bidder"));
+                                        err => this.handleHandError(err, "Unable to get or submit Trump"));
     }
 
     trumpReceived(trump: Trump): void {
@@ -161,6 +162,26 @@ export class HandService {
         this.allowSelections(true);
         this.playingInfo = playingInfo;
         this.setGameStatus("Trump is " + this.trump + ", pick a card to play");
+    }
+
+    submitCardToPlay(cardToPlay: Card): void {
+        this.setGameStatus("Submitting card");
+        this.allowSelections(false);
+        this.unSelectCard();
+        this.deleteCard(cardToPlay);
+        let gameUserCard = new GameUserCard(this.gameAndUser.game_id, this.gameAndUser.username, cardToPlay);
+        this.smearApiService.handSubmitCardToPlay(gameUserCard)
+                            .subscribe( res => this.cardSubmitted(),
+                                        err => this.handleHandError(err, "Unable to submit card to play"));
+    }
+
+    cardSubmitted(): void {
+        this.setGameStatus("Card submitted successfully");
+        // Get trick results
+        //let gameAndHand = new GameAndHand(this.gameAndUser.game_id, this.handId);
+        //this.smearApiService.handGetHighBid(gameAndHand)
+                            //.subscribe( bid => this.highBidReceived(bid),
+                                        //err => this.handleHandError(err, "Unable to get the high bidder"));
     }
 
     handleHandError(err: any, message: string) {
@@ -189,6 +210,11 @@ export class HandService {
     unSelectCard():void {
         this.selectedCard = undefined;
     }
+
+    deleteCard(card:Card) {
+        this.cards.splice(this.cards.indexOf(card), 1);
+    }
+
     allowSelections(selections: boolean) {
         this.allowSelection = selections;
     }

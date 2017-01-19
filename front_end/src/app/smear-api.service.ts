@@ -15,6 +15,7 @@ import { GameAndHand } from './model/game-and-hand';
 import { GameAndUser } from './model/game-and-user';
 import { GameStartStatusInput } from './model/game-start-status-input';
 import { GameStartStatus } from './model/game-start-status';
+import { GameUserCard } from './model/game-user-card';
 import { GetTrump } from './model/get-trump';
 import { HandInfo } from './model/hand-info';
 import { PlayingInfo } from './model/playing-info';
@@ -120,7 +121,7 @@ export class SmearApiService {
                         .catch(this.handleError);
     }
 
-    handSubmitCardToPlay(data: Card): Observable<any> {
+    handSubmitCardToPlay(data: GameUserCard): Observable<any> {
         let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
         let options = new RequestOptions({ headers: headers }); // Create a request option
 

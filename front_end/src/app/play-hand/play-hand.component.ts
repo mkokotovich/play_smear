@@ -14,12 +14,7 @@ export class PlayHandComponent implements OnInit {
 
     playSelectedCard() {
         console.log("play submitted: " + this.handService.getSelectedCard().value + " of " + this.handService.getSelectedCard().suit);
-        // Send card to server
-        // smearApiService.playSelectedCard(...);
-        // Remove card from hand
-        // Unselect, and reset for next card
-        this.handService.unSelectCard();
-        this.handService.allowSelections(true);
+        this.handService.submitCardToPlay(this.handService.getSelectedCard());
     }
 
     ngOnInit() {
