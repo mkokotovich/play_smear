@@ -331,14 +331,14 @@ class PlaySmearHandGetPlayingInfo(PlaySmearTest):
     def setUp(self):
         PlaySmearTest.setUp(self)
         self.url = "/api/hand/getplayinginfo/"
-        self.current_trick = [ 
-                { "suit":"Spades", "value": "2" },
-                { "suit":"Spades", "value": "Ace" }
+        self.cards_played = [ 
+                { "username": "player1", "card": { "suit":"Spades", "value": "2" }},
+                { "username": "player2", "card": { "suit":"Spades", "value": "Ace" }}
                 ]
         self.lead_suit = "Spades"
         self.current_winning_card = { "suit": "Spades", "value": "Ace" }
         self.playing_info = { 
-                "current_trick" : self.current_trick,
+                "cards_played" : self.cards_played,
                 "current_winning_card": self.current_winning_card,
                 "lead_suit": self.lead_suit
                 }
@@ -356,8 +356,8 @@ class PlaySmearHandGetPlayingInfo(PlaySmearTest):
         self.add_return_value_to_engine_function("get_playing_info_for_player", self.playing_info)
         params = self.post_data_and_return_data(self.url, self.data)
         self.assert_engine_function_called_with("get_playing_info_for_player", self.username)
-        self.assertIn("current_trick", params)
-        self.assertEqual(params["current_trick"], self.current_trick)
+        self.assertIn("cards_played", params)
+        self.assertEqual(params["cards_played"], self.cards_played)
         self.assertIn("current_winning_card", params)
         self.assertEqual(params["current_winning_card"], self.current_winning_card)
         self.assertIn("lead_suit", params)
@@ -368,19 +368,20 @@ class PlaySmearHandGetPlayingInfo(PlaySmearTest):
         empty_suit = ""
         empty_winning_card = { "suit": "", "value": "" }
         empty_playing_info = { 
-                "current_trick" : empty_trick,
+                "cards_played" : empty_trick,
                 "current_winning_card": empty_winning_card,
                 "lead_suit": empty_suit
                 }
         self.add_return_value_to_engine_function("get_playing_info_for_player", empty_playing_info)
         params = self.post_data_and_return_data(self.url, self.data)
         self.assert_engine_function_called_with("get_playing_info_for_player", self.username)
-        self.assertIn("current_trick", params)
-        self.assertEqual(params["current_trick"], empty_trick)
+        self.assertIn("cards_played", params)
+        self.assertEqual(params["cards_played"], empty_trick)
         self.assertIn("current_winning_card", params)
         self.assertEqual(params["current_winning_card"], empty_winning_card)
         self.assertIn("lead_suit", params)
         self.assertEqual(params["lead_suit"], empty_suit)
+
 
 class PlaySmearHandSubmitCardToPlay(PlaySmearTest):
 
@@ -411,6 +412,35 @@ class PlaySmearHandSubmitCardToPlay(PlaySmearTest):
         self.assertNotEquals(status["status_id"], 0)
         self.assertIn("message", status)
         self.assertIn("Improperly formatted card", status["message"])
+
+
+class PlaySmearHandGetTrickResults(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        self.url = "/api/hand/gettrickresults/"
+        self.trick_results = { 
+                "winner": self.username,
+                "cards_played": [
+                    { "username": self.username, "card": {"suit": "Spades", "value": "Ace"}},
+                    { "username": "player1", "card": {"suit": "Hearts", "value": "3"}},
+                    { "username": "player2", "card": {"suit": "Spades", "value": "Jack"}},
+                    ]
+                }
+        self.data = { "game_id": self.game_id, "username": self.username }
+        self.create_default_mock_engine()
+
+    def tearDown(self):
+        pass
+
+    def test_hand_submit_card_to_play_get(self):
+        rv = self.app.get(self.url)
+        self.assertIn(b'The method is not allowed', rv.get_data())
+
+    def test_hand_submit_card_to_play_returns_success(self):
+        self.add_return_value_to_engine_function("get_trick_results_for_player", self.trick_results)
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assert_engine_function_called_with("get_trick_results_for_player", self.username)
 
 
 if __name__ == '__main__':

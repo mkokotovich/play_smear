@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Bid} from './model/bid';
 import { BidInfo } from './model/bid-info';
 import { Card } from './model/card';
+import { CardPlayed } from './model/card-played';
 import { GameAndHand } from './model/game-and-hand';
 import { GameAndUser } from './model/game-and-user';
 import { GameId } from './model/game-id';
@@ -11,6 +12,7 @@ import { GetTrump } from './model/get-trump';
 import { HandInfo } from './model/hand-info';
 import { PlayingInfo } from './model/playing-info';
 import { SmearApiService } from './smear-api.service';
+import { TrickResults } from './model/trick-results';
 import { Trump } from './model/trump';
 
 @Injectable()
@@ -27,10 +29,13 @@ export class HandService {
     private gameAndHand: GameAndHand;
     private gameAndUser: GameAndUser;
     private handMessage: string;
+    public highBid = new Bid("", "", 0);
+    private bidder: string;
     private bidMessage: string;
     private bidInfo = new BidInfo(false, 0, "");
-    private playingInfo: PlayingInfo;
+    public playingInfo = new PlayingInfo(new Array<CardPlayed>(), new Card("", ""), "");
     private handId: string;
+    public cardsPlayed = new Array<CardPlayed>();
     private trump: string;
 
     constructor(private smearApiService :SmearApiService) {
@@ -40,6 +45,7 @@ export class HandService {
         this.allowBid = false;
         this.allowTrumpSelection = false;
         this.currentlyBidding = false;
+        this.highBid = new Bid("", "", 0);
         this.handMessage = "Waiting for cards...";
     }
 
@@ -56,9 +62,17 @@ export class HandService {
 
     startNewHand(): void {
         this.setGameStatus("Waiting for cards to be dealt");
-        this.getNewHand();
+        this.allowSelection = false;
+        this.showBidInput = false;
+        this.showTrumpInput = false;
         this.allowBid = false;
+        this.allowTrumpSelection = false;
         this.currentlyBidding = true;
+        this.highBid = new Bid("", "", 0);
+        this.cardsPlayed = new Array<CardPlayed>();
+        this.playingInfo = new PlayingInfo(new Array<CardPlayed>(), new Card("", ""), "");
+
+        this.getNewHand();
     }
 
     getNewHand(): void {
@@ -117,6 +131,7 @@ export class HandService {
     }
 
     highBidReceived(highBid: Bid): void {
+        this.highBid = highBid;
         this.setGameStatus("High bid received: " + highBid.username + " bid: " + highBid.bid);
         if (highBid.bid == 0) {
             // Handle the case where bid == 0 - a forced two set
@@ -160,6 +175,7 @@ export class HandService {
 
     receivePlayingInfo(playingInfo: PlayingInfo) {
         this.allowSelections(true);
+        this.cardsPlayed = playingInfo.cards_played;
         this.playingInfo = playingInfo;
         this.setGameStatus("Trump is " + this.trump + ", pick a card to play");
     }
@@ -176,12 +192,16 @@ export class HandService {
     }
 
     cardSubmitted(): void {
-        this.setGameStatus("Card submitted successfully");
+        this.setGameStatus("Card submitted successfully, waiting for results of trick");
         // Get trick results
-        //let gameAndHand = new GameAndHand(this.gameAndUser.game_id, this.handId);
-        //this.smearApiService.handGetHighBid(gameAndHand)
-                            //.subscribe( bid => this.highBidReceived(bid),
-                                        //err => this.handleHandError(err, "Unable to get the high bidder"));
+        this.smearApiService.handGetTrickResults(this.gameAndUser)
+                            .subscribe( trickResults => this.trickResultsReceived(trickResults),
+                                        err => this.handleHandError(err, "Unable to get the results of the trick"));
+    }
+
+    trickResultsReceived(trickResults: TrickResults) {
+        this.setGameStatus("Trick is finished, " + trickResults.winner + " took the trick");
+        this.cardsPlayed = trickResults.cards_played;
     }
 
     handleHandError(err: any, message: string) {

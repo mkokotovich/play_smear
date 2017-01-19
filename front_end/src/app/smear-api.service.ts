@@ -19,6 +19,7 @@ import { GameUserCard } from './model/game-user-card';
 import { GetTrump } from './model/get-trump';
 import { HandInfo } from './model/hand-info';
 import { PlayingInfo } from './model/playing-info';
+import { TrickResults } from './model/trick-results';
 import { Trump } from './model/trump';
 
 @Injectable()
@@ -34,6 +35,7 @@ export class SmearApiService {
     private handSubmitBidUrl = this.baseUrl + "hand/submitbid/";
     private handGetHighBidUrl = this.baseUrl + "hand/gethighbid/";
     private handGetPlayingInfoUrl = this.baseUrl + "hand/getplayinginfo/";
+    private handGetTrickResultsUrl = this.baseUrl + "hand/gettrickresults/";
     private handGetTrumpUrl = this.baseUrl + "hand/gettrump/";
     private handSubmitCardToPlayUrl = this.baseUrl + "hand/submitcard/";
 
@@ -126,6 +128,15 @@ export class SmearApiService {
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
         return this.http.post(this.handSubmitCardToPlayUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
+    }
+
+    handGetTrickResults(data: GameAndUser): Observable<TrickResults> {
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.handGetTrickResultsUrl, data, options)
                         .map(this.extractData)
                         .catch(this.handleError);
     }

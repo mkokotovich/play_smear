@@ -349,7 +349,7 @@ def submit_and_get_trump():
 #  game_id  - string - ID of game we're playing
 #  username - string - username of player
 # Return (json data):
-#  current_trick        - list of cards - Cards that have been played so far, in order of play
+#  cards_played         - list of card_played - Cards that have been played so far, with username
 #  current_winning_card - card          - The card that is currently winning the trick
 #  lead_suit            - string        - The suit of the first card played
 @app.route("/api/hand/getplayinginfo/", methods=["POST"])
@@ -408,3 +408,35 @@ def submit_card_to_play():
 
     # Return success
     return generate_return_string()
+
+
+# Retrieve the results of the previous trick
+# Input (json data from post):
+#  game_id  - string - ID of game we're playing
+#  username - string - username of player
+# Return (json data):
+#  winner        - string  - The winner of the trick
+#  cards_played  - list of card_played objects  -  a card_played object is a username and a card
+@app.route("/api/hand/gettrickresults/", methods=["POST"])
+def get_trick_results():
+    global g_engines
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    username = get_value_from_params(params, "username")
+
+    # Check input
+    if game_id not in g_engines:
+        return generate_error(4, "Could not find game {}".format(game_id))
+    if username not in g_engines[game_id].get_player_names():
+        return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
+
+
+    # Perform game-related logic
+    trick_results = g_engines[game_id].get_trick_results_for_player(username) 
+
+    # Return the playing_info
+    data = trick_results
+    return generate_return_string(data)
+
+

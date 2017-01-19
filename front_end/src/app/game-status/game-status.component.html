@@ -2,15 +2,18 @@
     <div class="row">
         <div class="col-md-2"
              *ngFor="let player of gameService.getPlayers()">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="card-title"> {{ player.name }} </h4>
-                </div>
-                <div class="panel-body">
+            <div class="card">
+                <h4 class="card-header card-title"> {{ player.name }} </h4>
+                <div class="card-block">
                     <p class="card-text">
-                        Score: <span class="label label-default"> {{ player.score }} </span>
+                        Score: {{ player.score }}
                     </p>
                 </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item" *ngIf="player.name == handService.highBid.username">
+                        Bidder, bid {{ handService.highBid.bid }}
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
