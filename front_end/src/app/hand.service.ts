@@ -37,6 +37,8 @@ export class HandService {
     private handId: string;
     public cardsPlayed = new Array<CardPlayed>();
     private trump: string;
+    public displayNextTrickButton: boolean;
+    public enableNextTrickButton: boolean;
 
     constructor(private smearApiService :SmearApiService) {
         this.allowSelection = false;
@@ -45,6 +47,8 @@ export class HandService {
         this.allowBid = false;
         this.allowTrumpSelection = false;
         this.currentlyBidding = false;
+        this.displayNextTrickButton = false;
+        this.enableNextTrickButton = false;
         this.highBid = new Bid("", "", 0);
         this.handMessage = "Waiting for cards...";
     }
@@ -68,6 +72,8 @@ export class HandService {
         this.allowBid = false;
         this.allowTrumpSelection = false;
         this.currentlyBidding = true;
+        this.displayNextTrickButton = false;
+        this.enableNextTrickButton = false;
         this.highBid = new Bid("", "", 0);
         this.cardsPlayed = new Array<CardPlayed>();
         this.playingInfo = new PlayingInfo(new Array<CardPlayed>(), new Card("", ""), "");
@@ -170,16 +176,22 @@ export class HandService {
     }
 
     getPlayingInfo(): void {
+        this.setGameStatus("Trump is " + this.trump + ", waiting for your turn");
         this.smearApiService.handGetPlayingInfo(this.gameAndUser)
                             .subscribe( playingInfo => this.receivePlayingInfo(playingInfo),
                                         err => this.handleHandError(err, "Unable to retrieve information needed for playing"));
     }
 
     receivePlayingInfo(playingInfo: PlayingInfo) {
+        this.displayNextTrickButton = false;
         this.allowSelections(true);
         this.cardsPlayed = playingInfo.cards_played;
         this.playingInfo = playingInfo;
-        this.setGameStatus("Trump is " + this.trump + ", pick a card to play");
+        if (playingInfo.lead_suit != "") {
+            this.setGameStatus("Trump is " + this.trump + ", " + playingInfo.lead_suit + " was lead");
+        } else {
+            this.setGameStatus("Trump is " + this.trump + ", it is your lead");
+        }
     }
 
     submitCardToPlay(cardToPlay: Card): void {
@@ -204,6 +216,14 @@ export class HandService {
     trickResultsReceived(trickResults: TrickResults) {
         this.setGameStatus("Trick is finished, " + trickResults.winner + " took the trick");
         this.cardsPlayed = trickResults.cards_played;
+        this.displayNextTrickButton = true;
+        this.enableNextTrickButton = true;
+    }
+
+    startNextTrick() {
+        this.enableNextTrickButton = false;
+        this.cardsPlayed = new Array<CardPlayed>();
+        this.getPlayingInfo();
     }
 
     handleHandError(err: any, message: string) {

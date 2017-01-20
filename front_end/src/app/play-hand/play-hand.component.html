@@ -9,6 +9,13 @@
         </button>
     </div>
 </div>
+<div *ngIf="handService.displayNextTrickButton == true">
+    <button type="button" class="btn btn-default"
+                          [disabled]="!handService.enableNextTrickButton"
+                          (click)="handService.startNextTrick()">
+        Okay
+    </button>
+</div>
 <div>
     <app-hand>Loading cards</app-hand>
 </div>
