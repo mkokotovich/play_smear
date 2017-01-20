@@ -13,8 +13,8 @@
                     <li class="list-group-item" *ngIf="player.name == handService.highBid.username">
                         <b>Bidder</b>, bid {{ handService.highBid.bid }}
                     </li>
-                    <li class="list-group-item" *ngIf="player.name != handService.highBid.username">
-                        Bid unknown
+                    <li class="list-group-item" *ngIf="player.name != handService.highBid.username && handService.hasPlayerBid(player.name)">
+                        {{ handService.getBidForPlayer(player.name) }} 
                     </li>
                     <li class="list-group-item" *ngIf="handService.hasPlayerPlayedACard(player.name)">
                         Played {{ handService.getCardPlayedForPlayer(player.name) }}

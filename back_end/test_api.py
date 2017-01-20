@@ -229,7 +229,17 @@ class PlaySmearHandGetBidInfoTest(PlaySmearTest):
         bid_info = { 
                 'force_two': False,
                 'current_bid': 2,
-                'bidder': "user01"
+                'bidder': "user01",
+                'all_bids': [
+                    { 'game_id': self.game_id,
+                      'username': "user01",
+                      'bid': 2
+                    },
+                    { 'game_id': self.game_id,
+                      'username': "user02",
+                      'bid': 0
+                    }
+                    ]
                 }
         self.add_return_value_to_engine_function("get_bid_info_for_player", bid_info)
         params = self.post_data_and_return_data(self.url, self.data)
@@ -268,6 +278,25 @@ class PlaySmearHandGetHighBid(PlaySmearTest):
         self.url = "/api/hand/gethighbid/"
         self.high_bid = 4
         self.high_bidder = "bidder"
+        self.high_bid_info = { 
+                'force_two': False,
+                'current_bid': self.high_bid,
+                'bidder': self.high_bidder,
+                'all_bids': [
+                    { 'game_id': self.game_id,
+                      'username': "user01",
+                      'bid': 2
+                    },
+                    { 'game_id': self.game_id,
+                      'username': self.high_bidder,
+                      'bid': self.high_bid
+                    },
+                    { 'game_id': self.game_id,
+                      'username': "user02",
+                      'bid': 0
+                    }
+                    ]
+                }
         self.hand_id = 0
         self.data = { "game_id": self.game_id, "hand_id": self.hand_id }
         self.create_default_mock_engine()
@@ -280,15 +309,12 @@ class PlaySmearHandGetHighBid(PlaySmearTest):
         self.assertIn(b'The method is not allowed', rv.get_data())
 
     def test_hand_get_high_bid_returns_correct_high_bid_and_bidder(self):
-        self.add_return_value_to_engine_function("get_high_bid", (self.high_bid, self.high_bidder))
+        self.add_return_value_to_engine_function("get_high_bid", self.high_bid_info)
         params = self.post_data_and_return_data(self.url, self.data)
         self.assert_engine_function_called_with("get_high_bid", self.hand_id)
-        self.assertIn("game_id", params)
-        self.assertEqual(params["game_id"], self.game_id)
-        self.assertIn("username", params)
-        self.assertEqual(params["username"], self.high_bidder)
-        self.assertIn("bid", params)
-        self.assertEqual(params["bid"], self.high_bid)
+        for key, value in self.high_bid_info.items():
+            self.assertIn(key, params)
+            self.assertEquals(value, params[key])
 
 
 class PlaySmearHandGetTrump(PlaySmearTest):

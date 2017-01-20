@@ -30,9 +30,9 @@ export class HandService {
     private gameAndUser: GameAndUser;
     private handMessage: string;
     public highBid = new Bid("", "", 0);
+    public allBids = new Array<Bid>();
     private bidder: string;
     private bidMessage: string;
-    private bidInfo = new BidInfo(false, 0, "");
     public playingInfo = new PlayingInfo(new Array<CardPlayed>(), new Card("", ""), "");
     private handId: string;
     public cardsPlayed = new Array<CardPlayed>();
@@ -98,17 +98,17 @@ export class HandService {
     }
 
     receiveBidInfo(bidInfo: BidInfo) {
-        this.bidInfo = bidInfo;
+        this.allBids = bidInfo.all_bids;
         this.allowBid = true;
         this.setGameStatus("Enter your bid below");
-        if (this.bidInfo.current_bid < 2) {
-            if (this.bidInfo.force_two) {
+        if (bidInfo.current_bid < 2) {
+            if (bidInfo.force_two) {
                 this.setBidMessage("No one has bid yet. Since you are the dealer, if you pass you will take an automatic two set.");
             } else {
                 this.setBidMessage("No one has bid yet");
             }
         } else {
-            this.setBidMessage(this.bidInfo.bidder + " has the highest bid of " + this.bidInfo.current_bid);
+            this.setBidMessage(bidInfo.bidder + " has the highest bid of " + bidInfo.current_bid);
         }
     }
 
@@ -126,17 +126,19 @@ export class HandService {
         this.setGameStatus("Bid submitted successfully. Waiting to discover the high bidder");
         let gameAndHand = new GameAndHand(this.gameAndUser.game_id, this.handId);
         this.smearApiService.handGetHighBid(gameAndHand)
-                            .subscribe( bid => this.highBidReceived(bid),
+                            .subscribe( highBidInfo => this.highBidReceived(highBidInfo),
                                         err => this.handleHandError(err, "Unable to get the high bidder"));
     }
 
-    highBidReceived(highBid: Bid): void {
-        this.highBid = highBid;
-        this.setGameStatus("High bid received: " + highBid.username + " bid: " + highBid.bid);
-        if (highBid.bid == 0) {
+    highBidReceived(highBidInfo: BidInfo): void {
+        this.highBid.username = highBidInfo.bidder;
+        this.highBid.bid = highBidInfo.current_bid;
+        this.allBids = highBidInfo.all_bids;
+        this.setGameStatus("High bid received: " + this.highBid.username + " bid: " + this.highBid.bid);
+        if (this.highBid.bid == 0) {
             // Handle the case where bid == 0 - a forced two set
             this.setGameStatus("Dealer was forced to take a two set");
-        } else if (highBid.username == this.gameAndUser.username) {
+        } else if (this.highBid.username == this.gameAndUser.username) {
             this.setGameStatus("You are the bidder, enter your choice for trump below");
             this.allowTrumpSelection = true;
             this.showTrumpInput = true;
@@ -207,6 +209,30 @@ export class HandService {
     handleHandError(err: any, message: string) {
         this.gameStatusMessage = message + <string>err;
         console.log(err);
+    }
+
+    hasPlayerBid(player: string): boolean {
+        for (let bid of this.allBids) {
+            if (bid.username == player) {
+                return true;
+            }
+        }
+        // If a bid wasn't found
+        return false;
+    }
+
+    getBidForPlayer(player: string): string {
+        for (let bid of this.allBids) {
+            if (bid.username == player) {
+                if (bid.bid == 0) {
+                    return "passed";
+                } else {
+                    return "bid " + bid.bid;
+                }
+            }
+        }
+        // If a bid wasn't found
+        return "bid unknown";
     }
 
     hasPlayerPlayedACard(player: string): boolean {

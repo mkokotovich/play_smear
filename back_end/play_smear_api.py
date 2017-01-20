@@ -296,13 +296,10 @@ def get_high_bid():
         return generate_error(4, "Could not find game {}".format(game_id))
 
     # Perform game-related logic
-    high_bid, username = g_engines[game_id].get_high_bid(hand_id) 
+    high_bid_info = g_engines[game_id].get_high_bid(hand_id) 
 
     # Return the high bid
-    data = {}
-    data["game_id"] = game_id
-    data["username"] = username
-    data["bid"] = high_bid
+    data = high_bid_info
     return generate_return_string(data)
 
 
