@@ -209,6 +209,26 @@ export class HandService {
         console.log(err);
     }
 
+    hasPlayerPlayedACard(player: string): boolean {
+        for (let cp of this.cardsPlayed) {
+            if (cp.username == player) {
+                return true;
+            }
+        }
+        // If a card wasn't found
+        return false;
+    }
+
+    getCardPlayedForPlayer(player: string): string {
+        for (let cp of this.cardsPlayed) {
+            if (cp.username == player) {
+                return cp.card.value + " of " + cp.card.suit;
+            }
+        }
+        // If a card wasn't found
+        return "card not played";
+    }
+
     getCards(): Card[] {
         return this.cards;
     }
