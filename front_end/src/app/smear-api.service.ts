@@ -25,8 +25,8 @@ import { Trump } from './model/trump';
 @Injectable()
 export class SmearApiService {
     private initialCardsUrl = 'api/getinitial';
-    //private serverAddress = "localhost:5000";
-    private serverAddress = "192.168.86.200:5000";
+    private serverAddress = "localhost:5000";
+    //private serverAddress = "192.168.86.200:5000";
     private baseUrl = "http://" + this.serverAddress + '/api/';
     private gameCreateUrl = this.baseUrl + "game/create/";
     private gameJoinUrl = this.baseUrl + "game/join/";
