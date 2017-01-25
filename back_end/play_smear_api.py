@@ -437,3 +437,33 @@ def get_trick_results():
     return generate_return_string(data)
 
 
+# Retrieve the results of the previous hand
+# Input (json data from post):
+#  game_id  - string - ID of game we're playing
+#  hand_id  - string - ID of hand we want results for
+# Return (json data):
+#  high_winner  - string  - The winner of high
+#  low_winner   - string  - The winner of low
+#  jack_winner  - string  - The winner of jack
+#  jick_winner  - string  - The winner of jick
+#  game_winner  - string  - The winner of game
+@app.route("/api/hand/getresults/", methods=["POST"])
+def get_hand_results():
+    global g_engines
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    hand_id = get_value_from_params(params, "hand_id")
+
+    # Check input
+    if game_id not in g_engines:
+        return generate_error(4, "Could not find game {}".format(game_id))
+
+    # Perform game-related logic
+    hand_results = g_engines[game_id].get_hand_results(hand_id)
+
+    # Return the playing_info
+    data = hand_results
+    return generate_return_string(data)
+
+

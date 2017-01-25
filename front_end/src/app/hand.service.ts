@@ -10,6 +10,8 @@ import { GameId } from './model/game-id';
 import { GameUserCard } from './model/game-user-card';
 import { GetTrump } from './model/get-trump';
 import { HandInfo } from './model/hand-info';
+import { HandResults } from './model/hand-results';
+import { Player } from './model/player';
 import { PlayingInfo } from './model/playing-info';
 import { SmearApiService } from './smear-api.service';
 import { TrickResults } from './model/trick-results';
@@ -37,8 +39,11 @@ export class HandService {
     private handId: string;
     public cardsPlayed = new Array<CardPlayed>();
     private trump: string;
-    public displayNextTrickButton: boolean;
-    public enableNextTrickButton: boolean;
+    public displayTrickConfirmationButton: boolean;
+    public enableTrickConfirmationButton: boolean;
+    public showHandResults: boolean;
+    private handResults: HandResults;
+    private players: Array<Player>;
 
     constructor(private smearApiService :SmearApiService) {
         this.allowSelection = false;
@@ -47,8 +52,9 @@ export class HandService {
         this.allowBid = false;
         this.allowTrumpSelection = false;
         this.currentlyBidding = false;
-        this.displayNextTrickButton = false;
-        this.enableNextTrickButton = false;
+        this.displayTrickConfirmationButton = false;
+        this.enableTrickConfirmationButton = false;
+        this.showHandResults = false;
         this.highBid = new Bid("", "", 0);
         this.handMessage = "Waiting for cards...";
     }
@@ -64,6 +70,10 @@ export class HandService {
         this.handMessage = "Waiting for cards...";
     }
 
+    setPlayers(players: Array<Player>): void {
+        this.players = players;
+    }
+
     startNewHand(): void {
         this.setGameStatus("Waiting for cards to be dealt");
         this.allowSelection = false;
@@ -72,8 +82,8 @@ export class HandService {
         this.allowBid = false;
         this.allowTrumpSelection = false;
         this.currentlyBidding = true;
-        this.displayNextTrickButton = false;
-        this.enableNextTrickButton = false;
+        this.displayTrickConfirmationButton = false;
+        this.enableTrickConfirmationButton = false;
         this.highBid = new Bid("", "", 0);
         this.cardsPlayed = new Array<CardPlayed>();
         this.playingInfo = new PlayingInfo(new Array<CardPlayed>(), new Card("", ""), "");
@@ -183,7 +193,7 @@ export class HandService {
     }
 
     receivePlayingInfo(playingInfo: PlayingInfo) {
-        this.displayNextTrickButton = false;
+        this.displayTrickConfirmationButton = false;
         this.allowSelections(true);
         this.cardsPlayed = playingInfo.cards_played;
         this.playingInfo = playingInfo;
@@ -216,14 +226,67 @@ export class HandService {
     trickResultsReceived(trickResults: TrickResults) {
         this.setGameStatus("Trick is finished, " + trickResults.winner + " took the trick");
         this.cardsPlayed = trickResults.cards_played;
-        this.displayNextTrickButton = true;
-        this.enableNextTrickButton = true;
+        this.displayTrickConfirmationButton = true;
+        this.enableTrickConfirmationButton = true;
     }
 
     startNextTrick() {
-        this.enableNextTrickButton = false;
+        if (this.cards.length == 0) {
+            return this.getHandResults();
+        }
+        this.enableTrickConfirmationButton = false;
         this.cardsPlayed = new Array<CardPlayed>();
         this.getPlayingInfo();
+    }
+
+    getHandResults(): void {
+        this.setGameStatus("Retrieving results of hand");
+        let gameAndHand = new GameAndHand(this.gameAndUser.game_id, this.handId);
+        this.smearApiService.handGetResults(gameAndHand)
+                            .subscribe( handResults => this.receiveHandResults(handResults),
+                                        err => this.handleHandError(err, "Unable to retrieve results of hand"));
+    }
+
+    receiveHandResults(handResults: HandResults) {
+        this.handResults = handResults;
+        this.showHandResults = true;
+        this.displayTrickConfirmationButton = false;
+
+        // Update scores
+        for (let player of this.players) {
+            player.points = new Array<string>();
+
+            if (this.handResults.high_winner == player.name) {
+                player.addToScore(1)
+                player.points.push("High");
+            }
+            if (this.handResults.low_winner == player.name) {
+                player.addToScore(1)
+                player.points.push("Low");
+            }
+            if (this.handResults.jack_winner == player.name) {
+                player.addToScore(1)
+                player.points.push("Jack");
+            }
+            if (this.handResults.jick_winner == player.name) {
+                player.addToScore(1)
+                player.points.push("Jick");
+            }
+            if (this.handResults.game_winner == player.name) {
+                player.addToScore(1)
+                player.points.push("Game");
+            }
+        }
+
+    }
+
+    getPointsWon(player: string): Array<string> {
+        for (let p of this.players) {
+            if (p.name == player) {
+                return p.points;
+            }
+        }
+        return new Array<string>();
     }
 
     handleHandError(err: any, message: string) {

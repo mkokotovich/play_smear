@@ -18,6 +18,7 @@ import { GameStartStatus } from './model/game-start-status';
 import { GameUserCard } from './model/game-user-card';
 import { GetTrump } from './model/get-trump';
 import { HandInfo } from './model/hand-info';
+import { HandResults } from './model/hand-results';
 import { PlayingInfo } from './model/playing-info';
 import { TrickResults } from './model/trick-results';
 import { Trump } from './model/trump';
@@ -36,6 +37,7 @@ export class SmearApiService {
     private handSubmitBidUrl = this.baseUrl + "hand/submitbid/";
     private handGetHighBidUrl = this.baseUrl + "hand/gethighbid/";
     private handGetPlayingInfoUrl = this.baseUrl + "hand/getplayinginfo/";
+    private handGetResultsUrl = this.baseUrl + "hand/getresults/";
     private handGetTrickResultsUrl = this.baseUrl + "hand/gettrickresults/";
     private handGetTrumpUrl = this.baseUrl + "hand/gettrump/";
     private handSubmitCardToPlayUrl = this.baseUrl + "hand/submitcard/";
@@ -138,6 +140,15 @@ export class SmearApiService {
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
         return this.http.post(this.handGetTrickResultsUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
+    }
+
+    handGetResults(data: GameAndHand): Observable<HandResults> {
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.handGetResultsUrl, data, options)
                         .map(this.extractData)
                         .catch(this.handleError);
     }

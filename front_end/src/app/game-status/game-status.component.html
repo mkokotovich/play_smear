@@ -19,6 +19,12 @@
                     <li class="list-group-item" *ngIf="handService.hasPlayerPlayedACard(player.name)">
                         Played {{ handService.getCardPlayedForPlayer(player.name) }}
                     </li>
+                    <div *ngIf="handService.showHandResults">
+                        <li class="list-group-item"
+                            *ngFor="let point of handService.getPointsWon(player.name)">
+                            Won {{ point }}
+                        </li>
+                    </div>
                 </ul>
             </div>
         </div>

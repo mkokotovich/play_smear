@@ -469,5 +469,34 @@ class PlaySmearHandGetTrickResults(PlaySmearTest):
         self.assert_engine_function_called_with("get_trick_results_for_player", self.username)
 
 
+class PlaySmearHandGetResults(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        self.url = "/api/hand/getresults/"
+        self.hand_id = "hand1"
+        self.hand_results = { 
+                "high_winner": self.username,
+                "low_winner": self.username,
+                "jack_winner": self.username,
+                "jick_winner": self.username,
+                "game_winner": self.username,
+                }
+        self.data = { "game_id": self.game_id, "hand_id": self.hand_id }
+        self.create_default_mock_engine()
+
+    def tearDown(self):
+        pass
+
+    def test_hand_submit_card_to_play_get(self):
+        rv = self.app.get(self.url)
+        self.assertIn(b'The method is not allowed', rv.get_data())
+
+    def test_hand_submit_card_to_play_returns_success(self):
+        self.add_return_value_to_engine_function("get_hand_results", self.hand_results)
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assert_engine_function_called_with("get_hand_results", self.hand_id)
+
+
 if __name__ == '__main__':
     unittest.main()

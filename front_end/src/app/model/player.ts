@@ -2,6 +2,7 @@ export class Player {
     constructor(
         public name: string,
         public score: number,
+        public points: Array<string>,
         public isMe: boolean) {
     }
 

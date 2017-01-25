@@ -9,9 +9,9 @@
         </button>
     </div>
 </div>
-<div *ngIf="handService.displayNextTrickButton == true">
+<div *ngIf="handService.displayTrickConfirmationButton == true">
     <button type="button" class="btn btn-default"
-                          [disabled]="!handService.enableNextTrickButton"
+                          [disabled]="!handService.enableTrickConfirmationButton"
                           (click)="handService.startNextTrick()">
         Okay
     </button>
