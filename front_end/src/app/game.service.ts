@@ -32,7 +32,7 @@ export class GameService {
         this.numPlayers = numPlayers;
         this.players = new Array<Player>();
         for (var i = 0; i < this.numPlayers; i++) {
-            this.players.push(new Player(playerList[i], 0, this.username == playerList[i]));
+            this.players.push(new Player(playerList[i], 0, new Array<string>(), this.username == playerList[i]));
         }
         this.handService.setPlayers(this.players);
     }

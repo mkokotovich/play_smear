@@ -22,13 +22,12 @@ import { HandResults } from './model/hand-results';
 import { PlayingInfo } from './model/playing-info';
 import { TrickResults } from './model/trick-results';
 import { Trump } from './model/trump';
+import { constants } from '../host-specific-constants';
 
 @Injectable()
 export class SmearApiService {
-    private initialCardsUrl = 'api/getinitial';
-    private serverAddress = "localhost:5000";
-    //private serverAddress = "192.168.86.200:5000";
-    private baseUrl = "http://" + this.serverAddress + '/api/';
+    private serverAddress = constants.apiServerAddress;
+    private baseUrl = "http://" + constants.apiServerAddress + '/api/';
     private gameCreateUrl = this.baseUrl + "game/create/";
     private gameJoinUrl = this.baseUrl + "game/join/";
     private gameStartStatusUrl = this.baseUrl + "game/startstatus/";
