@@ -16,6 +16,13 @@
         Okay
     </button>
 </div>
+<div *ngIf="handService.displayNextHandButton == true">
+    <button type="button" class="btn btn-default"
+                          [disabled]="!handService.enableNextHandButton"
+                          (click)="handService.startNextHand()">
+        {{ handService.nextHandButtonText }}
+    </button>
+</div>
 <div>
     <app-hand>Loading cards</app-hand>
 </div>

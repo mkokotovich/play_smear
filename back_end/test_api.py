@@ -481,6 +481,7 @@ class PlaySmearHandGetResults(PlaySmearTest):
                 "jack_winner": self.username,
                 "jick_winner": self.username,
                 "game_winner": self.username,
+                "is_game_over": False,
                 }
         self.data = { "game_id": self.game_id, "hand_id": self.hand_id }
         self.create_default_mock_engine()

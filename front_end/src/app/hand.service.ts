@@ -41,6 +41,9 @@ export class HandService {
     private trump: string;
     public displayTrickConfirmationButton: boolean;
     public enableTrickConfirmationButton: boolean;
+    public displayNextHandButton: boolean;
+    public enableNextHandButton: boolean;
+    public nextHandButtonText: string;
     public showHandResults: boolean;
     private handResults: HandResults;
     private players: Array<Player>;
@@ -54,6 +57,8 @@ export class HandService {
         this.currentlyBidding = false;
         this.displayTrickConfirmationButton = false;
         this.enableTrickConfirmationButton = false;
+        this.displayNextHandButton = false;
+        this.enableNextHandButton = false;
         this.showHandResults = false;
         this.highBid = new Bid("", "", 0);
         this.handMessage = "Waiting for cards...";
@@ -84,6 +89,8 @@ export class HandService {
         this.currentlyBidding = true;
         this.displayTrickConfirmationButton = false;
         this.enableTrickConfirmationButton = false;
+        this.displayNextHandButton = false;
+        this.enableNextHandButton = false;
         this.highBid = new Bid("", "", 0);
         this.cardsPlayed = new Array<CardPlayed>();
         this.playingInfo = new PlayingInfo(new Array<CardPlayed>(), new Card("", ""), "");
@@ -241,6 +248,7 @@ export class HandService {
 
     getHandResults(): void {
         this.setGameStatus("Retrieving results of hand");
+        this.handMessage = "";
         let gameAndHand = new GameAndHand(this.gameAndUser.game_id, this.handId);
         this.smearApiService.handGetResults(gameAndHand)
                             .subscribe( handResults => this.receiveHandResults(handResults),
@@ -250,8 +258,18 @@ export class HandService {
     receiveHandResults(handResults: HandResults) {
         this.setGameStatus("Results of previous hand");
         this.handResults = handResults;
+        if (this.handResults.is_game_over) {
+            this.setGameStatus("Results of previous hand. Game is now over.");
+            this.nextHandButtonText = "See results";
+        } else {
+            this.setGameStatus("Results of previous hand");
+            this.nextHandButtonText = "Start next hand";
+        }
         this.showHandResults = true;
         this.displayTrickConfirmationButton = false;
+        this.displayNextHandButton = true;
+        this.enableNextHandButton = true;
+        this.cardsPlayed = new Array<CardPlayed>();
 
         // Update scores
         for (let player of this.players) {
@@ -297,6 +315,15 @@ export class HandService {
             }
         }
         return new Array<string>();
+    }
+
+    startNextHand() {
+        this.enableNextHandButton = false;
+        this.startNewHand();
+        for (let player of this.players) {
+            player.points = new Array<string>();
+        }
+
     }
 
     handleHandError(err: any, message: string) {

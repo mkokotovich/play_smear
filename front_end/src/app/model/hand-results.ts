@@ -4,6 +4,7 @@ export class HandResults {
         public low_winner: string,
         public jack_winner: string,
         public jick_winner: string,
-        public game_winner: string) {
+        public game_winner: string,
+        public is_game_over: boolean) {
     }
 }
