@@ -22,7 +22,7 @@
                     <div *ngIf="handService.showHandResults">
                         <li class="list-group-item"
                             *ngFor="let point of handService.getPointsWon(player.name)">
-                            Won {{ point }}
+                            {{ point }}
                         </li>
                     </div>
                 </ul>
