@@ -2,15 +2,81 @@ from flask import Flask, abort, request
 from flask_cors import CORS, cross_origin
 import json
 import threading
+from collections import namedtuple
+import Queue
 import time
 from pysmear import smear_engine_api
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+global g_game_id
+global g_game_id_lock
+global g_engines
+global g_cleanup_thread
+global g_cleanup_queue
+global g_game_timeout
+
 g_game_id = 0
 g_game_id_lock = threading.Lock()
 g_engines = {}
+g_cleanup_queue = Queue.Queue()
+g_cleanup_thread = None
+g_game_timeout = 36000
+
+
+# Gets the engine in a thread-safe manner
+def get_engine(game_id):
+    engine = None
+    with g_game_id_lock:
+        if game_id in g_engines:
+            engine = g_engines[game_id]
+    return engine
+
+
+# Cleans up games after an expiration period, to release resources
+def cleanup_thread_function(engine_queue, game_timeout):
+    global g_engines
+
+    print "+++Starting cleanup thread with game_timeout of {}".format(game_timeout)
+    check_for_inactive_games_interval = 60
+    Game = namedtuple("Game", ["game_id", "expiration"])
+    active_games = []
+    while True:
+        # Accept new games, and every 60 seconds check if any are inactive
+        try:
+            game_id = engine_queue.get(timeout=check_for_inactive_games_interval)
+            if game_id is None:
+                for game in active_games:
+                    app.logger.debug("+++Received empty game_id, quitting all games and exiting")
+                    active_games.remove(game)
+                    engine = get_engine(game.game_id)
+                    if engine is not None:
+                        engine.finish_game()
+                return
+            expiration = int(time.time()) + game_timeout
+            app.logger.debug("+++Cleanup thread received game_id {}, setting expiration for {}".format(game_id, expiration))
+            game = Game(game_id, expiration)
+            active_games.append(game)
+        except Queue.Empty:
+            #app.logger.debug("+++Cleanup thread looking for games with expiration < {}".format(time.time()))
+            for game in active_games:
+                if game.expiration < time.time():
+                    # Game has reached the expiration time
+                    app.logger.debug("+++Game {} has reached the expiration time ({}), quitting".format(game.game_id, game.expiration))
+                    active_games.remove(game)
+                    engine = get_engine(game.game_id)
+                    if engine is not None:
+                        engine.finish_game()
+                        with g_game_id_lock:
+                            del g_engines[game.game_id]
+
+
+def initialize(cleanup_thread, cleanup_queue, game_timeout):
+    if cleanup_thread is None:
+        cleanup_thread = threading.Thread(target=cleanup_thread_function, args = ( cleanup_queue, game_timeout, ))
+        cleanup_thread.daemon = True
+        cleanup_thread.start()
 
 
 def generate_error(status_id, message, error_code=500):
@@ -37,14 +103,14 @@ def generate_return_string(data=None):
 def create_game_and_return_id():
     global g_game_id_lock
     global g_game_id
+    global g_cleanup_queue
+    global g_engines
     game_id = None
-    g_game_id_lock.acquire()
-    try:
+    with g_game_id_lock:
         g_game_id += 1
         game_id = str(g_game_id)
-    finally:
-        g_game_id_lock.release()
-    g_engines[game_id] = smear_engine_api.SmearEngineApi(debug=True)
+        g_engines[game_id] = smear_engine_api.SmearEngineApi(debug=True)
+    g_cleanup_queue.put(game_id)
     return game_id
 
 
@@ -79,16 +145,19 @@ def get_value_from_params(params, key, abort_if_absent=True):
 #  player_names - list of strings  - if ready == True, this will be a list of all players in the game
 @app.route("/api/game/startstatus/", methods=["POST"])
 def game_start_status():
-    global g_engines
-
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
     blocking = get_value_from_params(params, "blocking")
 
+    # Check input
+    engine = get_engine(game_id)
+    if engine is None:
+        return generate_error(4, "Could not find game {}".format(game_id))
+
     player_names = []
     data = {}
-    data["ready"] = g_engines[game_id].all_players_added()
+    data["ready"] = engine.all_players_added()
     if blocking:
         sleep_interval = 5
         time_waited = 0
@@ -97,13 +166,13 @@ def game_start_status():
             #sleep and check again
             time.sleep(sleep_interval)
             time_waited += sleep_interval
-            data["ready"] = g_engines[game_id].all_players_added()
+            data["ready"] = engine.all_players_added()
         if time_waited >= timeout_after:
             return generate_error(2, "Game {} took too long, giving up. Create a new game and try again".format(game_id))
 
     if data["ready"]:
-        player_names = g_engines[game_id].get_player_names()
-        g_engines[game_id].start_game()
+        player_names = engine.get_player_names()
+        engine.start_game()
         
     data["num_players"] = len(player_names)
     data["player_names"] = player_names
@@ -117,28 +186,27 @@ def game_start_status():
 # Return - nothing
 @app.route("/api/game/join/", methods=["POST"])
 def join_game():
-    global g_engines
-    # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
     username = get_value_from_params(params, "username")
 
     # Check input
-    if game_id not in g_engines:
+    engine = get_engine(game_id)
+    if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
 
     # Perform game-related logic
-    if g_engines[game_id].all_players_added():
+    if engine.all_players_added():
         # Game is already full
-        num_players = g_engines[game_id].get_number_of_players()
+        num_players = engine.get_number_of_players()
         return generate_error(1, "Game {} is already full, contains {} players".format(game_id, num_players))
 
-    g_engines[game_id].add_player(player_id=username, interactive=True)
-    num_players = g_engines[game_id].get_number_of_players()
+    engine.add_player(player_id=username, interactive=True)
+    num_players = engine.get_number_of_players()
     for i in range(1, num_players):
         new_player = "player{}".format(i)
         app.logger.debug("Adding player {} to game {}".format(new_player, game_id))
-        g_engines[game_id].add_player(player_id=new_player, interactive=False)
+        engine.add_player(player_id=new_player, interactive=False)
 
     # Return result
     data = {}
@@ -152,7 +220,6 @@ def join_game():
 #  game_id    - String  - Id of the game to be used in future API calls
 @app.route("/api/game/create/", methods=["POST"])
 def create_game():
-    global g_engines
     # Read input
     params = get_params_or_abort(request)
     numPlayerInput = get_value_from_params(params, "numPlayers")
@@ -167,7 +234,10 @@ def create_game():
     # Perform game-related logic
     game_id = create_game_and_return_id()
     app.logger.debug("Starting game {} with {} players".format(game_id, numPlayers))
-    g_engines[game_id].create_new_game(num_players=numPlayers)
+    engine = get_engine(game_id)
+    if engine is None:
+        return generate_error(4, "Unusual error occurred, could not find game that was just created {}".format(game_id))
+    engine.create_new_game(num_players=numPlayers)
 
     # Return result
     data = {}
@@ -184,21 +254,21 @@ def create_game():
 #  hand_id  - string         - ID of the hand we're playing
 @app.route("/api/hand/deal/", methods=["POST"])
 def get_next_deal():
-    global g_engines
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
     username = get_value_from_params(params, "username")
 
     # Check input
-    if game_id not in g_engines:
+    engine = get_engine(game_id)
+    if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
-    if username not in g_engines[game_id].get_player_names():
+    if username not in engine.get_player_names():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
     # Perform game-related logic
-    cards = g_engines[game_id].get_hand_for_player(username) 
-    hand_id = g_engines[game_id].get_hand_id() 
+    cards = engine.get_hand_for_player(username) 
+    hand_id = engine.get_hand_id() 
 
     # Return result, cards list should be at the root of data
     data = {}
@@ -215,20 +285,20 @@ def get_next_deal():
 #  bid_info - information pertaining to the current bid
 @app.route("/api/hand/getbidinfo/", methods=["POST"])
 def get_bid_info():
-    global g_engines
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
     username = get_value_from_params(params, "username")
 
     # Check input
-    if game_id not in g_engines:
+    engine = get_engine(game_id)
+    if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
-    if username not in g_engines[game_id].get_player_names():
+    if username not in engine.get_player_names():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
     # Perform game-related logic
-    bid_info = g_engines[game_id].get_bid_info_for_player(username) 
+    bid_info = engine.get_bid_info_for_player(username) 
 
     # Return result, bid_info dict should be the top-level data
     data = bid_info
@@ -244,7 +314,6 @@ def get_bid_info():
 #  nothing, just status
 @app.route("/api/hand/submitbid/", methods=["POST"])
 def submit_bid():
-    global g_engines
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
@@ -262,13 +331,14 @@ def submit_bid():
                 raise ValueError("Invalid bid")
         except ValueError:
             return generate_error(6, "Invalid bid: {}, bid must be between 2 and 5, or 0 for a pass".format(bid))
-    if game_id not in g_engines:
+    engine = get_engine(game_id)
+    if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
-    if username not in g_engines[game_id].get_player_names():
+    if username not in engine.get_player_names():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
     # Perform game-related logic
-    valid_bid = g_engines[game_id].submit_bid_for_player(username, bid) 
+    valid_bid = engine.submit_bid_for_player(username, bid) 
     if not valid_bid:
         return generate_error(6, "Invalid bid ({}) for {}, unable to submit bid".format(bid, username))
 
@@ -285,18 +355,18 @@ def submit_bid():
 #  bid      - int    - the high bid
 @app.route("/api/hand/gethighbid/", methods=["POST"])
 def get_high_bid():
-    global g_engines
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
     hand_id = get_value_from_params(params, "hand_id")
 
     # Check input
-    if game_id not in g_engines:
+    engine = get_engine(game_id)
+    if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
 
     # Perform game-related logic
-    high_bid_info = g_engines[game_id].get_high_bid(hand_id) 
+    high_bid_info = engine.get_high_bid(hand_id) 
 
     # Return the high bid
     data = high_bid_info
@@ -312,7 +382,6 @@ def get_high_bid():
 #  trump    - string - suit that was picked to be trump
 @app.route("/api/hand/gettrump/", methods=["POST"])
 def submit_and_get_trump():
-    global g_engines
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
@@ -321,19 +390,20 @@ def submit_and_get_trump():
     query_only = False
 
     # Check input
-    if game_id not in g_engines:
+    engine = get_engine(game_id)
+    if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
-    if username not in g_engines[game_id].get_player_names():
+    if username not in engine.get_player_names():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
     if input_trump == None or len(input_trump) == 0:
         query_only = True
 
     # Perform game-related logic
     if not query_only:
-        valid_trump = g_engines[game_id].submit_trump_for_player(username, input_trump) 
+        valid_trump = engine.submit_trump_for_player(username, input_trump) 
         if not valid_trump:
             return generate_error(9, "Invalid trump selected: {}".format(input_trump))
-    trump = g_engines[game_id].get_trump() 
+    trump = engine.get_trump() 
 
     # Return the high bid
     data = {}
@@ -351,21 +421,21 @@ def submit_and_get_trump():
 #  lead_suit            - string        - The suit of the first card played
 @app.route("/api/hand/getplayinginfo/", methods=["POST"])
 def get_playing_info():
-    global g_engines
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
     username = get_value_from_params(params, "username")
 
     # Check input
-    if game_id not in g_engines:
+    engine = get_engine(game_id)
+    if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
-    if username not in g_engines[game_id].get_player_names():
+    if username not in engine.get_player_names():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
 
     # Perform game-related logic
-    playing_info = g_engines[game_id].get_playing_info_for_player(username) 
+    playing_info = engine.get_playing_info_for_player(username) 
 
     # Return the playing_info
     data = playing_info
@@ -383,7 +453,6 @@ def get_playing_info():
 #  lead_suit            - string        - The suit of the first card played
 @app.route("/api/hand/submitcard/", methods=["POST"])
 def submit_card_to_play():
-    global g_engines
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
@@ -391,15 +460,16 @@ def submit_card_to_play():
     card = get_value_from_params(params, "card_to_play")
 
     # Check input
-    if game_id not in g_engines:
+    engine = get_engine(game_id)
+    if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
-    if username not in g_engines[game_id].get_player_names():
+    if username not in engine.get_player_names():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
     if len(card.keys()) != 2 or "suit" not in card.keys() or "value" not in card.keys():
         return generate_error(7, "Improperly formatted card: {}".format(str(card)))
 
     # Perform game-related logic
-    valid_card = g_engines[game_id].submit_card_to_play_for_player(username, card) 
+    valid_card = engine.submit_card_to_play_for_player(username, card) 
     if not valid_card:
         return generate_error(8, "Unable to play {} of {}, please pick another card".format(card["value"], card["suit"]))
 
@@ -416,21 +486,21 @@ def submit_card_to_play():
 #  cards_played  - list of card_played objects  -  a card_played object is a username and a card
 @app.route("/api/hand/gettrickresults/", methods=["POST"])
 def get_trick_results():
-    global g_engines
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
     username = get_value_from_params(params, "username")
 
     # Check input
-    if game_id not in g_engines:
+    engine = get_engine(game_id)
+    if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
-    if username not in g_engines[game_id].get_player_names():
+    if username not in engine.get_player_names():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
 
     # Perform game-related logic
-    trick_results = g_engines[game_id].get_trick_results_for_player(username) 
+    trick_results = engine.get_trick_results_for_player(username) 
 
     # Return the playing_info
     data = trick_results
@@ -449,21 +519,31 @@ def get_trick_results():
 #  game_winner  - string  - The winner of game
 @app.route("/api/hand/getresults/", methods=["POST"])
 def get_hand_results():
-    global g_engines
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
     hand_id = get_value_from_params(params, "hand_id")
 
     # Check input
-    if game_id not in g_engines:
+    engine = get_engine(game_id)
+    if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
 
     # Perform game-related logic
-    hand_results = g_engines[game_id].get_hand_results(hand_id)
+    hand_results = engine.get_hand_results(hand_id)
 
     # Return the playing_info
     data = hand_results
     return generate_return_string(data)
 
+
+
+if __name__ == '__main__':
+
+    initialize(g_cleanup_thread, g_cleanup_queue, g_game_timeout)
+
+    my_host = "0.0.0.0"
+    my_port = 5000
+    app.debug = True
+    app.run(host=my_host, port=my_port)
 
