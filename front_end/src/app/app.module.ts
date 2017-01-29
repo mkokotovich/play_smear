@@ -1,5 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
+import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 
@@ -18,6 +19,7 @@ import { PlayGameComponent } from './play-game/play-game.component';
 import { SmearApiService } from './smear-api.service';
 import { StartGameComponent } from './start-game/start-game.component';
 import { GameStatusComponent } from './game-status/game-status.component';
+import { HandStatusModalComponent } from './hand-status-modal/hand-status-modal.component';
 
 @NgModule({
   declarations: [
@@ -27,15 +29,18 @@ import { GameStatusComponent } from './game-status/game-status.component';
     PlayHandComponent,
     PlayGameComponent,
     HandComponent,
-    GameStatusComponent
+    GameStatusComponent,
+    HandStatusModalComponent
   ],
   imports: [
     AppRoutingModule,
     BrowserModule,
     FormsModule,
-    HttpModule
+    HttpModule,
+    NgbModule.forRoot()
   ],
   providers: [SmearApiService, HandService, GameService],
+  entryComponents: [HandStatusModalComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

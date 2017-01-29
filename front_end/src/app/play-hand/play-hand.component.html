@@ -1,13 +1,5 @@
 <div *ngIf="handService.allowSelection">
-    <div *ngIf="handService.isCardSelected() == false">
-        Select a card to play
-    </div>
-    <div *ngIf="handService.isCardSelected() == true">
-        <button type="button" class="btn btn-default"
-                              (click)="playSelectedCard()">
-            Play selected card
-        </button>
-    </div>
+    Select a card to play, then click it again to submit your choice
 </div>
 <div *ngIf="handService.displayTrickConfirmationButton == true">
     <button type="button" class="btn btn-default"
@@ -16,6 +8,7 @@
         Okay
     </button>
 </div>
+
 <div *ngIf="handService.displayNextHandButton == true">
     <button type="button" class="btn btn-default"
                           [disabled]="!handService.enableNextHandButton"

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { Bid} from './model/bid';
 import { BidInfo } from './model/bid-info';
@@ -11,6 +12,7 @@ import { GameUserCard } from './model/game-user-card';
 import { GetTrump } from './model/get-trump';
 import { HandInfo } from './model/hand-info';
 import { HandResults } from './model/hand-results';
+import { HandStatusModalComponent } from './hand-status-modal/hand-status-modal.component';
 import { Player } from './model/player';
 import { PlayingInfo } from './model/playing-info';
 import { SmearApiService } from './smear-api.service';
@@ -48,7 +50,8 @@ export class HandService {
     private handResults: HandResults;
     private players: Array<Player>;
 
-    constructor(private smearApiService :SmearApiService) {
+    constructor(private smearApiService :SmearApiService,
+                private modalService: NgbModal) {
         this.allowSelection = false;
         this.showBidInput = false;
         this.showTrumpInput = false;
@@ -77,6 +80,11 @@ export class HandService {
 
     setPlayers(players: Array<Player>): void {
         this.players = players;
+    }
+
+    displayHandStatusModal(message: string) {
+        const modalRef = this.modalService.open(HandStatusModalComponent);
+        modalRef.componentInstance.handStatus = message;
     }
 
     startNewHand(): void {
@@ -232,6 +240,7 @@ export class HandService {
 
     trickResultsReceived(trickResults: TrickResults) {
         this.setGameStatus("Trick is finished, " + trickResults.winner + " took the trick");
+        this.displayHandStatusModal("Trick is finished, " + trickResults.winner + " took the trick");
         this.cardsPlayed = trickResults.cards_played;
         this.displayTrickConfirmationButton = true;
         this.enableTrickConfirmationButton = true;
@@ -389,7 +398,12 @@ export class HandService {
 
     selectCard(card: Card):void {
         if (this.allowSelection) {
-            this.selectedCard = card;
+            if (this.selectedCard == card) {
+                // If the user clicks on a card that is already selected, play it
+                this.submitCardToPlay(card);
+            } else {
+                this.selectedCard = card;
+            }
         }
     }
 
