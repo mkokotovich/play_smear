@@ -1,3 +1,7 @@
+<div style="position: fixed; top: 0; left: 50%; width: 400px; margin-left: -200px;" *ngFor="let alert of handService.alerts">
+    <alert [type]="alert.type" dismissible="true">{{ alert.msg }}</alert>
+</div>
+
 <div *ngIf="handService.allowSelection">
     Select a card to play, then click it again to submit your choice
 </div>

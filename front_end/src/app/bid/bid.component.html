@@ -1,11 +1,15 @@
 <div>
     <p> {{ handService.getBidMessage() }} </p>
     <div *ngIf="handService.showBidInput == true">
-        <input [(ngModel)]="bid" placeholder="0">
+        <input [(ngModel)]="bid" placeholder=bid>
         <button type="button" class="btn btn-default"
                               [disabled]="!handService.allowBid"
                               (click)="submit_bid()">
             Bid
+        </button>
+        <button type="button" class="btn btn-default"
+                              (click)="submit_bid_as_pass()">
+            Pass
         </button>
     </div>
     <div *ngIf="handService.showTrumpInput == true">

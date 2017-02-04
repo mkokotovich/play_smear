@@ -49,6 +49,7 @@ export class HandService {
     public showHandResults: boolean;
     private handResults: HandResults;
     private players: Array<Player>;
+    public alerts: any = [];
 
     constructor(private smearApiService :SmearApiService,
                 private modalService: NgbModal) {
@@ -240,7 +241,8 @@ export class HandService {
 
     trickResultsReceived(trickResults: TrickResults) {
         this.setGameStatus("Trick is finished, " + trickResults.winner + " took the trick");
-        this.displayHandStatusModal("Trick is finished, " + trickResults.winner + " took the trick");
+        // This wasn't working very well.
+        //this.displayHandStatusModal("Trick is finished, " + trickResults.winner + " took the trick");
         this.cardsPlayed = trickResults.cards_played;
         this.displayTrickConfirmationButton = true;
         this.enableTrickConfirmationButton = true;
@@ -421,6 +423,13 @@ export class HandService {
 
     setGameStatus(message: string):void {
         this.gameStatusMessage = message;
+        //Clear array first
+        //this.alerts.length = 0;
+        //Add new alert
+        //this.alerts.push({
+            //type: 'info',
+            //msg: `${message}`
+        //});
     }
 
     getGameStatus(): string {
