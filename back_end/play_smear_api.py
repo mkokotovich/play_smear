@@ -237,7 +237,7 @@ def create_game():
     engine = get_engine(game_id)
     if engine is None:
         return generate_error(4, "Unusual error occurred, could not find game that was just created {}".format(game_id))
-    engine.create_new_game(num_players=numPlayers)
+    engine.create_new_game(num_players=numPlayers, score_to_play_to=11)
 
     # Return result
     data = {}
@@ -523,6 +523,7 @@ def get_hand_results():
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
     hand_id = get_value_from_params(params, "hand_id")
+    username = get_value_from_params(params, "username")
 
     # Check input
     engine = get_engine(game_id)
@@ -531,6 +532,13 @@ def get_hand_results():
 
     # Perform game-related logic
     hand_results = engine.get_hand_results(hand_id)
+    if hand_results["is_game_over"]:
+        ready_to_delete = engine.player_is_finished(username)
+        if ready_to_delete:
+            app.logger.debug("Game {} is finished, removing engine".format(game_id))
+            engine.finish_game()
+            with g_game_id_lock:
+                del g_engines[game_id]
 
     # Return the playing_info
     data = hand_results

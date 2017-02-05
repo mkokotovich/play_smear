@@ -483,7 +483,7 @@ class PlaySmearHandGetResults(PlaySmearTest):
                 "game_winner": self.username,
                 "is_game_over": False,
                 }
-        self.data = { "game_id": self.game_id, "hand_id": self.hand_id }
+        self.data = { "game_id": self.game_id, "hand_id": self.hand_id, "username": self.username }
         self.create_default_mock_engine()
 
     def tearDown(self):
@@ -493,10 +493,20 @@ class PlaySmearHandGetResults(PlaySmearTest):
         rv = self.app.get(self.url)
         self.assertIn(b'The method is not allowed', rv.get_data())
 
-    def test_hand_submit_card_to_play_returns_success(self):
+    def test_hand_submit_card_to_play_returns_success_does_not_end_if_not_finished(self):
+        self.hand_results["is_game_over"] = False
         self.add_return_value_to_engine_function("get_hand_results", self.hand_results)
         params = self.post_data_and_return_data(self.url, self.data)
         self.assert_engine_function_called_with("get_hand_results", self.hand_id)
+
+    def test_hand_submit_card_to_play_returns_success_calls_player_finished_if_finished(self):
+        self.hand_results["is_game_over"] = True
+        self.add_return_value_to_engine_function("get_hand_results", self.hand_results)
+        self.add_return_value_to_engine_function("player_is_finished", False)
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assert_engine_function_called_with("get_hand_results", self.hand_id)
+        self.assert_engine_function_called_with("player_is_finished", self.username)
+
 
 
 if __name__ == '__main__':

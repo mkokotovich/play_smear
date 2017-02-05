@@ -7,6 +7,7 @@ import { Card } from './model/card';
 import { CardPlayed } from './model/card-played';
 import { GameAndHand } from './model/game-and-hand';
 import { GameAndUser } from './model/game-and-user';
+import { GameHandUser } from './model/game-hand-user';
 import { GameId } from './model/game-id';
 import { GameUserCard } from './model/game-user-card';
 import { GetTrump } from './model/get-trump';
@@ -76,7 +77,7 @@ export class HandService {
         this.allowBid = false;
         this.allowTrumpSelection = false;
         this.currentlyBidding = true;
-        this.handMessage = "Waiting for cards...";
+        this.setHandMessage("Waiting for cards...");
     }
 
     setPlayers(players: Array<Player>): void {
@@ -108,7 +109,7 @@ export class HandService {
     }
 
     getNewHand(): void {
-        this.handMessage = "Waiting for cards...";
+        this.setHandMessage("Waiting for cards...");
         this.smearApiService.handDeal(this.gameAndUser)
                             .subscribe( handInfo => this.receiveHand(handInfo),
                                         err => this.handleHandError(err, "Unable to retrieve cards"));
@@ -118,7 +119,7 @@ export class HandService {
         this.cards = handInfo.cards;
         this.handId = handInfo.hand_id;
         this.showBidInput = true;
-        this.handMessage = "Your hand:";
+        this.setHandMessage("Your hand:");
         this.setGameStatus("Waiting for your turn to bid");
         this.getBidInfo();
     }
@@ -225,6 +226,9 @@ export class HandService {
         this.allowSelections(false);
         this.unSelectCard();
         this.deleteCard(cardToPlay);
+        if (this.cards.length == 0) {
+            this.setHandMessage("");
+        }
         let gameUserCard = new GameUserCard(this.gameAndUser.game_id, this.gameAndUser.username, cardToPlay);
         this.smearApiService.handSubmitCardToPlay(gameUserCard)
                             .subscribe( res => this.cardSubmitted(),
@@ -259,9 +263,9 @@ export class HandService {
 
     getHandResults(): void {
         this.setGameStatus("Retrieving results of hand");
-        this.handMessage = "";
-        let gameAndHand = new GameAndHand(this.gameAndUser.game_id, this.handId);
-        this.smearApiService.handGetResults(gameAndHand)
+        this.setHandMessage("");
+        let gameHandUser = new GameHandUser(this.gameAndUser.game_id, this.handId, this.gameAndUser.username);
+        this.smearApiService.handGetResults(gameHandUser)
                             .subscribe( handResults => this.receiveHandResults(handResults),
                                         err => this.handleHandError(err, "Unable to retrieve results of hand"));
     }
@@ -271,15 +275,16 @@ export class HandService {
         this.handResults = handResults;
         if (this.handResults.is_game_over) {
             this.setGameStatus("Results of previous hand. Game is now over.");
-            this.nextHandButtonText = "See results";
+            this.displayNextHandButton = false;
+            this.enableNextHandButton = false;
         } else {
             this.setGameStatus("Results of previous hand");
             this.nextHandButtonText = "Start next hand";
+            this.displayNextHandButton = true;
+            this.enableNextHandButton = true;
         }
         this.showHandResults = true;
         this.displayTrickConfirmationButton = false;
-        this.displayNextHandButton = true;
-        this.enableNextHandButton = true;
         this.cardsPlayed = new Array<CardPlayed>();
 
         // Update scores
@@ -438,6 +443,10 @@ export class HandService {
 
     getHandMessage(): string {
         return this.handMessage;
+    }
+
+    setHandMessage(message:string): void {
+        this.handMessage = message;
     }
 
     setBidMessage(message:string): void {
