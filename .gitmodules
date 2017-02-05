@@ -1,0 +1,6 @@
+[submodule "back_end/pysmear"]
+	path = back_end/pysmear
+	url = https://github.com/mkokotovich/pysmear
+[submodule "back_end/pydealer"]
+	path = back_end/pydealer
+	url = https://github.com/mkokotovich/pydealer
