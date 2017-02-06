@@ -6,6 +6,8 @@ import { Observable } from 'rxjs/Rx';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 
+import { environment } from '../environments/environment';
+
 import { Bid } from './model/bid';
 import { BidInfo } from './model/bid-info';
 import { Card } from './model/card';
@@ -26,8 +28,7 @@ import { constants } from '../host-specific-constants';
 
 @Injectable()
 export class SmearApiService {
-    private serverAddress = constants.apiServerAddress;
-    private baseUrl = "http://" + constants.apiServerAddress + '/api/';
+    private baseUrl = environment.apiBaseUrl + '/api/';
     private gameCreateUrl = this.baseUrl + "game/create/";
     private gameJoinUrl = this.baseUrl + "game/join/";
     private gameStartStatusUrl = this.baseUrl + "game/startstatus/";

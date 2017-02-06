@@ -6,7 +6,7 @@
   },
   "proxies": {
     "/api/": {
-      "origin": "https://playsmear.herokuapp.com/api"
+      "origin": "localhost:5000/api"
     }
   }
 }
