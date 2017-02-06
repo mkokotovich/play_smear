@@ -1,0 +1,2 @@
+front_end: cd front_end && node server.js
+back_end: cd back_end && gunicorn --bind 0.0.0.0:5000 play_smear_api:app
