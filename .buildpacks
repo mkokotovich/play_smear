@@ -1,1 +1,2 @@
 back_end=https://github.com/heroku/heroku-buildpack-python.git
+front_end=https://github.com/heroku/heroku-buildpack-nodejs.git
