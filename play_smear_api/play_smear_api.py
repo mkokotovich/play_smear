@@ -7,8 +7,8 @@ import Queue
 import time
 import sys
 import os
-sys.path.insert(0, os.getcwd() + "/pysmear")
-sys.path.insert(0, os.getcwd() + "/pydealer")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pydealer")
 from pysmear import smear_engine_api
 
 app = Flask(__name__)
