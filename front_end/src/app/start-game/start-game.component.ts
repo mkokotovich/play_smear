@@ -14,7 +14,7 @@ import { GameId } from '../model/game-id';
   styleUrls: ['./start-game.component.css']
 })
 export class StartGameComponent implements OnInit {
-    private gameCreateInput = new GameCreateInput(0);
+    private gameCreateInput = new GameCreateInput(0, 0);
     private gameAndUser = new GameAndUser("", "");
     private welcomeMessage = "";
     private errorMessage = "";
@@ -39,6 +39,9 @@ export class StartGameComponent implements OnInit {
         this.errorMessage = "";
         this.disableCreateButton = true;
         // Send numPlayers to server to start a game, retreive a gameID?
+        // Increment numHumanPlayers to account for self
+        var numHumanPlayers = Number(this.gameCreateInput.numHumanPlayers) + 1
+        this.gameCreateInput.numHumanPlayers = numHumanPlayers
         this.smearApiService.gameCreate(this.gameCreateInput)
                             .subscribe( gameId => this.gameIsCreated(gameId),
                                         err => this.handleStartError(err, "Unable to create game, make sure you have a valid number of players and try again"));
@@ -47,7 +50,10 @@ export class StartGameComponent implements OnInit {
 
     gameIsCreated(gameId: GameId) {
         this.gameAndUser.game_id = gameId.game_id;
-        this.welcomeMessage = "Game " + this.gameAndUser.game_id + " created successfully";
+        this.welcomeMessage = "Game " + this.gameAndUser.game_id + " created successfully!";
+        if (this.gameCreateInput.numHumanPlayers != 0) {
+            this.welcomeMessage += " Tell the other players to use game id " + this.gameAndUser.game_id + " and join the game!";
+        }
     }
 
     joinGame() {

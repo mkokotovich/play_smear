@@ -177,7 +177,6 @@ def game_start_status():
 
     if data["ready"]:
         player_names = engine.get_player_names()
-        engine.start_game()
         
     data["num_players"] = len(player_names)
     data["player_names"] = player_names
@@ -207,11 +206,15 @@ def join_game():
         return generate_error(1, "Game {} is already full, contains {} players".format(game_id, num_players))
 
     engine.add_player(player_id=username, interactive=True)
-    num_players = engine.get_number_of_players()
-    for i in range(1, num_players):
-        new_player = "player{}".format(i)
-        app.logger.debug("Adding player {} to game {}".format(new_player, game_id))
-        engine.add_player(player_id=new_player, interactive=False)
+    if engine.all_human_players_joined():
+        # All humans are in, add the robots and start the game
+        num_players = engine.get_desired_number_of_players()
+        num_humans = engine.get_desired_number_of_human_players()
+        for i in range(1, num_players-num_humans+1):
+            new_player = "computer{}".format(i)
+            app.logger.debug("Adding player {} to game {}".format(new_player, game_id))
+            engine.add_player(player_id=new_player, interactive=False)
+        engine.start_game()
 
     # Return result
     data = {}
@@ -221,6 +224,7 @@ def join_game():
 # creates a new game
 # Input (json data from post):
 #  numPlayers - Integer - number of players in the game
+#  numHumanPlayers - Integer - number of human players expected to join game
 # Return (json data):
 #  game_id    - String  - Id of the game to be used in future API calls
 @app.route("/api/game/create/", methods=["POST"])
@@ -228,13 +232,21 @@ def create_game():
     # Read input
     params = get_params_or_abort(request)
     numPlayerInput = get_value_from_params(params, "numPlayers")
+    numHumanPlayersInput = get_value_from_params(params, "numHumanPlayers")
     numPlayers = 0
+    numHumanPlayers = 0
     try:
         numPlayers = int(numPlayerInput)
         if numPlayers < 2 or numPlayers > 8:
             raise ValueError("Invalid number of players")
     except ValueError:
         return generate_error(3, "Invalid number of players {}, must be between 2 and 8".format(numPlayerInput))
+    try:
+        numHumanPlayers = int(numHumanPlayersInput)
+        if numHumanPlayers > numPlayers:
+            raise ValueError("Invalid number of human players")
+    except ValueError:
+        return generate_error(3, "Invalid number of human players {}, must be less than or equal to number of players ({})".format(numHumanPlayersInput, numPlayers))
 
     # Perform game-related logic
     game_id = create_game_and_return_id()
@@ -242,7 +254,7 @@ def create_game():
     engine = get_engine(game_id)
     if engine is None:
         return generate_error(4, "Unusual error occurred, could not find game that was just created {}".format(game_id))
-    engine.create_new_game(num_players=numPlayers, score_to_play_to=11)
+    engine.create_new_game(num_players=numPlayers, num_human_players=numHumanPlayers, score_to_play_to=11)
 
     # Return result
     data = {}
@@ -557,5 +569,5 @@ if __name__ == '__main__':
     my_host = "0.0.0.0"
     my_port = 5000
     app.debug = True
-    app.run(host=my_host, port=my_port)
+    app.run(threaded=True, host=my_host, port=my_port)
 

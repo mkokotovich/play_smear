@@ -7,8 +7,14 @@
     <div class="card-block">
         <h4 class="card-title">Don't have an existing game to join? Create one here first</h4>
         <div class="card-text">
-            How many players do you want to play with?
-            <input [(ngModel)]="gameCreateInput.numPlayers" placeholder="2">
+            <p>
+                How many players do you want to play with?
+                <input [(ngModel)]="gameCreateInput.numPlayers" placeholder="2">
+            </p>
+            <p>
+                <i>Optional:</i> How many other humans do you expect to join? (not including yourself)
+                <input [(ngModel)]="gameCreateInput.numHumanPlayers" placeholder="0">
+            </p>
 
             <button class="btn"
                     (click)="createGame()"

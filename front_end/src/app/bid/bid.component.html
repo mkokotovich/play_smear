@@ -8,6 +8,7 @@
             Bid
         </button>
         <button type="button" class="btn btn-default"
+                              [disabled]="!handService.allowBid"
                               (click)="submit_bid_as_pass()">
             Pass
         </button>

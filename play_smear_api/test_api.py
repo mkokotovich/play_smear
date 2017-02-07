@@ -65,6 +65,7 @@ class PlaySmearGameCreateTest(PlaySmearTest):
     def setUp(self):
         PlaySmearTest.setUp(self)
         self.url = "/api/game/create/"
+        self.data = { "numPlayers": self.numPlayers, "numHumanPlayers": 0 }
 
     def tearDown(self):
         pass
@@ -82,8 +83,7 @@ class PlaySmearGameCreateTest(PlaySmearTest):
         self.assertIn(b'this server could not understand', rv.get_data())
 
     def test_game_create_returns_gameid(self):
-        data = { "numPlayers": self.numPlayers }
-        params = self.post_data_and_return_data(self.url, data)
+        params = self.post_data_and_return_data(self.url, self.data)
         self.assertIn("game_id", params)
         game_id = params["game_id"]
         self.assertIsNotNone(game_id)
