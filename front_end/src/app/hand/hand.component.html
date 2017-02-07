@@ -1,11 +1,15 @@
 <div>
     <p>{{handService.getHandMessage()}}</p>
-    <div class="hand">
-        <button type="button" class="btn btn-default smearcard"
-            *ngFor="let card of handService.getCards()"
-            [class.selected]="card === handService.getSelectedCard()"
-            (click)="onSelect(card)">
-            {{card.value}} <br> {{card.suit}}
-        </button>
+    <div class="container-fluid hand">
+        <div class="row">
+            <div class="col-4 col-sm-4 col-lg-2"
+                 *ngFor="let card of handService.getCards()">
+                <button type="button" class="btn btn-default smearcard"
+                                      [class.selected]="card === handService.getSelectedCard()"
+                                      (click)="onSelect(card)">
+                    {{card.value}} <br> {{card.suit}}
+                </button>
+            </div>
+        </div>
     </div>
 </div>
