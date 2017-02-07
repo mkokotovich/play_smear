@@ -1,2 +1,0 @@
-front_end: node front_end/server.js
-back_end: gunicorn --bind 0.0.0.0:5000 --chdir back_end play_smear_api:app

@@ -28,7 +28,6 @@ g_cleanup_queue = Queue.Queue()
 g_cleanup_thread = None
 g_game_timeout = 36000
 
-
 # Gets the engine in a thread-safe manner
 def get_engine(game_id):
     engine = None
@@ -75,12 +74,14 @@ def cleanup_thread_function(engine_queue, game_timeout):
                         with g_game_id_lock:
                             del g_engines[game.game_id]
 
-
 def initialize(cleanup_thread, cleanup_queue, game_timeout):
     if cleanup_thread is None:
         cleanup_thread = threading.Thread(target=cleanup_thread_function, args = ( cleanup_queue, game_timeout, ))
         cleanup_thread.daemon = True
         cleanup_thread.start()
+    with open("/tmp/app-initialized", 'a'):
+        os.utime("/tmp/app-initialized", None)
+
 
 
 def generate_error(status_id, message, error_code=500):
@@ -549,10 +550,9 @@ def get_hand_results():
     return generate_return_string(data)
 
 
+initialize(g_cleanup_thread, g_cleanup_queue, g_game_timeout)
 
 if __name__ == '__main__':
-
-    initialize(g_cleanup_thread, g_cleanup_queue, g_game_timeout)
 
     my_host = "0.0.0.0"
     my_port = 5000
