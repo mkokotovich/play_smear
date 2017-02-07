@@ -38,8 +38,8 @@ http {
         keepalive_timeout 5;
 
         location / {
-            root ../front_end/dist
-            index index.html
+            root ../front_end/dist;
+            index index.html;
         }
         location /api/ {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
