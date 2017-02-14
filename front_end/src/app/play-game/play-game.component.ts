@@ -26,12 +26,11 @@ export class PlayGameComponent implements OnInit {
     }
 
     ngOnInit() {
-        // Redirect user back to start if they navigated here directly
+        // Attempt to rejoin a game if navigated here without a gameID set
         this.gameId = this.gameService.getGameId()
         if (this.gameId == undefined || this.gameId.game_id == "") {
-            this.router.navigate(['/start']);
+            return this.gameService.rejoinGame();
         }
-        this.gameService.manageGame();
     }
 
 }

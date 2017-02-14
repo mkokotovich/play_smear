@@ -1,4 +1,4 @@
-from flask import Flask, abort, request
+from flask import Flask, abort, request, make_response
 from flask_cors import CORS, cross_origin
 import json
 import threading
@@ -183,27 +183,10 @@ def game_start_status():
     return generate_return_string(data)
 
 
-# join a game
-# Input (json data from post):
-#  game_id  - string - ID of game to join
-#  username - string - username to use
-# Return - nothing
-@app.route("/api/game/join/", methods=["POST"])
-def join_game():
-    params = get_params_or_abort(request)
-    game_id = get_value_from_params(params, "game_id")
-    username = get_value_from_params(params, "username")
-
-    # Check input
-    engine = get_engine(game_id)
-    if engine is None:
-        return generate_error(4, "Could not find game {}".format(game_id))
-
-    # Perform game-related logic
+def add_user_to_game(engine, game_id, username):
     if engine.all_players_added():
         # Game is already full
-        num_players = engine.get_number_of_players()
-        return generate_error(1, "Game {} is already full, contains {} players".format(game_id, num_players))
+        return engine.get_desired_number_of_players()
 
     engine.add_player(player_id=username, interactive=True)
     if engine.all_human_players_joined():
@@ -216,10 +199,65 @@ def join_game():
             engine.add_player(player_id=new_player, interactive=False)
         engine.start_game()
 
-    # Return result
+    return 0
+
+
+# join a game
+# Input (json data from post):
+#  game_id  - string - ID of game to join
+#  username - string - username to use
+# Return - nothing
+@app.route("/api/game/join/", methods=["POST"])
+def join_game():
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id", abort_if_absent=False)
+    username = get_value_from_params(params, "username", abort_if_absent=False)
+
+    # Check input
+    engine = get_engine(game_id)
+    if engine is None:
+        return generate_error(4, "Could not find game {}".format(game_id))
+
+    # Perform game-related logic
+    result = add_user_to_game(engine, game_id, username)
+    if result is not 0:
+        return generate_error(1, "Game {} is already full, contains {} players".format(game_id, result))
+
+    # Return result, but first set a cookie so the client can rejoin
     data = {}
     data["game_id"] = game_id
-    return generate_return_string(data)
+    data["username"] = username
+    resp = make_response(generate_return_string(data))
+    resp.set_cookie("game_id", game_id, max_age=12*60*60, path="/")
+    resp.set_cookie("username", username, max_age=12*60*60, path="/")
+    return resp
+
+
+# rejoin a game
+# Input (json data from post):
+#  game_id  - string - ID of game to join
+#  username - string - username to use
+# Return - nothing
+@app.route("/api/game/rejoin/", methods=["POST"])
+def rejoin_game():
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id", abort_if_absent=False)
+    username = get_value_from_params(params, "username", abort_if_absent=False)
+
+    # Check input
+    engine = get_engine(game_id)
+    if engine is None:
+        return generate_error(4, "Could not find game {}".format(game_id))
+
+    # Return result, but first set a cookie so the client can rejoin
+    data = {}
+    data["game_id"] = game_id
+    data["username"] = username
+    resp = make_response(generate_return_string(data))
+    resp.set_cookie("game_id", game_id, max_age=12*60*60, path="/")
+    resp.set_cookie("username", username, max_age=12*60*60, path="/")
+    return resp
+
 
 # creates a new game
 # Input (json data from post):
@@ -546,6 +584,7 @@ def get_hand_results():
     engine = get_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
+    # TODO: convert hand_id to int
 
     # Perform game-related logic
     hand_results = engine.get_hand_results(hand_id)

@@ -1,7 +1,7 @@
 <div>
     <h2>{{title}}</h2>
-    <p>{{welcomeMessage}}</p>
-    <p>{{errorMessage}}</p>
+    <p>{{gameService.welcomeMessage}}</p>
+    <p>{{gameService.errorMessage}}</p>
 </div>
 <div class="card bg-faded">
     <div class="card-block">
@@ -9,11 +9,11 @@
         <div class="card-text">
             <p>
                 How many players do you want to play with?
-                <input [(ngModel)]="gameCreateInput.numPlayers" placeholder="2">
+                <input [(ngModel)]="gameService.gameCreateInput.numPlayers" placeholder="2">
             </p>
             <p>
                 <i>Optional:</i> How many other humans do you expect to join? (not including yourself)
-                <input [(ngModel)]="gameCreateInput.numHumanPlayers" placeholder="0">
+                <input [(ngModel)]="gameService.gameCreateInput.numHumanPlayers" placeholder="0">
             </p>
 
             <button class="btn"
@@ -31,9 +31,9 @@
         <div class="card-text">
             <div>
                 Game ID to join:
-                <input [(ngModel)]="gameAndUser.game_id">
+                <input [(ngModel)]="gameService.gameAndUser.game_id">
                 What is your username?
-                <input [(ngModel)]="gameAndUser.username" placeholder="username">
+                <input [(ngModel)]="gameService.gameAndUser.username" placeholder="username">
                 <button class="btn"
                         (click)="joinGame()"
                         [disabled]="!gameJoinInputIsValid()">

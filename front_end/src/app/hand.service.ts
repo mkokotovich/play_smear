@@ -1,3 +1,4 @@
+import { Cookie } from 'ng2-cookies/ng2-cookies';
 import { Injectable } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -105,6 +106,12 @@ export class HandService {
         this.cardsPlayed = new Array<CardPlayed>();
         this.playingInfo = new PlayingInfo(new Array<CardPlayed>(), new Card("", ""), "");
 
+        // If we rejoined a game after a hand had finished, just straight to the hand summary
+        let hand_finished = Cookie.get("hand_finished");
+        if (hand_finished == "true") {
+            this.handId = Cookie.get("hand_id");
+            return this.getHandResults();
+        }
         this.getNewHand();
     }
 
@@ -120,8 +127,14 @@ export class HandService {
         this.handId = handInfo.hand_id;
         this.showBidInput = true;
         this.setHandMessage("Your hand:");
-        this.setGameStatus("Waiting for your turn to bid");
-        this.getBidInfo();
+        let bid_submitted = Cookie.get("bid_submitted");
+        Cookie.set("hand_id", this.handId, 1);
+        if (bid_submitted != "true") {
+            this.setGameStatus("Waiting for your turn to bid");
+            this.getBidInfo();
+        } else {
+            this.bidSubmitted();
+        }
     }
 
     getBidInfo(): void {
@@ -156,6 +169,7 @@ export class HandService {
 
     bidSubmitted(): void {
         this.showBidInput = false;
+        Cookie.set("bid_submitted", "true", 1);
         this.setGameStatus("Bid submitted successfully. Waiting to discover the high bidder");
         let gameAndHand = new GameAndHand(this.gameAndUser.game_id, this.handId);
         this.smearApiService.handGetHighBid(gameAndHand)
@@ -167,17 +181,23 @@ export class HandService {
         this.highBid.username = highBidInfo.bidder;
         this.highBid.bid = highBidInfo.current_bid;
         this.allBids = highBidInfo.all_bids;
-        this.setGameStatus("High bid received: " + this.highBid.username + " bid: " + this.highBid.bid);
-        if (this.highBid.bid == 0) {
-            // Handle the case where bid == 0 - a forced two set
-            this.setGameStatus("Dealer was forced to take a two set");
-        } else if (this.highBid.username == this.gameAndUser.username) {
-            this.setGameStatus("You are the bidder, enter your choice for trump below");
-            this.allowTrumpSelection = true;
-            this.showTrumpInput = true;
+        let saved_trump = Cookie.get("trump");
+        if (saved_trump == "" || saved_trump == "null") {
+            this.setGameStatus("High bid received: " + this.highBid.username + " bid: " + this.highBid.bid);
+            if (this.highBid.bid == 0) {
+                this.setGameStatus("Dealer was forced to take a two set");
+                // TODO: Handle the case where bid == 0 - a forced two set
+                this.startNextHand();
+            } else if (this.highBid.username == this.gameAndUser.username) {
+                this.setGameStatus("You are the bidder, enter your choice for trump below");
+                this.allowTrumpSelection = true;
+                this.showTrumpInput = true;
+            } else {
+                this.setGameStatus("Finding out what trump will be");
+                this.getOrSubmitTrump("");
+            }
         } else {
-            this.setGameStatus("Finding out what trump will be");
-            this.getOrSubmitTrump("");
+            this.trumpReceived(new Trump(saved_trump));
         }
     }
 
@@ -196,6 +216,7 @@ export class HandService {
 
     trumpReceived(trump: Trump): void {
         this.trump = trump.trump;
+        Cookie.set("trump", this.trump, 1);
         this.setGameStatus("Trump is " + this.trump + ", waiting for your turn");
         this.showTrumpInput = false;
         this.currentlyBidding = false;
@@ -228,6 +249,7 @@ export class HandService {
         this.deleteCard(cardToPlay);
         if (this.cards.length == 0) {
             this.setHandMessage("");
+            Cookie.set("hand_finished", "true", 1);
         }
         let gameUserCard = new GameUserCard(this.gameAndUser.game_id, this.gameAndUser.username, cardToPlay);
         this.smearApiService.handSubmitCardToPlay(gameUserCard)
@@ -335,6 +357,10 @@ export class HandService {
 
     startNextHand() {
         this.enableNextHandButton = false;
+        Cookie.set("bid_submitted", "false", 1);
+        Cookie.set("trump", "", 1);
+        Cookie.set("hand_finished", "false", 1);
+        Cookie.set("hand_id", "", 1);
         this.startNewHand();
         for (let player of this.players) {
             player.points = new Array<string>();

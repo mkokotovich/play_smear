@@ -31,6 +31,7 @@ export class SmearApiService {
     private baseUrl = environment.apiBaseUrl + '/api/';
     private gameCreateUrl = this.baseUrl + "game/create/";
     private gameJoinUrl = this.baseUrl + "game/join/";
+    private gameRejoinUrl = this.baseUrl + "game/rejoin/";
     private gameStartStatusUrl = this.baseUrl + "game/startstatus/";
     private handDealUrl = this.baseUrl + "hand/deal/";
     private handGetBidInfoUrl = this.baseUrl + "hand/getbidinfo/";
@@ -63,11 +64,20 @@ export class SmearApiService {
                         .catch(this.handleError);
     }
 
-    gameJoin(data: GameAndUser): Observable<GameId> {
+    gameJoin(data: GameAndUser): Observable<GameAndUser> {
         let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
         return this.http.post(this.gameJoinUrl, data, options)
+                        .map(this.extractData)
+                        .catch(this.handleError);
+    }
+
+    gameRejoin(data: GameAndUser): Observable<GameAndUser> {
+        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
+        let options = new RequestOptions({ headers: headers }); // Create a request option
+
+        return this.http.post(this.gameRejoinUrl, data, options)
                         .map(this.extractData)
                         .catch(this.handleError);
     }
