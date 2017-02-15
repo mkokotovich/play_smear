@@ -413,7 +413,14 @@ def get_high_bid():
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
-    hand_id = get_value_from_params(params, "hand_id")
+    hand_id_input = get_value_from_params(params, "hand_id")
+    hand_id = 0
+    try:
+        hand_id = int(hand_id_input)
+        if hand_id < 0:
+            raise ValueError("Invalid hand_id")
+    except ValueError:
+        return generate_error(11, "Invalid hand_id ({})".format(hand_id_input))
 
     # Check input
     engine = get_engine(game_id)
@@ -565,26 +572,33 @@ def get_trick_results():
 # Retrieve the results of the previous hand
 # Input (json data from post):
 #  game_id  - string - ID of game we're playing
-#  hand_id  - string - ID of hand we want results for
+#  hand_id  - int - ID of hand we want results for
 # Return (json data):
 #  high_winner  - string  - The winner of high
 #  low_winner   - string  - The winner of low
 #  jack_winner  - string  - The winner of jack
 #  jick_winner  - string  - The winner of jick
 #  game_winner  - string  - The winner of game
+#  player_infos - array of player_info  - Updated names and scores for all players
 @app.route("/api/hand/getresults/", methods=["POST"])
 def get_hand_results():
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
-    hand_id = get_value_from_params(params, "hand_id")
+    hand_id_input = get_value_from_params(params, "hand_id")
+    hand_id = 0
     username = get_value_from_params(params, "username")
 
     # Check input
     engine = get_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
-    # TODO: convert hand_id to int
+    try:
+        hand_id = int(hand_id_input)
+        if hand_id < 0:
+            raise ValueError("Invalid hand_id")
+    except ValueError:
+        return generate_error(11, "Invalid hand_id ({})".format(hand_id_input))
 
     # Perform game-related logic
     hand_results = engine.get_hand_results(hand_id)

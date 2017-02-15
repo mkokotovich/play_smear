@@ -72,6 +72,7 @@ export class GameService {
     unableToJoin(err: any) {
         this.welcomeMessage = "Unable to join any existing games, create or join a game to play";
         this.errorMessage = <any>err;
+        this.disableJoinButton = false;
         this.router.navigate(['/start']);
     }
 

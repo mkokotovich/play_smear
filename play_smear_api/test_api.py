@@ -474,7 +474,7 @@ class PlaySmearHandGetResults(PlaySmearTest):
     def setUp(self):
         PlaySmearTest.setUp(self)
         self.url = "/api/hand/getresults/"
-        self.hand_id = "hand1"
+        self.hand_id = 1
         self.hand_results = { 
                 "high_winner": self.username,
                 "low_winner": self.username,
@@ -482,6 +482,11 @@ class PlaySmearHandGetResults(PlaySmearTest):
                 "jick_winner": self.username,
                 "game_winner": self.username,
                 "is_game_over": False,
+                "player_infos": [
+                    { "username": "player1", "score": 0 },
+                    { "username": "player2", "score": -2 },
+                    { "username": "player3", "score": 3 }
+                    ]
                 }
         self.data = { "game_id": self.game_id, "hand_id": self.hand_id, "username": self.username }
         self.create_default_mock_engine()

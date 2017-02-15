@@ -16,6 +16,7 @@ import { HandInfo } from './model/hand-info';
 import { HandResults } from './model/hand-results';
 import { HandStatusModalComponent } from './hand-status-modal/hand-status-modal.component';
 import { Player } from './model/player';
+import { PlayerInfo } from './model/player-info';
 import { PlayingInfo } from './model/playing-info';
 import { SmearApiService } from './smear-api.service';
 import { TrickResults } from './model/trick-results';
@@ -109,10 +110,29 @@ export class HandService {
         // If we rejoined a game after a hand had finished, just straight to the hand summary
         let hand_finished = Cookie.get("hand_finished");
         if (hand_finished == "true") {
+            this.currentlyBidding = false;
             this.handId = Cookie.get("hand_id");
-            return this.getHandResults();
+            return this.getHighBidAtEndOfGameAfterRejoin();
         }
         this.getNewHand();
+    }
+
+    getHighBidAtEndOfGameAfterRejoin(): void {
+        this.showBidInput = false;
+        Cookie.set("bid_submitted", "true", 1);
+        let gameAndHand = new GameAndHand(this.gameAndUser.game_id, this.handId);
+        this.smearApiService.handGetHighBid(gameAndHand)
+                            .subscribe( highBidInfo => this.highBidReceivedAtEndOfGameAfterRejoin(highBidInfo),
+                                        err => this.handleHandError(err, "Unable to get the high bidder"));
+    }
+
+    highBidReceivedAtEndOfGameAfterRejoin(highBidInfo: BidInfo): void {
+        this.highBid.username = highBidInfo.bidder;
+        this.highBid.bid = highBidInfo.current_bid;
+        this.allBids = highBidInfo.all_bids;
+        let saved_trump = Cookie.get("trump");
+        this.trump = saved_trump;
+        return this.getHandResults();
     }
 
     getNewHand(): void {
@@ -182,7 +202,7 @@ export class HandService {
         this.highBid.bid = highBidInfo.current_bid;
         this.allBids = highBidInfo.all_bids;
         let saved_trump = Cookie.get("trump");
-        if (saved_trump == "" || saved_trump == "null") {
+        if (saved_trump != "Spades" && saved_trump != "Clubs" && saved_trump != "Diamonds" && saved_trump != "Hearts") {
             this.setGameStatus("High bid received: " + this.highBid.username + " bid: " + this.highBid.bid);
             if (this.highBid.bid == 0) {
                 this.setGameStatus("Dealer was forced to take a two set");
@@ -293,7 +313,6 @@ export class HandService {
     }
 
     receiveHandResults(handResults: HandResults) {
-        this.setGameStatus("Results of previous hand");
         this.handResults = handResults;
         if (this.handResults.is_game_over) {
             this.setGameStatus("Results of previous hand. Game is now over.");
@@ -309,7 +328,7 @@ export class HandService {
         this.displayTrickConfirmationButton = false;
         this.cardsPlayed = new Array<CardPlayed>();
 
-        // Update scores
+        // Update points won for UI
         for (let player of this.players) {
             let pointsWon = 0
 
@@ -337,10 +356,15 @@ export class HandService {
             }
 
             if (this.highBid.username == player.name && pointsWon < this.highBid.bid ) {
-                player.addToScore(-this.highBid.bid);
                 player.points.push("Was set!");
-            } else {
-                player.addToScore(pointsWon);
+            }
+        }
+        // Update scores
+        for (let player of this.players) {
+            for (let playerInfo of this.handResults.player_infos) {
+                if (player.name == playerInfo.username) {
+                    player.score = playerInfo.score;
+                }
             }
         }
 
