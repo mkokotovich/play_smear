@@ -4,6 +4,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { AlertModule } from 'ng2-bootstrap';
+import { DndModule } from 'ng2-dnd';
 
 //import { ButtonsModule } from 'ng2-bootstrap';
 
@@ -38,7 +39,8 @@ import { HandStatusModalComponent } from './hand-status-modal/hand-status-modal.
     FormsModule,
     HttpModule,
     AlertModule.forRoot(),
-    NgbModule.forRoot()
+    NgbModule.forRoot(),
+    DndModule.forRoot()
   ],
   providers: [SmearApiService, HandService, GameService],
   entryComponents: [HandStatusModalComponent],
