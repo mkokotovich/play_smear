@@ -7,6 +7,6 @@ import { constants } from '../host-specific-constants';
 
 export const environment = {
   production: false,
-  //apiBaseUrl: constants.apiServerAddress
-  apiBaseUrl: "http://192.168.86.200:5000"
+  apiBaseUrl: constants.apiServerAddress
+  //apiBaseUrl: "http://192.168.86.200:5000"
 };
