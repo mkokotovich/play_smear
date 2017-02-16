@@ -167,7 +167,6 @@
     text-align: center;
     white-space: pre;
     line-height: .9;
-    font-size: 1.3em;
     word-spacing: -.05em;
 }
 
@@ -369,16 +368,16 @@
 .playingCards .card.joker .rank:after {
     font-family: Georgia, serif;
     position: absolute;
-    font-size: 3em;
-    right: .1em;
-    bottom: .25em;
+    font-size: 300%;
+    right: 0.0vw;
+    bottom: 0.0vw;
     word-spacing: normal;
     letter-spacing: normal;
     line-height: 1;
 }
 .playingCards .card.rank-j .suit:after {
     content: "\265F";
-    right: .15em;
+    right: 0.05vw;
 }
 .playingCards .card.rank-q .suit:after {
     content: "\265B";
@@ -402,27 +401,27 @@
 .playingCards .card.rank-a .suit:after {
     font-family: Arial, sans-serif;
     line-height: .9;
-    bottom: .35em;
+    bottom: .3vh;
 }
 .playingCards.simpleCards .card.diams .suit:after,
 .playingCards .card.rank-a.diams .suit:after {
     content: "\2666";
-    right: .4em;
+    right: .1vw;
 }
 .playingCards.simpleCards .card.hearts .suit:after,
 .playingCards .card.rank-a.hearts .suit:after {
     content: "\2665";
-    right: .35em;
+    right: .05vw;
 }
 .playingCards.simpleCards .card.spades .suit:after,
 .playingCards .card.rank-a.spades .suit:after {
     content: "\2660";
-    right: .35em;
+    right: .05vw;
 }
 .playingCards.simpleCards .card.clubs .suit:after,
 .playingCards .card.rank-a.clubs .suit:after {
     content: "\2663";
-    right: .3em;
+    right: 0.0vw;
 }
 
 /*____________ smaller cards for use inside text ____________*/

@@ -5,7 +5,7 @@
             dnd-sortable-container [sortableData]="handService.getCards()">
             <div class="col-2"
                  *ngFor="let card of handService.getCards(); let i = index">
-                <div class="smearcard card {{ cardHelper.getCardClass(card) }}"
+                <div class="card {{ cardHelper.getCardClass(card) }} smearcard"
                         dnd-sortable [sortableIndex]="i"
                         [class.selected]="card === handService.getSelectedCard()"
                         (click)="onSelect(card)">
