@@ -1,31 +1,46 @@
 <div>
     <p> {{ handService.getBidMessage() }} </p>
     <div *ngIf="handService.showBidInput == true">
-        <input [(ngModel)]="bid" placeholder=bid>
-        <button type="button" class="btn btn-default"
-                              [disabled]="!handService.allowBid"
-                              (click)="submit_bid()">
-            Bid
-        </button>
-        <button type="button" class="btn btn-default"
-                              [disabled]="!handService.allowBid"
-                              (click)="submit_bid_as_pass()">
-            Pass
-        </button>
+        Submit bid:
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-secondary"
+                                  [disabled]="!handService.allowBid"
+                                  (click)="submit_bid_as_pass()">
+                Pass
+            </button>
+            <button type="button" class="btn btn-secondary"
+                                  [disabled]="!handService.allowBid"
+                                  (click)="submit_bid(2)">
+                2
+            </button>
+            <button type="button" class="btn btn-secondary"
+                                  [disabled]="!handService.allowBid"
+                                  (click)="submit_bid(3)">
+                3
+            </button>
+            <button type="button" class="btn btn-secondary"
+                                  [disabled]="!handService.allowBid"
+                                  (click)="submit_bid(4)">
+                4
+            </button>
+            <button type="button" class="btn btn-secondary"
+                                  [disabled]="!handService.allowBid"
+                                  (click)="submit_bid(5)">
+                5
+            </button>
+        </div>
     </div>
     <div *ngIf="handService.showTrumpInput == true">
-        <select [(ngModel)]="selectedTrump"
-                              [disabled]="!handService.allowTrumpSelection">
-            <option *ngFor="let trump of trumpChoices" value={{trump}}>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-secondary"
+                                  *ngFor="let trump of trumpChoices" 
+                                  [disabled]="!handService.allowTrumpSelection"
+                                  (click)="submit_trump(trump)">
                 {{trump}}
-            </option>
-        </select>
-        <button type="button" class="btn btn-default"
-                              [disabled]="selectedTrump == undefined || !handService.allowTrumpSelection"
-                              (click)="submit_trump()">
-            Submit trump
-        </button>
+            </button>
+        </div>
     </div>
+    <br>
 </div>
 <div>
     <app-hand>Loading cards for placing bid</app-hand>

@@ -9,17 +9,14 @@ import { HandService } from '../hand.service';
   styleUrls: ['./bid.component.css']
 })
 export class BidComponent implements OnInit {
-    private bid: number;
-    private selectedTrump: string;
     private trumpChoices = [ "Spades", "Clubs", "Hearts", "Diamonds" ];
 
     constructor(private handService: HandService) {
-        this.bid = 0;
     }
 
-    submit_bid() {
-        console.log("bid submitted: " + this.bid);
-        this.handService.declareBid(this.bid);
+    submit_bid(bid: number) {
+        console.log("bid submitted: " + bid);
+        this.handService.declareBid(bid);
     }
 
     submit_bid_as_pass() {
@@ -27,9 +24,9 @@ export class BidComponent implements OnInit {
         this.handService.declareBid(0);
     }
 
-    submit_trump() {
-        console.log("trump submitted: " + this.selectedTrump);
-        this.handService.submitTrump(this.selectedTrump);
+    submit_trump(trump: string) {
+        console.log("trump submitted: " + trump);
+        this.handService.submitTrump(trump);
     }
 
     ngOnInit() {
