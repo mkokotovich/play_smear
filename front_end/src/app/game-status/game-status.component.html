@@ -17,7 +17,13 @@
                         {{ handService.getBidForPlayer(player.name) }} 
                     </li>
                     <li class="list-group-item" *ngIf="handService.hasPlayerPlayedACard(player.name)">
-                        Played {{ handService.getCardPlayedForPlayer(player.name) }}
+                        Played:<br>
+                        <div class="playingCards simpleCards">
+                            <div class="smearcard_status card {{ cardHelper.getCardClass(handService.getCardPlayedForPlayer(player.name)) }}" >
+                                <span class="rank">{{ cardHelper.getCardRankUpper(handService.getCardPlayedForPlayer(player.name)) }}</span>
+                                <span class="suit">{{ cardHelper.getCardSuitSymbol(handService.getCardPlayedForPlayer(player.name)) }}</span>
+                            </div>
+                        </div>
                     </li>
                     <div *ngIf="handService.showHandResults">
                         <li class="list-group-item"

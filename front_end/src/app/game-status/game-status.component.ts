@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
+import { CardHelper } from '../card-helper';
 import { GameService } from '../game.service';
 import { HandService } from '../hand.service';
 import { SmearApiService } from '../smear-api.service';
@@ -12,6 +13,7 @@ import { SmearApiService } from '../smear-api.service';
 export class GameStatusComponent implements OnInit {
     //Local copy just for easy of use
     private numPlayers: number;
+    public cardHelper = new CardHelper();
 
     constructor(private handService: HandService,
                 private gameService: GameService,

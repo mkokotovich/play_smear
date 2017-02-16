@@ -1,5 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { Card } from '../model/card';
+import { CardHelper } from '../card-helper';
 import { HandService } from '../hand.service';
 
 @Component({
@@ -8,6 +9,8 @@ import { HandService } from '../hand.service';
   styleUrls: ['./hand.component.css']
 })
 export class HandComponent implements OnInit {
+    cardHelper = new CardHelper();
+
     constructor(private handService: HandService) { 
     }
 

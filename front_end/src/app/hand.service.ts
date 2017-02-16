@@ -431,14 +431,14 @@ export class HandService {
         return false;
     }
 
-    getCardPlayedForPlayer(player: string): string {
+    getCardPlayedForPlayer(player: string): Card {
         for (let cp of this.cardsPlayed) {
             if (cp.username == player) {
-                return cp.card.value + " of " + cp.card.suit;
+                return cp.card;
             }
         }
         // If a card wasn't found
-        return "card not played";
+        return new Card("", "");
     }
 
     getCards(): Card[] {

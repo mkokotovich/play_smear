@@ -3,7 +3,10 @@
 // `ng build --env=prod` then `environment.prod.ts` will be used instead.
 // The list of which env maps to which file can be found in `angular-cli.json`.
 
+import { constants } from '../host-specific-constants';
+
 export const environment = {
   production: false,
-  apiBaseUrl: "http://localhost:5000"
+  //apiBaseUrl: constants.apiServerAddress
+  apiBaseUrl: "http://192.168.86.200:5000"
 };

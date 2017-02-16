@@ -1,15 +1,17 @@
 <div>
     <p>{{handService.getHandMessage()}}</p>
     <div class="container-fluid hand">
-        <div class="row" dnd-sortable-container [sortableData]="handService.getCards()">
-            <div class="col-4 col-sm-4 col-lg-2"
+        <div class="row playingCards simpleCards"
+            dnd-sortable-container [sortableData]="handService.getCards()">
+            <div class="col-2"
                  *ngFor="let card of handService.getCards(); let i = index">
-                <button type="button" class="btn btn-default smearcard"
-                                      dnd-sortable [sortableIndex]="i"
-                                      [class.selected]="card === handService.getSelectedCard()"
-                                      (click)="onSelect(card)">
-                    {{card.value}} <br> {{card.suit}}
-                </button>
+                <div class="smearcard card {{ cardHelper.getCardClass(card) }}"
+                        dnd-sortable [sortableIndex]="i"
+                        [class.selected]="card === handService.getSelectedCard()"
+                        (click)="onSelect(card)">
+                    <span class="rank">{{ cardHelper.getCardRankUpper(card) }}</span>
+                    <span class="suit">{{ cardHelper.getCardSuitSymbol(card) }}</span>
+                </div>
             </div>
         </div>
     </div>
