@@ -4,6 +4,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { AlertModule } from 'ng2-bootstrap';
+import { AccordionModule } from 'ng2-bootstrap';
 import { DndModule } from 'ng2-dnd';
 
 //import { ButtonsModule } from 'ng2-bootstrap';
@@ -34,6 +35,7 @@ import { HandStatusModalComponent } from './hand-status-modal/hand-status-modal.
     HandStatusModalComponent
   ],
   imports: [
+    AccordionModule.forRoot(),
     AppRoutingModule,
     BrowserModule,
     FormsModule,

@@ -32,7 +32,7 @@ export class GameService {
         this.handService.startNewHand();
     }
 
-    createGame() {
+    createAndJoinGame() {
         this.welcomeMessage = "Waiting for game to start...";
         this.errorMessage = "";
         this.disableCreateButton = true;
@@ -52,6 +52,7 @@ export class GameService {
         if (this.gameCreateInput.numHumanPlayers != 0) {
             this.welcomeMessage += " Tell the other players to use game id " + this.gameAndUser.game_id + " and join the game!";
         }
+        this.joinGame();
     }
 
     rejoinGame() {
@@ -78,7 +79,7 @@ export class GameService {
 
     joinGame() {
         Cookie.deleteAll();
-        this.welcomeMessage = "Joining game..."
+        this.welcomeMessage += "\nJoining game..."
         this.errorMessage = "";
         this.disableJoinButton = true;
         this.setGameInfo(this.gameAndUser.game_id, this.gameAndUser.username);

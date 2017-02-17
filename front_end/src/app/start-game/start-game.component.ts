@@ -10,22 +10,30 @@ import { SmearApiService } from '../smear-api.service';
   styleUrls: ['./start-game.component.css']
 })
 export class StartGameComponent implements OnInit {
-    private title = "Start or join a game";
+    public playAgainstPeople: boolean;
 
     constructor(private router: Router,
                 private gameService: GameService,
-                private smearApiService: SmearApiService) { }
+                private smearApiService: SmearApiService) {
+        this.playAgainstPeople = false;
+    }
 
     gameCreateInputIsValid() {
-        return !this.gameService.disableCreateButton && this.gameService.gameCreateInput.numPlayers;
+        return !this.gameService.disableCreateButton &&
+            this.gameService.gameCreateInput.numPlayers &&
+            this.gameService.gameAndUser.username;
     }
 
     gameJoinInputIsValid() {
         return !this.gameService.disableJoinButton && this.gameService.gameAndUser.game_id && this.gameService.gameAndUser.username;
     }
 
-    createGame() {
-        this.gameService.createGame();
+    createAndJoinGame() {
+        if (this.playAgainstPeople == false) {
+            // Make sure that the user didn't set this and then hide it.
+            this.gameService.gameCreateInput.numHumanPlayers = 0;
+        }
+        this.gameService.createAndJoinGame();
     }
 
     joinGame() {
