@@ -9,19 +9,32 @@ import { HandService } from '../hand.service';
   styleUrls: ['./bid.component.css']
 })
 export class BidComponent implements OnInit {
+    public bid = 0;
+
     private trumpChoices = [ "Spades", "Clubs", "Hearts", "Diamonds" ];
 
     constructor(private handService: HandService) {
+        this.bid = 0;
     }
 
-    submit_bid(bid: number) {
-        console.log("bid submitted: " + bid);
-        this.handService.declareBid(bid);
+    get_bid(): string {
+        let bid_str = ""
+        if (this.bid == 0) {
+            bid_str = "Pass";
+        } else {
+            bid_str = this.bid.toString();
+        }
+
+        return bid_str;
     }
 
-    submit_bid_as_pass() {
-        console.log("pass submitted");
-        this.handService.declareBid(0);
+    save_bid(bid: number) {
+        this.bid = bid;
+    }
+
+    submit_bid() {
+        console.log("bid submitted: " + this.bid);
+        this.handService.declareBid(this.bid);
     }
 
     submit_trump(trump: string) {
