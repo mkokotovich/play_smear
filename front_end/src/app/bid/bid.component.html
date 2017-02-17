@@ -1,49 +1,59 @@
 <div>
     <p> {{ handService.getBidMessage() }} </p>
     <div *ngIf="handService.showBidInput == true">
-        Select a bid:
         <div class="btn-group" role="group">
             <button type="button" class="btn btn-secondary"
                                   [disabled]="!handService.allowBid"
+                                  [class.active]="0 === bid"
                                   (click)="save_bid(0)">
                 Pass
             </button>
             <button type="button" class="btn btn-secondary"
                                   [disabled]="!handService.allowBid"
+                                  [class.active]="2 === bid"
                                   (click)="save_bid(2)">
                 2
             </button>
             <button type="button" class="btn btn-secondary"
                                   [disabled]="!handService.allowBid"
+                                  [class.active]="3 === bid"
                                   (click)="save_bid(3)">
                 3
             </button>
             <button type="button" class="btn btn-secondary"
                                   [disabled]="!handService.allowBid"
+                                  [class.active]="4 === bid"
                                   (click)="save_bid(4)">
                 4
             </button>
             <button type="button" class="btn btn-secondary"
                                   [disabled]="!handService.allowBid"
+                                  [class.active]="5 === bid"
                                   (click)="save_bid(5)">
                 5
             </button>
-            <button type="button" class="btn btn-default"
-                                  [disabled]="!handService.allowBid"
-                                  (click)="submit_bid()">
-                Submit Bid ({{ get_bid() }})
-            </button>
         </div>
+        <button type="button" class="btn btn-default" style="margin-left: 10px;"
+                              [disabled]="!handService.allowBid || bid == undefined"
+                              (click)="submit_bid()">
+            Submit Bid
+        </button>
     </div>
     <div *ngIf="handService.showTrumpInput == true">
         <div class="btn-group" role="group">
-            <button type="button" class="btn btn-secondary" style="margin-left: 10px;"
+            <button type="button" class="btn btn-secondary"
                                   *ngFor="let trump of trumpChoices" 
+                                  [class.active]="trump === get_trump()"
                                   [disabled]="!handService.allowTrumpSelection"
-                                  (click)="submit_trump(trump)">
+                                  (click)="save_trump(trump)">
                 {{trump}}
             </button>
         </div>
+        <button type="button" class="btn btn-default" style="margin-left: 10px;"
+                              [disabled]="!handService.allowTrumpSelection || selected_trump == undefined"
+                              (click)="submit_trump()">
+            Submit trump
+        </button>
     </div>
     <br>
 </div>
