@@ -142,7 +142,7 @@ class PlaySmearGameStartStatusTest(PlaySmearTest):
         PlaySmearTest.setUp(self)
         self.url = "/api/game/startstatus/"
         self.create_default_mock_engine()
-        self.data = { "game_id": self.game_id, "blocking": True }
+        self.data = { "game_id": self.game_id }
 
     def tearDown(self):
         pass

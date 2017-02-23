@@ -140,10 +140,9 @@ def get_value_from_params(params, key, abort_if_absent=True):
     return value
 
 
-# Checks on the status of a game
+# Checks on the status of a game. Returns status 503 if the game is not ready
 # Input (json data from post):
 #  game_id    - String - ID of game to check on
-#  blocking   - boolean - if true, don't return until game is ready to start
 # Return (json data):
 #  ready        - String/bool  - If the game is ready to start (all players have joined)
 #  num_players  - int     - if ready == True, this will be the number of players in the game
@@ -153,7 +152,6 @@ def game_start_status():
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
-    blocking = get_value_from_params(params, "blocking")
 
     # Check input
     engine = get_engine(game_id)
@@ -163,17 +161,9 @@ def game_start_status():
     player_names = []
     data = {}
     data["ready"] = engine.all_players_added()
-    if blocking:
-        sleep_interval = 5
-        time_waited = 0
-        timeout_after = 600
-        while not data["ready"] and time_waited < timeout_after:
-            #sleep and check again
-            time.sleep(sleep_interval)
-            time_waited += sleep_interval
-            data["ready"] = engine.all_players_added()
-        if time_waited >= timeout_after:
-            return generate_error(2, "Game {} took too long, giving up. Create a new game and try again".format(game_id))
+
+    if not data["ready"]:
+        return generate_error(12, "Game {} is not ready to start".format(game_id), error_code=503)
 
     if data["ready"]:
         player_names = engine.get_player_names()
@@ -323,6 +313,9 @@ def get_next_deal():
 
     # Perform game-related logic
     cards = engine.get_hand_for_player(username) 
+    if cards == None:
+        return generate_error(13, "Cards for {} in game {} are not available".format(username, game_id), error_code=503)
+
     hand_id = engine.get_hand_id() 
 
     # Return result, cards list should be at the root of data
@@ -354,6 +347,8 @@ def get_bid_info():
 
     # Perform game-related logic
     bid_info = engine.get_bid_info_for_player(username) 
+    if bid_info == None:
+        return generate_error(14, "bid info for {} in game {} is not available".format(username, game_id), error_code=503)
 
     # Return result, bid_info dict should be the top-level data
     data = bid_info
@@ -429,6 +424,8 @@ def get_high_bid():
 
     # Perform game-related logic
     high_bid_info = engine.get_high_bid(hand_id) 
+    if high_bid_info == None:
+        return generate_error(15, "high bid info for hand {} in game {} is not available".format(hand_id, game_id), error_code=503)
 
     # Return the high bid
     data = high_bid_info
@@ -466,8 +463,10 @@ def submit_and_get_trump():
         if not valid_trump:
             return generate_error(9, "Invalid trump selected: {}".format(input_trump))
     trump = engine.get_trump() 
+    if trump == None:
+        return generate_error(16, "trump for {} in game {} is not available".format(username, game_id), error_code=503)
 
-    # Return the high bid
+    # Return trump
     data = {}
     data["trump"] = trump
     return generate_return_string(data)
@@ -498,6 +497,8 @@ def get_playing_info():
 
     # Perform game-related logic
     playing_info = engine.get_playing_info_for_player(username) 
+    if playing_info == None:
+        return generate_error(17, "playing info for {} in game {} is not available".format(username, game_id), error_code=503)
 
     # Return the playing_info
     data = playing_info
@@ -563,6 +564,8 @@ def get_trick_results():
 
     # Perform game-related logic
     trick_results = engine.get_trick_results_for_player(username) 
+    if trick_results == None:
+        return generate_error(18, "trick results for {} in game {} is not available".format(username, game_id), error_code=503)
 
     # Return the playing_info
     data = trick_results
@@ -602,6 +605,8 @@ def get_hand_results():
 
     # Perform game-related logic
     hand_results = engine.get_hand_results(hand_id)
+    if hand_results == None:
+        return generate_error(19, "hand results for hand {} in game {} are not available".format(hand_id, game_id), error_code=503)
     if hand_results["is_game_over"]:
         ready_to_delete = engine.player_is_finished(username)
         if ready_to_delete:

@@ -15,7 +15,6 @@ import { GameId } from './model/game-id';
 import { GameCreateInput } from './model/game-create-input';
 import { GameAndHand } from './model/game-and-hand';
 import { GameAndUser } from './model/game-and-user';
-import { GameStartStatusInput } from './model/game-start-status-input';
 import { GameStartStatus } from './model/game-start-status';
 import { GameUserCard } from './model/game-user-card';
 import { GetTrump } from './model/get-trump';
@@ -45,13 +44,15 @@ export class SmearApiService {
 
     constructor(private http: Http) { }
 
-    getGameStartStatus(gameId: GameId): Observable<GameStartStatus> {
-        let data = new GameStartStatusInput(gameId.game_id, true);
+    getGameStartStatus(data: GameId): Observable<GameStartStatus> {
         let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
         return this.http.post(this.gameStartStatusUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -61,6 +62,9 @@ export class SmearApiService {
 
         return this.http.post(this.gameCreateUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -70,6 +74,9 @@ export class SmearApiService {
 
         return this.http.post(this.gameJoinUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -79,6 +86,9 @@ export class SmearApiService {
 
         return this.http.post(this.gameRejoinUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -88,6 +98,9 @@ export class SmearApiService {
 
         return this.http.post(this.handDealUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -97,6 +110,9 @@ export class SmearApiService {
 
         return this.http.post(this.handGetBidInfoUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -106,6 +122,9 @@ export class SmearApiService {
 
         return this.http.post(this.handSubmitBidUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -115,6 +134,9 @@ export class SmearApiService {
 
         return this.http.post(this.handGetHighBidUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -124,6 +146,9 @@ export class SmearApiService {
 
         return this.http.post(this.handGetTrumpUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -133,6 +158,9 @@ export class SmearApiService {
 
         return this.http.post(this.handGetPlayingInfoUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -142,6 +170,9 @@ export class SmearApiService {
 
         return this.http.post(this.handSubmitCardToPlayUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -151,6 +182,9 @@ export class SmearApiService {
 
         return this.http.post(this.handGetTrickResultsUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -160,6 +194,9 @@ export class SmearApiService {
 
         return this.http.post(this.handGetResultsUrl, data, options)
                         .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -167,6 +204,13 @@ export class SmearApiService {
         let body = res.json();
         console.debug(body);
         return body.data || { };
+    }
+
+    private handleErrorRetry(errors: Observable<any>): Observable<any> {
+        return errors
+                .mergeMap((error) => (error.status === 503) ? Observable.of(error) : Observable.throw(error))
+                .delay(2000)
+                .take(600);
     }
 
     private handleError (error: Response | any) {
