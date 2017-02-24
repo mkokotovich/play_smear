@@ -179,11 +179,11 @@ def game_start_status():
     if data["ready"]:
         player_names = engine.get_player_names()
         
-    data["num_players"] = len(player_names)
-    data["player_names"] = player_names
-
     # Continue the game play
     continue_game(engine)
+
+    data["num_players"] = len(player_names)
+    data["player_names"] = player_names
 
     return generate_return_string(data)
 
@@ -336,13 +336,13 @@ def get_next_deal():
 
     hand_id = engine.get_hand_id() 
 
+    # Continue the game play
+    continue_game(engine)
+
     # Return result, cards list should be at the root of data
     data = {}
     data["cards"] = cards
     data["hand_id"] = hand_id
-
-    # Continue the game play
-    continue_game(engine)
 
     return generate_return_string(data)
 
