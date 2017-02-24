@@ -16,6 +16,7 @@ cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 global g_game_id
 global g_game_id_lock
+global g_game_play_lock
 global g_engines
 global g_cleanup_thread
 global g_cleanup_queue
@@ -23,6 +24,7 @@ global g_game_timeout
 
 g_game_id = 0
 g_game_id_lock = threading.Lock()
+g_game_play_lock = threading.Lock()
 g_engines = {}
 g_cleanup_queue = Queue.Queue()
 g_cleanup_thread = None
@@ -35,6 +37,12 @@ def get_engine(game_id):
         if game_id in g_engines:
             engine = g_engines[game_id]
     return engine
+
+
+# Advances the game in a thread-safe manner
+def continue_game(engine):
+    with g_game_play_lock:
+        engine.continue_game()
 
 
 # Cleans up games after an expiration period, to release resources
@@ -158,6 +166,9 @@ def game_start_status():
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
 
+    # Continue the game play
+    continue_game(engine)
+
     player_names = []
     data = {}
     data["ready"] = engine.all_players_added()
@@ -170,6 +181,10 @@ def game_start_status():
         
     data["num_players"] = len(player_names)
     data["player_names"] = player_names
+
+    # Continue the game play
+    continue_game(engine)
+
     return generate_return_string(data)
 
 
@@ -311,6 +326,9 @@ def get_next_deal():
     if username not in engine.get_player_names():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
+    # Continue the game play
+    continue_game(engine)
+
     # Perform game-related logic
     cards = engine.get_hand_for_player(username) 
     if cards == None:
@@ -322,6 +340,10 @@ def get_next_deal():
     data = {}
     data["cards"] = cards
     data["hand_id"] = hand_id
+
+    # Continue the game play
+    continue_game(engine)
+
     return generate_return_string(data)
 
 
@@ -345,10 +367,16 @@ def get_bid_info():
     if username not in engine.get_player_names():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
+    # Continue the game play
+    continue_game(engine)
+
     # Perform game-related logic
     bid_info = engine.get_bid_info_for_player(username) 
     if bid_info == None:
         return generate_error(14, "bid info for {} in game {} is not available".format(username, game_id), error_code=503)
+
+    # Continue the game play
+    continue_game(engine)
 
     # Return result, bid_info dict should be the top-level data
     data = bid_info
@@ -387,10 +415,16 @@ def submit_bid():
     if username not in engine.get_player_names():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
+    # Continue the game play
+    continue_game(engine)
+
     # Perform game-related logic
     valid_bid = engine.submit_bid_for_player(username, bid) 
     if not valid_bid:
         return generate_error(6, "Invalid bid ({}) for {}, unable to submit bid".format(bid, username))
+
+    # Continue the game play
+    continue_game(engine)
 
     # Return success
     return generate_return_string()
@@ -422,10 +456,16 @@ def get_high_bid():
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
 
+    # Continue the game play
+    continue_game(engine)
+
     # Perform game-related logic
     high_bid_info = engine.get_high_bid(hand_id) 
     if high_bid_info == None:
         return generate_error(15, "high bid info for hand {} in game {} is not available".format(hand_id, game_id), error_code=503)
+
+    # Continue the game play
+    continue_game(engine)
 
     # Return the high bid
     data = high_bid_info
@@ -457,6 +497,9 @@ def submit_and_get_trump():
     if input_trump == None or len(input_trump) == 0:
         query_only = True
 
+    # Continue the game play
+    continue_game(engine)
+
     # Perform game-related logic
     if not query_only:
         valid_trump = engine.submit_trump_for_player(username, input_trump) 
@@ -465,6 +508,9 @@ def submit_and_get_trump():
     trump = engine.get_trump() 
     if trump == None:
         return generate_error(16, "trump for {} in game {} is not available".format(username, game_id), error_code=503)
+
+    # Continue the game play
+    continue_game(engine)
 
     # Return trump
     data = {}
@@ -495,10 +541,16 @@ def get_playing_info():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
 
+    # Continue the game play
+    continue_game(engine)
+
     # Perform game-related logic
     playing_info = engine.get_playing_info_for_player(username) 
     if playing_info == None:
         return generate_error(17, "playing info for {} in game {} is not available".format(username, game_id), error_code=503)
+
+    # Continue the game play
+    continue_game(engine)
 
     # Return the playing_info
     data = playing_info
@@ -531,10 +583,16 @@ def submit_card_to_play():
     if len(card.keys()) != 2 or "suit" not in card.keys() or "value" not in card.keys():
         return generate_error(7, "Improperly formatted card: {}".format(str(card)))
 
+    # Continue the game play
+    continue_game(engine)
+
     # Perform game-related logic
     valid_card = engine.submit_card_to_play_for_player(username, card) 
     if not valid_card:
         return generate_error(8, "Unable to play {} of {}, please pick another card".format(card["value"], card["suit"]))
+
+    # Continue the game play
+    continue_game(engine)
 
     # Return success
     return generate_return_string()
@@ -562,10 +620,16 @@ def get_trick_results():
         return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
 
 
+    # Continue the game play
+    continue_game(engine)
+
     # Perform game-related logic
     trick_results = engine.get_trick_results_for_player(username) 
     if trick_results == None:
         return generate_error(18, "trick results for {} in game {} is not available".format(username, game_id), error_code=503)
+
+    # Continue the game play
+    continue_game(engine)
 
     # Return the playing_info
     data = trick_results
@@ -603,6 +667,9 @@ def get_hand_results():
     except ValueError:
         return generate_error(11, "Invalid hand_id ({})".format(hand_id_input))
 
+    # Continue the game play
+    continue_game(engine)
+
     # Perform game-related logic
     hand_results = engine.get_hand_results(hand_id)
     if hand_results == None:
@@ -614,6 +681,9 @@ def get_hand_results():
             engine.finish_game()
             with g_game_id_lock:
                 del g_engines[game_id]
+
+    # Continue the game play
+    continue_game(engine)
 
     # Return the playing_info
     data = hand_results
