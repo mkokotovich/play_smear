@@ -45,7 +45,7 @@ def create_engine():
         game_id = str(g_game_id)
         engine = smear_engine_api.SmearEngineApi(debug=True)
         g_engines[game_id] = engine
-        pickle.dump( engine, open( "engine{}.p".format(game_id), "wb" ) )
+        #pickle.dump( engine, open( "engine{}.p".format(game_id), "wb" ) )
     return game_id
 
 
@@ -55,24 +55,25 @@ def load_engine(game_id):
     with g_game_id_lock:
         if game_id in g_engines:
             engine = g_engines[game_id]
-        filename = "engine{}.p".format(game_id)
-        if os.path.isfile(filename):
-            with open(filename, "rb") as pfile:
-                engine = pickle.load(pfile)
+        #filename = "engine{}.p".format(game_id)
+        #if os.path.isfile(filename):
+        #    with open(filename, "rb") as pfile:
+        #        engine = pickle.load(pfile)
     return engine
 
 
 # Updates the engine in a thread-safe manner
 def update_engine(game_id, engine):
-    with open("engine{}.p".format(game_id), "wb") as pfile:
-        pickle.dump(engine, pfile)
+    pass
+    #with open("engine{}.p".format(game_id), "wb") as pfile:
+    #    pickle.dump(engine, pfile)
 
 
 # Removes the engine in a thread-safe manner
 def remove_engine(game_id):
     with g_game_id_lock:
         del g_engines[game_id]
-        os.remove("engine{}.p".format(game_id))
+        #os.remove("engine{}.p".format(game_id))
 
 
 # Advances the game in a thread-safe manner
