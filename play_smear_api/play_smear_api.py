@@ -7,6 +7,8 @@ import Queue
 import time
 import sys
 import os
+import inspect
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pydealer")
 from pysmear import smear_engine_api
@@ -93,7 +95,13 @@ def initialize(cleanup_thread, cleanup_queue, game_timeout):
 
 
 def generate_error(status_id, message, error_code=500):
-    app.logger.error("Returning error: {} ({})".format(message, status_id))
+    func = inspect.currentframe().f_back.f_code
+    location_str = "{} in {}:{}".format(
+        func.co_name,
+        func.co_filename,
+        func.co_firstlineno
+    )
+    app.logger.error("Returning error from {}: {} ({})".format(location_str, message, status_id))
     status = {}
     status["status_id"] = status_id
     status["message"] = message
@@ -104,7 +112,13 @@ def generate_error(status_id, message, error_code=500):
 
 
 def generate_return_string(data=None):
-    app.logger.debug("Returning success with data: {}".format(str(data)))
+    func = inspect.currentframe().f_back.f_code
+    location_str = "{} in {}:{}".format(
+        func.co_name,
+        func.co_filename,
+        func.co_firstlineno
+    )
+    app.logger.debug("Returning success from {} with data: {}".format(location_str, json.dumps(data, indent=2, separators=(',', ': '))))
     status = {}
     status["status_id"] = 0
     ret = {}
