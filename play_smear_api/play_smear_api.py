@@ -8,6 +8,7 @@ import time
 import sys
 import os
 import inspect
+import cPickle as pickle
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pydealer")
@@ -32,13 +33,46 @@ g_cleanup_queue = Queue.Queue()
 g_cleanup_thread = None
 g_game_timeout = 36000
 
+
+# Creates a new engine in a thread-safe manner
+def create_engine():
+    global g_engines
+    global g_game_id_lock
+    global g_game_id
+    game_id = None
+    with g_game_id_lock:
+        g_game_id += 1
+        game_id = str(g_game_id)
+        engine = smear_engine_api.SmearEngineApi(debug=True)
+        g_engines[game_id] = engine
+        pickle.dump( engine, open( "engine{}.p".format(game_id), "wb" ) )
+    return game_id
+
+
 # Gets the engine in a thread-safe manner
-def get_engine(game_id):
+def load_engine(game_id):
     engine = None
     with g_game_id_lock:
         if game_id in g_engines:
             engine = g_engines[game_id]
+        filename = "engine{}.p".format(game_id)
+        if os.path.isfile(filename):
+            with open(filename, "rb") as pfile:
+                engine = pickle.load(pfile)
     return engine
+
+
+# Updates the engine in a thread-safe manner
+def update_engine(game_id, engine):
+    with open("engine{}.p".format(game_id), "wb") as pfile:
+        pickle.dump(engine, pfile)
+
+
+# Removes the engine in a thread-safe manner
+def remove_engine(game_id):
+    with g_game_id_lock:
+        del g_engines[game_id]
+        os.remove("engine{}.p".format(game_id))
 
 
 # Advances the game in a thread-safe manner
@@ -63,9 +97,10 @@ def cleanup_thread_function(engine_queue, game_timeout):
                 for game in active_games:
                     app.logger.debug("+++Received empty game_id, quitting all games and exiting")
                     active_games.remove(game)
-                    engine = get_engine(game.game_id)
+                    engine = load_engine(game.game_id)
                     if engine is not None:
                         engine.finish_game()
+                        remove_engine(game.game_id)
                 return
             expiration = int(time.time()) + game_timeout
             app.logger.debug("+++Cleanup thread received game_id {}, setting expiration for {}".format(game_id, expiration))
@@ -78,11 +113,11 @@ def cleanup_thread_function(engine_queue, game_timeout):
                     # Game has reached the expiration time
                     app.logger.debug("+++Game {} has reached the expiration time ({}), quitting".format(game.game_id, game.expiration))
                     active_games.remove(game)
-                    engine = get_engine(game.game_id)
+                    engine = load_engine(game.game_id)
                     if engine is not None:
                         engine.finish_game()
-                        with g_game_id_lock:
-                            del g_engines[game.game_id]
+                        remove_engine(game.game_id)
+
 
 def initialize(cleanup_thread, cleanup_queue, game_timeout):
     if cleanup_thread is None:
@@ -128,15 +163,8 @@ def generate_return_string(data=None):
 
 
 def create_game_and_return_id():
-    global g_game_id_lock
-    global g_game_id
     global g_cleanup_queue
-    global g_engines
-    game_id = None
-    with g_game_id_lock:
-        g_game_id += 1
-        game_id = str(g_game_id)
-        g_engines[game_id] = smear_engine_api.SmearEngineApi(debug=True)
+    game_id = create_engine()
     g_cleanup_queue.put(game_id)
     return game_id
 
@@ -176,7 +204,7 @@ def game_start_status():
     game_id = get_value_from_params(params, "game_id")
 
     # Check input
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
 
@@ -195,6 +223,9 @@ def game_start_status():
         
     # Continue the game play
     continue_game(engine)
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     data["num_players"] = len(player_names)
     data["player_names"] = player_names
@@ -233,7 +264,7 @@ def join_game():
     username = get_value_from_params(params, "username", abort_if_absent=False)
 
     # Check input
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
 
@@ -241,6 +272,9 @@ def join_game():
     result = add_user_to_game(engine, game_id, username)
     if result is not 0:
         return generate_error(1, "Game {} is already full, contains {} players".format(game_id, result))
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return result, but first set a cookie so the client can rejoin
     data = {}
@@ -264,9 +298,12 @@ def rejoin_game():
     username = get_value_from_params(params, "username", abort_if_absent=False)
 
     # Check input
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return result, but first set a cookie so the client can rejoin
     data = {}
@@ -308,10 +345,13 @@ def create_game():
     # Perform game-related logic
     game_id = create_game_and_return_id()
     app.logger.debug("Starting game {} with {} players".format(game_id, numPlayers))
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Unusual error occurred, could not find game that was just created {}".format(game_id))
     engine.create_new_game(num_players=numPlayers, num_human_players=numHumanPlayers, score_to_play_to=11)
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return result
     data = {}
@@ -334,7 +374,7 @@ def get_next_deal():
     username = get_value_from_params(params, "username")
 
     # Check input
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
     if username not in engine.get_player_names():
@@ -352,6 +392,9 @@ def get_next_deal():
 
     # Continue the game play
     continue_game(engine)
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return result, cards list should be at the root of data
     data = {}
@@ -375,7 +418,7 @@ def get_bid_info():
     username = get_value_from_params(params, "username")
 
     # Check input
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
     if username not in engine.get_player_names():
@@ -391,6 +434,9 @@ def get_bid_info():
 
     # Continue the game play
     continue_game(engine)
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return result, bid_info dict should be the top-level data
     data = bid_info
@@ -423,7 +469,7 @@ def submit_bid():
                 raise ValueError("Invalid bid")
         except ValueError:
             return generate_error(6, "Invalid bid: {}, bid must be between 2 and 5, or 0 for a pass".format(bid))
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
     if username not in engine.get_player_names():
@@ -439,6 +485,9 @@ def submit_bid():
 
     # Continue the game play
     continue_game(engine)
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return success
     return generate_return_string()
@@ -466,7 +515,7 @@ def get_high_bid():
         return generate_error(11, "Invalid hand_id ({})".format(hand_id_input))
 
     # Check input
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
 
@@ -480,6 +529,9 @@ def get_high_bid():
 
     # Continue the game play
     continue_game(engine)
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return the high bid
     data = high_bid_info
@@ -503,7 +555,7 @@ def submit_and_get_trump():
     query_only = False
 
     # Check input
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
     if username not in engine.get_player_names():
@@ -519,12 +571,20 @@ def submit_and_get_trump():
         valid_trump = engine.submit_trump_for_player(username, input_trump) 
         if not valid_trump:
             return generate_error(9, "Invalid trump selected: {}".format(input_trump))
+
+    # Continue the game play so trump is set
+    continue_game(engine)
+
+    # Perform game-related logic
     trump = engine.get_trump() 
     if trump == None:
         return generate_error(16, "trump for {} in game {} is not available".format(username, game_id), error_code=503)
 
     # Continue the game play
     continue_game(engine)
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return trump
     data = {}
@@ -548,7 +608,7 @@ def get_playing_info():
     username = get_value_from_params(params, "username")
 
     # Check input
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
     if username not in engine.get_player_names():
@@ -565,6 +625,9 @@ def get_playing_info():
 
     # Continue the game play
     continue_game(engine)
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return the playing_info
     data = playing_info
@@ -589,7 +652,7 @@ def submit_card_to_play():
     card = get_value_from_params(params, "card_to_play")
 
     # Check input
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
     if username not in engine.get_player_names():
@@ -607,6 +670,9 @@ def submit_card_to_play():
 
     # Continue the game play
     continue_game(engine)
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return success
     return generate_return_string()
@@ -627,7 +693,7 @@ def get_trick_results():
     username = get_value_from_params(params, "username")
 
     # Check input
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
     if username not in engine.get_player_names():
@@ -644,6 +710,9 @@ def get_trick_results():
 
     # Continue the game play
     continue_game(engine)
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return the playing_info
     data = trick_results
@@ -671,7 +740,7 @@ def get_hand_results():
     username = get_value_from_params(params, "username")
 
     # Check input
-    engine = get_engine(game_id)
+    engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
     try:
@@ -698,6 +767,9 @@ def get_hand_results():
 
     # Continue the game play
     continue_game(engine)
+
+    # Update persistent engine
+    update_engine(game_id, engine)
 
     # Return the playing_info
     data = hand_results
