@@ -35,7 +35,7 @@ g_game_timeout = 36000
 
 
 # Creates a new engine in a thread-safe manner
-def create_engine():
+def create_engine(engineDebug):
     global g_engines
     global g_game_id_lock
     global g_game_id
@@ -43,7 +43,7 @@ def create_engine():
     with g_game_id_lock:
         g_game_id += 1
         game_id = str(g_game_id)
-        engine = smear_engine_api.SmearEngineApi(debug=True)
+        engine = smear_engine_api.SmearEngineApi(debug=engineDebug)
         g_engines[game_id] = engine
         #pickle.dump( engine, open( "engine{}.p".format(game_id), "wb" ) )
     return game_id
@@ -163,9 +163,9 @@ def generate_return_string(data=None):
     return json.dumps(ret)
 
 
-def create_game_and_return_id():
+def create_game_and_return_id(engineDebug):
     global g_cleanup_queue
-    game_id = create_engine()
+    game_id = create_engine(engineDebug)
     g_cleanup_queue.put(game_id)
     return game_id
 
@@ -330,6 +330,13 @@ def create_game():
     numHumanPlayersInput = get_value_from_params(params, "numHumanPlayers")
     numPlayers = 0
     numHumanPlayers = 0
+
+    # Default to debug = True
+    engineDebug = True
+    debugValue = get_value_from_params(params, "engineDebug", abort_if_absent=False)
+    if debugValue == False:
+        engineDebug = False
+
     try:
         numPlayers = int(numPlayerInput)
         if numPlayers < 2 or numPlayers > 8:
@@ -344,7 +351,7 @@ def create_game():
         return generate_error(3, "Invalid number of human players {}, must be less than or equal to number of players ({})".format(numHumanPlayersInput, numPlayers))
 
     # Perform game-related logic
-    game_id = create_game_and_return_id()
+    game_id = create_game_and_return_id(engineDebug)
     app.logger.debug("Starting game {} with {} players".format(game_id, numPlayers))
     engine = load_engine(game_id)
     if engine is None:
