@@ -40,7 +40,7 @@ export class HandService {
     public allBids = new Array<Bid>();
     private bidder: string;
     private bidMessage: string;
-    public playingInfo = new PlayingInfo(new Array<CardPlayed>(), new Card("", ""), "");
+    public playingInfo = new PlayingInfo(new Array<CardPlayed>(), false, new Card("", ""), "");
     private handId: string;
     public cardsPlayed = new Array<CardPlayed>();
     private trump: string;
@@ -105,7 +105,7 @@ export class HandService {
         this.enableNextHandButton = false;
         this.highBid = new Bid("", "", 0);
         this.cardsPlayed = new Array<CardPlayed>();
-        this.playingInfo = new PlayingInfo(new Array<CardPlayed>(), new Card("", ""), "");
+        this.playingInfo = new PlayingInfo(new Array<CardPlayed>(), false, new Card("", ""), "");
 
         // If we rejoined a game after a hand had finished, just straight to the hand summary
         let hand_finished = Cookie.get("hand_finished");
@@ -251,9 +251,15 @@ export class HandService {
     }
 
     receivePlayingInfo(playingInfo: PlayingInfo) {
+        if (playingInfo.cards_played != undefined) {
+            this.cardsPlayed = playingInfo.cards_played;
+        }
+        if (playingInfo.ready_to_play == false) {
+            // If we aren't ready, check again in two seconds
+            return setTimeout(this.getPlayingInfo.bind(this), 2000);
+        }
         this.displayTrickConfirmationButton = false;
         this.allowSelections(true);
-        this.cardsPlayed = playingInfo.cards_played;
         this.playingInfo = playingInfo;
         if (playingInfo.lead_suit != "") {
             this.setGameStatus("Trump is " + this.trump + ", " + playingInfo.lead_suit + " was lead");
@@ -286,10 +292,15 @@ export class HandService {
     }
 
     trickResultsReceived(trickResults: TrickResults) {
+        if (trickResults.cards_played != undefined) {
+            this.cardsPlayed = trickResults.cards_played;
+        }
+        if (trickResults.trick_finished == false) {
+            return setTimeout(this.cardSubmitted.bind(this), 2000);
+        }
         this.setGameStatus("Trick is finished, " + trickResults.winner + " took the trick");
         // This wasn't working very well.
         //this.displayHandStatusModal("Trick is finished, " + trickResults.winner + " took the trick");
-        this.cardsPlayed = trickResults.cards_played;
         this.displayTrickConfirmationButton = true;
         this.enableTrickConfirmationButton = true;
     }

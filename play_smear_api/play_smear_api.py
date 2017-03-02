@@ -599,6 +599,7 @@ def submit_and_get_trump():
 #  username - string - username of player
 # Return (json data):
 #  cards_played         - list of card_played - Cards that have been played so far, with username
+#  ready_to_play        - boolean       - Indicates if the game is ready for the user to take his turn
 #  current_winning_card - card          - The card that is currently winning the trick
 #  lead_suit            - string        - The suit of the first card played
 @app.route("/api/hand/getplayinginfo/", methods=["POST"])
@@ -622,7 +623,11 @@ def get_playing_info():
     # Perform game-related logic
     playing_info = engine.get_playing_info_for_player(username) 
     if playing_info == None:
-        return generate_error(17, "playing info for {} in game {} is not available".format(username, game_id), error_code=503)
+        playing_info = {}
+        playing_info["cards_played"] = engine.get_cards_played_so_far()
+        playing_info["ready_to_play"] = False
+    else:
+        playing_info["ready_to_play"] = True
 
     # Continue the game play
     continue_game(engine)
@@ -684,8 +689,9 @@ def submit_card_to_play():
 #  game_id  - string - ID of game we're playing
 #  username - string - username of player
 # Return (json data):
-#  winner        - string  - The winner of the trick
-#  cards_played  - list of card_played objects  -  a card_played object is a username and a card
+#  cards_played   - list of card_played objects  -  a card_played object is a username and a card
+#  trick_finished - boolean  - The trick is finished, no need to call this again
+#  winner         - string   - The winner of the trick
 @app.route("/api/hand/gettrickresults/", methods=["POST"])
 def get_trick_results():
     # Read input
@@ -707,7 +713,11 @@ def get_trick_results():
     # Perform game-related logic
     trick_results = engine.get_trick_results_for_player(username) 
     if trick_results == None:
-        return generate_error(18, "trick results for {} in game {} is not available".format(username, game_id), error_code=503)
+        trick_results = {}
+        trick_results["cards_played"] = engine.get_cards_played_so_far()
+        trick_results["trick_finished"] = False
+    else:
+        trick_results["trick_finished"] = True
 
     # Continue the game play
     continue_game(engine)
