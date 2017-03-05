@@ -1,3 +1,14 @@
 .selected {
     background-color: #FFFFC7 !important;
 }
+
+.redStatus {
+    color: #FFFFFF;
+    background-color: #D9534F !important;
+    font-weight: bold;
+}
+
+.greenStatus {
+    color: #449d44 !important;
+    font-weight: bold;
+}

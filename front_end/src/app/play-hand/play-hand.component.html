@@ -6,20 +6,21 @@
     Select a card to play, then click it again to submit your choice
 </div>
 <div *ngIf="handService.displayTrickConfirmationButton == true">
-    <button type="button" class="btn btn-default"
+    <button type="button" class="btn btn-primary btn-lg"
                           [disabled]="!handService.enableTrickConfirmationButton"
                           (click)="handService.startNextTrick()">
-        Okay
+        Continue
     </button>
 </div>
 
 <div *ngIf="handService.displayNextHandButton == true">
-    <button type="button" class="btn btn-default"
+    <button type="button" class="btn btn-primary btn-lg"
                           [disabled]="!handService.enableNextHandButton"
                           (click)="handService.startNextHand()">
         {{ handService.nextHandButtonText }}
     </button>
 </div>
+<br>
 <div>
     <app-hand>Loading cards</app-hand>
 </div>

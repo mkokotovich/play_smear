@@ -29,6 +29,7 @@ export class HandService {
     public showTrumpInput: boolean;
     public allowBid: boolean;
     public allowTrumpSelection: boolean;
+    public playersTurn: boolean;
     private cards: Card[];
     private selectedCard: Card;
     private allowSelection: boolean;
@@ -61,6 +62,7 @@ export class HandService {
         this.showTrumpInput = false;
         this.allowBid = false;
         this.allowTrumpSelection = false;
+        this.playersTurn = false;
         this.currentlyBidding = false;
         this.displayTrickConfirmationButton = false;
         this.enableTrickConfirmationButton = false;
@@ -166,6 +168,7 @@ export class HandService {
     receiveBidInfo(bidInfo: BidInfo) {
         this.allBids = bidInfo.all_bids;
         this.allowBid = true;
+        this.playersTurn = true;
         this.setGameStatus("Enter your bid below");
         if (bidInfo.current_bid < 2) {
             if (bidInfo.force_two) {
@@ -180,6 +183,7 @@ export class HandService {
 
     declareBid(bidNum: number): void {
         let bid = new Bid(this.gameAndUser.game_id, this.gameAndUser.username, bidNum);
+        this.playersTurn = false;
         this.setGameStatus("Submitting bid");
         this.setBidMessage("");
         this.smearApiService.handSubmitBid(bid)
@@ -212,8 +216,9 @@ export class HandService {
                 this.setGameStatus("You are the bidder, enter your choice for trump below");
                 this.allowTrumpSelection = true;
                 this.showTrumpInput = true;
+                this.playersTurn = true;
             } else {
-                this.setGameStatus("Finding out what trump will be");
+                this.setGameStatus(this.highBid.username + " bid: " + this.highBid.bid + ". Finding out what trump will be");
                 this.getOrSubmitTrump("");
             }
         } else {
@@ -224,6 +229,7 @@ export class HandService {
     submitTrump(trump: string): void {
         this.setGameStatus("Submitting trump to be " + trump);
         this.allowTrumpSelection = false;
+        this.playersTurn = false;
         this.getOrSubmitTrump(trump);
     }
 
@@ -260,6 +266,7 @@ export class HandService {
         }
         this.displayTrickConfirmationButton = false;
         this.allowSelections(true);
+        this.playersTurn = true;
         this.playingInfo = playingInfo;
         if (playingInfo.lead_suit != "") {
             this.setGameStatus("Trump is " + this.trump + ", " + playingInfo.lead_suit + " was lead");
@@ -271,6 +278,7 @@ export class HandService {
     submitCardToPlay(cardToPlay: Card): void {
         this.setGameStatus("Submitting card");
         this.allowSelections(false);
+        this.playersTurn = false;
         this.unSelectCard();
         this.deleteCard(cardToPlay);
         if (this.cards.length == 0) {
@@ -292,6 +300,7 @@ export class HandService {
         }
         this.addCard(card);
         this.allowSelections(true);
+        this.playersTurn = true;
         this.gameStatusMessage = message;
         console.log(err);
     }
@@ -322,6 +331,7 @@ export class HandService {
         if (this.cards.length == 0) {
             return this.getHandResults();
         }
+        this.playersTurn = false;
         this.enableTrickConfirmationButton = false;
         this.cardsPlayed = new Array<CardPlayed>();
         this.getPlayingInfo();
@@ -343,7 +353,7 @@ export class HandService {
             this.displayNextHandButton = false;
             this.enableNextHandButton = false;
         } else {
-            this.setGameStatus("Results of previous hand");
+            this.setGameStatus("Results of previous hand.");
             this.nextHandButtonText = "Start next hand";
             this.displayNextHandButton = true;
             this.enableNextHandButton = true;
@@ -405,14 +415,16 @@ export class HandService {
 
     startNextHand() {
         this.enableNextHandButton = false;
+        this.playersTurn = false;
         Cookie.set("bid_submitted", "false", 1);
         Cookie.set("trump", "", 1);
         Cookie.set("hand_finished", "false", 1);
         Cookie.set("hand_id", "", 1);
-        this.startNewHand();
+        this.allBids = new Array<Bid>();
         for (let player of this.players) {
             player.points = new Array<string>();
         }
+        this.startNewHand();
 
     }
 

@@ -28,10 +28,18 @@
                         </div>
                     </li>
                     <div *ngIf="handService.showHandResults">
-                        <li class="list-group-item"
-                            *ngFor="let point of handService.getPointsWon(player.name)">
-                            {{ point }}
-                        </li>
+                        <div *ngFor="let point of handService.getPointsWon(player.name)">
+                            <div *ngIf="point == 'Was set!'" class="redStatus">
+                                <li class="list-group-item redStatus">
+                                    {{ point }}
+                                </li>
+                            </div>
+                            <div *ngIf="point != 'Was set!'" class="greenStatus">
+                                <li class="list-group-item greenStatus">
+                                    {{ point }}
+                                </li>
+                            </div>
+                        </div>
                     </div>
                 </ul>
             </div>
@@ -39,9 +47,10 @@
     </div>
 </div>
 <br>
-<div class="container">
+<div class="container" *ngIf="handService.getGameStatus() != ''">
     <div class="center">
-        <div class="card bg-faded">
+        <div class="card">
+            <h5 *ngIf="handService.playersTurn" style="font-weight: bold" class="card-header card-title">Your turn</h5>
             <div class="card-block">
                 <div class="card-text">
                     {{ handService.getGameStatus() }}
