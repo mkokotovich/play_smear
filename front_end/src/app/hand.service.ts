@@ -280,7 +280,20 @@ export class HandService {
         let gameUserCard = new GameUserCard(this.gameAndUser.game_id, this.gameAndUser.username, cardToPlay);
         this.smearApiService.handSubmitCardToPlay(gameUserCard)
                             .subscribe( res => this.cardSubmitted(),
-                                        err => this.handleHandError(err, "Unable to submit card to play"));
+                                        err => this.handleSubmitCardError(err, cardToPlay));
+    }
+
+    handleSubmitCardError(err: any, card: Card) {
+        let message = <string>err;
+        if (this.playingInfo.lead_suit != "") {
+            message += ". Trump is " + this.trump + ", " + this.playingInfo.lead_suit + " was lead.";
+        } else {
+            message += ". Trump is " + this.trump + ", it is your lead.";
+        }
+        this.addCard(card);
+        this.allowSelections(true);
+        this.gameStatusMessage = message;
+        console.log(err);
     }
 
     cardSubmitted(): void {
@@ -481,6 +494,10 @@ export class HandService {
 
     deleteCard(card:Card) {
         this.cards.splice(this.cards.indexOf(card), 1);
+    }
+
+    addCard(card:Card) {
+        this.cards.push(card);
     }
 
     allowSelections(selections: boolean) {
