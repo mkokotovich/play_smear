@@ -333,6 +333,7 @@ export class HandService {
         }
         this.playersTurn = false;
         this.enableTrickConfirmationButton = false;
+        this.displayTrickConfirmationButton = false;
         this.cardsPlayed = new Array<CardPlayed>();
         this.getPlayingInfo();
     }
