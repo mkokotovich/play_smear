@@ -82,6 +82,9 @@ def continue_game(engine):
         engine.continue_game()
 
 
+# Keep a reference to Queue.Empty so it isn't garabage collected before the cleanup thread function needs it
+unused_empty = Queue.Empty
+
 # Cleans up games after an expiration period, to release resources
 def cleanup_thread_function(engine_queue, game_timeout):
     global g_engines

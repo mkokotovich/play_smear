@@ -5,6 +5,8 @@ from mock import patch, MagicMock
 import tempfile
 import json
 from pysmear import smear_engine_api
+from pysmear import smear_utils
+import pydealer
 
 # Class with common tools
 class PlaySmearTest(unittest.TestCase):
@@ -566,7 +568,9 @@ class PlaySmearBrothersTest(PlaySmearTest):
             self.url = "/api/hand/deal/"
             self.data = { "game_id": self.game_id, "username": brother }
             params = self.post_data_and_return_data(self.url, self.data)
-            self.cards[brother] = params["cards"]
+            self.cards[brother] = pydealer.Stack()
+            for card in params["cards"]:
+                self.cards[brother].add(pydealer.Card(card["value"], card["suit"]))
             self.assertEquals(6, len(self.cards[brother]))
             self.hand_id = params["hand_id"]
 
@@ -630,7 +634,10 @@ class PlaySmearBrothersTest(PlaySmearTest):
 
                     # Submit card to play
                     self.url = "/api/hand/submitcard/"
-                    self.card_to_play = self.cards[brother].pop()
+                    indices = smear_utils.SmearUtils.get_legal_play_indices(params["lead_suit"], self.trump, self.cards[brother])
+                    card = self.cards[brother][indices[0]]
+                    self.card_to_play = { "suit": card.suit, "value": card.value }
+                    del self.cards[brother][indices[0]]
                     self.data = { "game_id": self.game_id, "username": brother, "card_to_play": self.card_to_play }
                     params = self.post_data_and_return_data(self.url, self.data)
                     card_played.append(brother)
