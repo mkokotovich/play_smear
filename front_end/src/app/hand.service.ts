@@ -152,7 +152,7 @@ export class HandService {
         let bid_submitted = Cookie.get("bid_submitted");
         Cookie.set("hand_id", this.handId, 1);
         if (bid_submitted != "true") {
-            this.setGameStatus("Waiting for your turn to bid");
+            this.setGameStatus("Waiting for your turn");
             this.getBidInfo();
         } else {
             this.bidSubmitted();
