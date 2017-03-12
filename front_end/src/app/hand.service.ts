@@ -88,7 +88,7 @@ export class HandService {
         this.players = players;
     }
 
-    displayHandStatusModal(message: string) {
+    displayHandStatusModal(message: string): void {
         const modalRef = this.modalService.open(HandStatusModalComponent);
         modalRef.componentInstance.handStatus = message;
     }
@@ -144,15 +144,14 @@ export class HandService {
                                         err => this.handleHandError(err, "Unable to retrieve cards"));
     }
 
-    receiveHand(handInfo: HandInfo) {
+    receiveHand(handInfo: HandInfo): void {
         this.cards = handInfo.cards;
         this.handId = handInfo.hand_id;
-        this.showBidInput = true;
         this.setHandMessage("Your hand:");
         let bid_submitted = Cookie.get("bid_submitted");
         Cookie.set("hand_id", this.handId, 1);
         if (bid_submitted != "true") {
-            this.setGameStatus("Waiting for your turn");
+            this.setGameStatus("Waiting for your turn to bid");
             this.getBidInfo();
         } else {
             this.bidSubmitted();
@@ -165,10 +164,18 @@ export class HandService {
                                         err => this.handleHandError(err, "Unable to retrieve information about bidding"));
     }
 
-    receiveBidInfo(bidInfo: BidInfo) {
-        this.allBids = bidInfo.all_bids;
+    receiveBidInfo(bidInfo: BidInfo): void {
+        if (bidInfo.all_bids != undefined) {
+            this.allBids = bidInfo.all_bids;
+        }
+        if (bidInfo.ready == false) {
+            // If we aren't ready, check again in two seconds
+            setTimeout(this.getBidInfo.bind(this), 2000);
+            return;
+        }
         this.allowBid = true;
         this.playersTurn = true;
+        this.showBidInput = true;
         this.setGameStatus("Enter your bid below");
         if (bidInfo.current_bid < 2) {
             if (bidInfo.force_two) {
@@ -202,9 +209,16 @@ export class HandService {
     }
 
     highBidReceived(highBidInfo: BidInfo): void {
+        if (highBidInfo.all_bids != undefined) {
+            this.allBids = highBidInfo.all_bids;
+        }
+        if (highBidInfo.ready == false) {
+            // If we aren't ready, check again in two seconds
+            setTimeout(this.bidSubmitted.bind(this), 2000);
+            return;
+        }
         this.highBid.username = highBidInfo.bidder;
         this.highBid.bid = highBidInfo.current_bid;
-        this.allBids = highBidInfo.all_bids;
         let saved_trump = Cookie.get("trump");
         if (saved_trump != "Spades" && saved_trump != "Clubs" && saved_trump != "Diamonds" && saved_trump != "Hearts") {
             this.setGameStatus("High bid received: " + this.highBid.username + " bid: " + this.highBid.bid);
@@ -256,13 +270,14 @@ export class HandService {
                                         err => this.handleHandError(err, "Unable to retrieve information needed for playing"));
     }
 
-    receivePlayingInfo(playingInfo: PlayingInfo) {
+    receivePlayingInfo(playingInfo: PlayingInfo): void {
         if (playingInfo.cards_played != undefined) {
             this.cardsPlayed = playingInfo.cards_played;
         }
         if (playingInfo.ready_to_play == false) {
             // If we aren't ready, check again in two seconds
-            return setTimeout(this.getPlayingInfo.bind(this), 2000);
+            setTimeout(this.getPlayingInfo.bind(this), 2000);
+            return;
         }
         this.displayTrickConfirmationButton = false;
         this.allowSelections(true);
@@ -291,7 +306,7 @@ export class HandService {
                                         err => this.handleSubmitCardError(err, cardToPlay));
     }
 
-    handleSubmitCardError(err: any, card: Card) {
+    handleSubmitCardError(err: any, card: Card): void {
         let message = <string>err;
         if (this.playingInfo.lead_suit != "") {
             message += ". Trump is " + this.trump + ", " + this.playingInfo.lead_suit + " was lead.";
@@ -313,12 +328,13 @@ export class HandService {
                                         err => this.handleHandError(err, "Unable to get the results of the trick"));
     }
 
-    trickResultsReceived(trickResults: TrickResults) {
+    trickResultsReceived(trickResults: TrickResults): void {
         if (trickResults.cards_played != undefined) {
             this.cardsPlayed = trickResults.cards_played;
         }
         if (trickResults.trick_finished == false) {
-            return setTimeout(this.cardSubmitted.bind(this), 2000);
+            setTimeout(this.cardSubmitted.bind(this), 2000);
+            return;
         }
         this.setGameStatus("Trick is finished, " + trickResults.winner + " took the trick");
         // This wasn't working very well.
@@ -327,7 +343,7 @@ export class HandService {
         this.enableTrickConfirmationButton = true;
     }
 
-    startNextTrick() {
+    startNextTrick(): void {
         if (this.cards.length == 0) {
             return this.getHandResults();
         }
@@ -347,7 +363,7 @@ export class HandService {
                                         err => this.handleHandError(err, "Unable to retrieve results of hand"));
     }
 
-    receiveHandResults(handResults: HandResults) {
+    receiveHandResults(handResults: HandResults): void {
         this.handResults = handResults;
         if (this.handResults.is_game_over) {
             this.setGameStatus("Results of previous hand. Game is now over.");
@@ -414,7 +430,7 @@ export class HandService {
         return new Array<string>();
     }
 
-    startNextHand() {
+    startNextHand(): void {
         this.enableNextHandButton = false;
         this.playersTurn = false;
         Cookie.set("bid_submitted", "false", 1);
@@ -429,7 +445,7 @@ export class HandService {
 
     }
 
-    handleHandError(err: any, message: string) {
+    handleHandError(err: any, message: string): void {
         this.gameStatusMessage = message + <string>err;
         console.log(err);
     }
@@ -505,15 +521,15 @@ export class HandService {
         this.selectedCard = undefined;
     }
 
-    deleteCard(card:Card) {
+    deleteCard(card:Card): void {
         this.cards.splice(this.cards.indexOf(card), 1);
     }
 
-    addCard(card:Card) {
+    addCard(card:Card): void {
         this.cards.push(card);
     }
 
-    allowSelections(selections: boolean) {
+    allowSelections(selections: boolean): void {
         this.allowSelection = selections;
     }
 

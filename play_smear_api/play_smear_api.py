@@ -420,7 +420,11 @@ def get_next_deal():
 #  game_id  - string - ID of game we're playing
 #  username - string - username of player
 # Return (json data):
-#  bid_info - information pertaining to the current bid
+#  all_bids             - List of bids that have been submitted so far
+#  ready_to_play        - boolean       - Indicates if the game is ready for the user to subit his/her bid
+#  force_two            - boolean       - Indicates if the bidder will have to bid two or take a set
+#  current_bid          - int           - Current high bid
+#  bidder               - string        - Current name of high bidder
 @app.route("/api/hand/getbidinfo/", methods=["POST"])
 def get_bid_info():
     # Read input
@@ -441,7 +445,11 @@ def get_bid_info():
     # Perform game-related logic
     bid_info = engine.get_bid_info_for_player(username) 
     if bid_info == None:
-        return generate_error(14, "bid info for {} in game {} is not available".format(username, game_id), error_code=503)
+        bid_info = {}
+        bid_info["all_bids"] = engine.get_bids_submitted_so_far()
+        bid_info["ready"] = False
+    else:
+        bid_info["ready"] = True
 
     # Continue the game play
     continue_game(engine)
@@ -536,7 +544,11 @@ def get_high_bid():
     # Perform game-related logic
     high_bid_info = engine.get_high_bid(hand_id) 
     if high_bid_info == None:
-        return generate_error(15, "high bid info for hand {} in game {} is not available".format(hand_id, game_id), error_code=503)
+        high_bid_info = {}
+        high_bid_info["all_bids"] = engine.get_bids_submitted_so_far()
+        high_bid_info["ready"] = False
+    else:
+        high_bid_info["ready"] = True
 
     # Continue the game play
     continue_game(engine)

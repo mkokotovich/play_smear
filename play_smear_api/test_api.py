@@ -230,6 +230,7 @@ class PlaySmearHandGetBidInfoTest(PlaySmearTest):
     def test_hand_get_bid_info_returns_bid_info(self):
         bid_info = { 
                 'force_two': False,
+                'ready_to_bid': True,
                 'current_bid': 2,
                 'bidder': "user01",
                 'all_bids': [
