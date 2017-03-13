@@ -230,6 +230,7 @@ class PlaySmearHandGetBidInfoTest(PlaySmearTest):
     def test_hand_get_bid_info_returns_bid_info(self):
         bid_info = { 
                 'force_two': False,
+                'dealer': "user01",
                 'ready_to_bid': True,
                 'current_bid': 2,
                 'bidder': "user01",
@@ -245,6 +246,7 @@ class PlaySmearHandGetBidInfoTest(PlaySmearTest):
                     ]
                 }
         self.add_return_value_to_engine_function("get_bid_info_for_player", bid_info)
+        self.add_return_value_to_engine_function("get_dealer", "user01")
         params = self.post_data_and_return_data(self.url, self.data)
         self.assert_engine_function_called_with("get_bid_info_for_player", self.username)
         for key, value in bid_info.items():

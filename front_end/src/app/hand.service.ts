@@ -40,6 +40,7 @@ export class HandService {
     public highBid = new Bid("", "", 0);
     public allBids = new Array<Bid>();
     private bidder: string;
+    private dealer: string;
     private bidMessage: string;
     public playingInfo = new PlayingInfo(new Array<CardPlayed>(), false, new Card("", ""), "");
     private handId: string;
@@ -168,6 +169,9 @@ export class HandService {
         if (bidInfo.all_bids != undefined) {
             this.allBids = bidInfo.all_bids;
         }
+        if (bidInfo.dealer != undefined) {
+            this.dealer = bidInfo.dealer;
+        }
         if (bidInfo.ready == false) {
             // If we aren't ready, check again in two seconds
             setTimeout(this.getBidInfo.bind(this), 2000);
@@ -217,6 +221,8 @@ export class HandService {
             setTimeout(this.bidSubmitted.bind(this), 2000);
             return;
         }
+        // Reset the dealer so it only shows his/her bid at this point
+        this.dealer = undefined;
         this.highBid.username = highBidInfo.bidder;
         this.highBid.bid = highBidInfo.current_bid;
         let saved_trump = Cookie.get("trump");

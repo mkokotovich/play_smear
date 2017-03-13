@@ -421,6 +421,7 @@ def get_next_deal():
 #  username - string - username of player
 # Return (json data):
 #  all_bids             - List of bids that have been submitted so far
+#  dealer               - string        - Name of dealer
 #  ready_to_play        - boolean       - Indicates if the game is ready for the user to subit his/her bid
 #  force_two            - boolean       - Indicates if the bidder will have to bid two or take a set
 #  current_bid          - int           - Current high bid
@@ -450,6 +451,7 @@ def get_bid_info():
         bid_info["ready"] = False
     else:
         bid_info["ready"] = True
+    bid_info["dealer"] = engine.get_dealer()
 
     # Continue the game play
     continue_game(engine)
@@ -517,8 +519,12 @@ def submit_bid():
 #  game_id  - string - ID of game we're playing
 #  hand_id  - string - ID of hand we're playing
 # Return (json data):
-#  username - string - username of player with the high bid
-#  bid      - int    - the high bid
+#  all_bids             - List of bids that have been submitted so far
+#  dealer               - string        - Name of dealer
+#  ready_to_play        - boolean       - Indicates if the game is ready for the user to subit his/her bid
+#  force_two            - boolean       - Indicates if the bidder will have to bid two or take a set
+#  current_bid          - int           - Current high bid
+#  bidder               - string        - Current name of high bidder
 @app.route("/api/hand/gethighbid/", methods=["POST"])
 def get_high_bid():
     # Read input
