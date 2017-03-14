@@ -37,8 +37,8 @@ import { HandStatusModalComponent } from './hand-status-modal/hand-status-modal.
   ],
   imports: [
     AccordionModule.forRoot(),
-    Angulartics2Module.forRoot([ Angulartics2GoogleAnalytics ]),
     AppRoutingModule,
+    Angulartics2Module.forRoot([ Angulartics2GoogleAnalytics ]),
     BrowserModule,
     FormsModule,
     HttpModule,
