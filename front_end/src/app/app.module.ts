@@ -1,3 +1,4 @@
+import { Angulartics2Module, Angulartics2GoogleAnalytics } from 'angulartics2';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -37,6 +38,7 @@ import { HandStatusModalComponent } from './hand-status-modal/hand-status-modal.
   imports: [
     AccordionModule.forRoot(),
     AppRoutingModule,
+    Angulartics2Module.forRoot([ Angulartics2GoogleAnalytics ]),
     BrowserModule,
     FormsModule,
     HttpModule,
