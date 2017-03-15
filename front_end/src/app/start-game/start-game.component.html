@@ -1,53 +1,13 @@
 <div>
     <p>{{gameService.welcomeMessage}}</p>
-    <br>
     <p>{{gameService.errorMessage}}</p>
-    <br>
 </div>
 <div class="container">
-    <accordion [closeOthers]=true>
-        <accordion-group [isOpen]=true #group>
-            <div accordion-heading>
-                <h5>Welcome, create a new game to start playing</h5>
-            </div>
-            <table>
-                <tr>
-                    <td>How many players do you want to play with?</td>
-                    <td><input [(ngModel)]="gameService.gameCreateInput.numPlayers" placeholder="2"></td>
-                </tr>
-                <tr>
-                    <td>What is your username?</td>
-                    <td><input [(ngModel)]="gameService.gameAndUser.username" placeholder="username"></td>
-                </tr>
-                <tr>
-                    <td>Play against other people (rather than the computer)</td>
-                    <td><input [(ngModel)]="playAgainstPeople" type="checkbox"></td>
-                </tr>
-                <tr *ngIf="playAgainstPeople">
-                    <td>How many other people will join?</td>
-                    <td><input [(ngModel)]="gameService.gameCreateInput.numHumanPlayers" placeholder="0"></td>
-                </tr>
-            </table>
-            <br>
-            <button class="btn"
-                    (click)="createAndJoinGame()"
-                    [disabled]="!gameCreateInputIsValid()">
-                Create new game
-            </button>
-        </accordion-group>
-        <accordion-group #group>
-            <div accordion-heading>
-                <h5>Already have the ID of the game you wish to join? Click here!</h5>
-            </div>
-            Game ID to join:
-            <input [(ngModel)]="gameService.gameAndUser.game_id">
-            What is your username?
-            <input [(ngModel)]="gameService.gameAndUser.username" placeholder="username">
-            <button class="btn"
-                    (click)="joinGame()"
-                    [disabled]="!gameJoinInputIsValid()">
-                Join game
-            </button>
-        </accordion-group>
-    </accordion>
+    <h4>Welcome to Play Smear, a site to play the card game Smear</h4>
+    <br>
+    <tabset>
+        <tab heading="Play against computer" active=true><div class="tab-content"><app-create-game [playAgainstPeople]=false></app-create-game></div></tab> 
+        <tab heading="Play against friends"><div class="tab-content"><app-create-game [playAgainstPeople]=true></app-create-game></div></tab> 
+        <tab heading="Join an existing game"><div class="tab-content"><app-join-game></app-join-game></div></tab> 
+    </tabset>
 </div>

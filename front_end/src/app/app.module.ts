@@ -5,7 +5,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { AlertModule } from 'ng2-bootstrap';
-import { AccordionModule } from 'ng2-bootstrap';
+import { TabsModule } from 'ng2-bootstrap/tabs';
 import { DndModule } from 'ng2-dnd';
 
 //import { ButtonsModule } from 'ng2-bootstrap';
@@ -23,6 +23,8 @@ import { SmearApiService } from './smear-api.service';
 import { StartGameComponent } from './start-game/start-game.component';
 import { GameStatusComponent } from './game-status/game-status.component';
 import { HandStatusModalComponent } from './hand-status-modal/hand-status-modal.component';
+import { CreateGameComponent } from './create-game/create-game.component';
+import { JoinGameComponent } from './join-game/join-game.component';
 
 @NgModule({
   declarations: [
@@ -33,16 +35,18 @@ import { HandStatusModalComponent } from './hand-status-modal/hand-status-modal.
     PlayGameComponent,
     HandComponent,
     GameStatusComponent,
-    HandStatusModalComponent
+    HandStatusModalComponent,
+    CreateGameComponent,
+    JoinGameComponent
   ],
   imports: [
-    AccordionModule.forRoot(),
     AppRoutingModule,
     Angulartics2Module.forRoot([ Angulartics2GoogleAnalytics ]),
     BrowserModule,
     FormsModule,
     HttpModule,
     AlertModule.forRoot(),
+    TabsModule.forRoot(),
     NgbModule.forRoot(),
     DndModule.forRoot()
   ],

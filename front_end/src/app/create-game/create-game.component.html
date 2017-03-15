@@ -1,0 +1,54 @@
+<div class="container">
+    <h5>Choose how many players you'd like to play with, and create a new game</h5>
+    <table>
+        <tr *ngIf="playAgainstPeople">
+            <td>How many other people will join?</td>
+            <td>
+                <div class="input-group">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default btn-sm" [disabled]="minHumanPlayersReached()" (click)="changePlayers(true, false)">
+                            -
+                        </button>
+                    </span>
+                    <input type="text" class="playerEntryBox" [(ngModel)]="numHumanPlayers">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default btn-sm" [disabled]="maxHumanPlayersReached()" (click)="changePlayers(true, true)">
+                            +
+                        </button>
+                    </span>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>How many computer players do you want to add?</td>
+            <td>
+                <div class="input-group">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default btn-sm" [disabled]="minComputerPlayersReached()" (click)="changePlayers(false, false)">
+                            -
+                        </button>
+                    </span>
+                    <input type="text" class="playerEntryBox" [(ngModel)]="numComputerPlayers">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default btn-sm" [disabled]="maxComputerPlayersReached()" (click)="changePlayers(false, true)">
+                            +
+                        </button>
+                    </span>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td> Total numer of players (including you):</td>
+            <td> {{numPlayers}} </td>
+        <tr>
+            <td>What is your username?</td>
+            <td><input [(ngModel)]="gameService.gameAndUser.username" placeholder="username"></td>
+        </tr>
+    </table>
+    <br>
+    <button class="btn"
+            (click)="createAndJoinGame()"
+            [disabled]="!gameCreateInputIsValid()">
+        Create new game
+    </button>
+</div>
