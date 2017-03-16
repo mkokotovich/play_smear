@@ -385,12 +385,21 @@ export class HandService {
         this.displayTrickConfirmationButton = false;
         this.cardsPlayed = new Array<CardPlayed>();
 
+        // Update scores and add game points
+        for (let player of this.players) {
+            player.points = new Array<string>();
+
+            for (let playerInfo of this.handResults.player_infos) {
+                if (player.name == playerInfo.username) {
+                    player.score = playerInfo.score;
+                    player.points.push("Game points: " + playerInfo.game_points);
+                }
+            }
+        }
+
         // Update points won for UI
         for (let player of this.players) {
             let pointsWon = 0
-
-            player.points = new Array<string>();
-
             if (this.handResults.high_winner == player.name) {
                 pointsWon += 1;
                 player.points.push("Won High");
@@ -414,14 +423,6 @@ export class HandService {
 
             if (this.highBid.username == player.name && pointsWon < this.highBid.bid ) {
                 player.points.push("Was set!");
-            }
-        }
-        // Update scores
-        for (let player of this.players) {
-            for (let playerInfo of this.handResults.player_infos) {
-                if (player.name == playerInfo.username) {
-                    player.score = playerInfo.score;
-                }
             }
         }
 

@@ -37,8 +37,13 @@
                                     {{ point }}
                                 </li>
                             </div>
-                            <div *ngIf="point != 'Was set!'" class="greenStatus">
+                            <div *ngIf="point.startsWith('Won')" class="greenStatus">
                                 <li class="list-group-item greenStatus">
+                                    {{ point }}
+                                </li>
+                            </div>
+                            <div *ngIf="!(point.startsWith('Won') || point == 'Was set!')">
+                                <li class="list-group-item">
                                     {{ point }}
                                 </li>
                             </div>
