@@ -41,8 +41,9 @@ export class HandService {
     public allBids = new Array<Bid>();
     private bidder: string;
     private dealer: string;
+    private waitingFor: string;
     private bidMessage: string;
-    public playingInfo = new PlayingInfo(new Array<CardPlayed>(), false, new Card("", ""), "");
+    public playingInfo = new PlayingInfo(new Array<CardPlayed>(), "", false, new Card("", ""), "");
     private handId: string;
     public cardsPlayed = new Array<CardPlayed>();
     private trump: string;
@@ -108,7 +109,7 @@ export class HandService {
         this.enableNextHandButton = false;
         this.highBid = new Bid("", "", 0);
         this.cardsPlayed = new Array<CardPlayed>();
-        this.playingInfo = new PlayingInfo(new Array<CardPlayed>(), false, new Card("", ""), "");
+        this.playingInfo = new PlayingInfo(new Array<CardPlayed>(), "", false, new Card("", ""), "");
 
         // If we rejoined a game after a hand had finished, just straight to the hand summary
         let hand_finished = Cookie.get("hand_finished");
@@ -172,6 +173,9 @@ export class HandService {
         if (bidInfo.dealer != undefined) {
             this.dealer = bidInfo.dealer;
         }
+        if (bidInfo.waiting_for != undefined) {
+            this.waitingFor = bidInfo.waiting_for;
+        }
         if (bidInfo.ready == false) {
             // If we aren't ready, check again in two seconds
             setTimeout(this.getBidInfo.bind(this), 2000);
@@ -216,6 +220,9 @@ export class HandService {
         if (highBidInfo.all_bids != undefined) {
             this.allBids = highBidInfo.all_bids;
         }
+        if (highBidInfo.waiting_for != undefined) {
+            this.waitingFor = highBidInfo.waiting_for;
+        }
         if (highBidInfo.ready == false) {
             // If we aren't ready, check again in two seconds
             setTimeout(this.bidSubmitted.bind(this), 2000);
@@ -248,6 +255,7 @@ export class HandService {
 
     submitTrump(trump: string): void {
         this.setGameStatus("Submitting trump to be " + trump);
+        this.waitingFor = "";
         this.allowTrumpSelection = false;
         this.playersTurn = false;
         this.getOrSubmitTrump(trump);
@@ -279,6 +287,9 @@ export class HandService {
     receivePlayingInfo(playingInfo: PlayingInfo): void {
         if (playingInfo.cards_played != undefined) {
             this.cardsPlayed = playingInfo.cards_played;
+        }
+        if (playingInfo.waiting_for != undefined) {
+            this.waitingFor = playingInfo.waiting_for;
         }
         if (playingInfo.ready_to_play == false) {
             // If we aren't ready, check again in two seconds
@@ -338,10 +349,14 @@ export class HandService {
         if (trickResults.cards_played != undefined) {
             this.cardsPlayed = trickResults.cards_played;
         }
+        if (trickResults.waiting_for != undefined) {
+            this.waitingFor = trickResults.waiting_for;
+        }
         if (trickResults.trick_finished == false) {
             setTimeout(this.cardSubmitted.bind(this), 2000);
             return;
         }
+        this.waitingFor = "";
         this.setGameStatus("Trick is finished, " + trickResults.winner + " took the trick");
         // This wasn't working very well.
         //this.displayHandStatusModal("Trick is finished, " + trickResults.winner + " took the trick");
@@ -362,6 +377,7 @@ export class HandService {
 
     getHandResults(): void {
         this.setGameStatus("Retrieving results of hand");
+        this.waitingFor = "";
         this.setHandMessage("");
         let gameHandUser = new GameHandUser(this.gameAndUser.game_id, this.handId, this.gameAndUser.username);
         this.smearApiService.handGetResults(gameHandUser)

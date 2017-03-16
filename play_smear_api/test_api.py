@@ -47,7 +47,8 @@ class PlaySmearTest(unittest.TestCase):
 
     def create_default_mock_engine(self):
         m = MagicMock()
-        attrs = {'get_player_names.return_value':[ self.username, "user1", "user2" ]}
+        attrs = {'get_player_names.return_value':[ self.username, "user1", "user2" ],
+                 'get_player_who_we_are_waiting_for.return_value':""}
         m.configure_mock(**attrs)
         smear.g_engines[self.game_id] = m
 

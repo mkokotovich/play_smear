@@ -12,3 +12,7 @@
     color: #449d44 !important;
     font-weight: bold;
 }
+
+.waiting-for {
+    font-style: italic;
+}

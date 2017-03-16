@@ -452,6 +452,7 @@ def get_bid_info():
     else:
         bid_info["ready"] = True
     bid_info["dealer"] = engine.get_dealer()
+    bid_info["waiting_for"] = engine.get_player_who_we_are_waiting_for(bidding=True)
 
     # Continue the game play
     continue_game(engine)
@@ -555,6 +556,7 @@ def get_high_bid():
         high_bid_info["ready"] = False
     else:
         high_bid_info["ready"] = True
+    high_bid_info["waiting_for"] = engine.get_player_who_we_are_waiting_for(bidding=True)
 
     # Continue the game play
     continue_game(engine)
@@ -656,6 +658,7 @@ def get_playing_info():
         playing_info["ready_to_play"] = False
     else:
         playing_info["ready_to_play"] = True
+    playing_info["waiting_for"] = engine.get_player_who_we_are_waiting_for(bidding=False)
 
     # Continue the game play
     continue_game(engine)
@@ -746,6 +749,7 @@ def get_trick_results():
         trick_results["trick_finished"] = False
     else:
         trick_results["trick_finished"] = True
+    trick_results["waiting_for"] = engine.get_player_who_we_are_waiting_for(bidding=False)
 
     # Continue the game play
     continue_game(engine)
