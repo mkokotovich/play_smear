@@ -323,6 +323,7 @@ def rejoin_game():
 # Input (json data from post):
 #  numPlayers - Integer - number of players in the game
 #  numHumanPlayers - Integer - number of human players expected to join game
+#  pointsToPlayTo - Integer - points for the game to play to
 # Return (json data):
 #  game_id    - String  - Id of the game to be used in future API calls
 @app.route("/api/game/create/", methods=["POST"])
@@ -331,8 +332,10 @@ def create_game():
     params = get_params_or_abort(request)
     numPlayerInput = get_value_from_params(params, "numPlayers")
     numHumanPlayersInput = get_value_from_params(params, "numHumanPlayers")
+    pointsToPlayToInput = get_value_from_params(params, "pointsToPlayTo")
     numPlayers = 0
     numHumanPlayers = 0
+    pointsToPlayTo = 0
 
     # Default to debug = True
     engineDebug = True
@@ -352,6 +355,12 @@ def create_game():
             raise ValueError("Invalid number of human players")
     except ValueError:
         return generate_error(3, "Invalid number of human players {}, must be less than or equal to number of players ({})".format(numHumanPlayersInput, numPlayers))
+    try:
+        pointsToPlayTo = int(pointsToPlayToInput)
+        if pointsToPlayTo < 1:
+            raise ValueError("Invalid number of points to play to")
+    except ValueError:
+        return generate_error(3, "Invalid number of points to play to {}, must be greater than zero".format(pointsToPlayToInput))
 
     # Perform game-related logic
     game_id = create_game_and_return_id(engineDebug)
@@ -359,7 +368,7 @@ def create_game():
     engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Unusual error occurred, could not find game that was just created {}".format(game_id))
-    engine.create_new_game(num_players=numPlayers, num_human_players=numHumanPlayers, score_to_play_to=11)
+    engine.create_new_game(num_players=numPlayers, num_human_players=numHumanPlayers, score_to_play_to=pointsToPlayTo)
 
     # Update persistent engine
     update_engine(game_id, engine)

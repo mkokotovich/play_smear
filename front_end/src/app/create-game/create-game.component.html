@@ -44,6 +44,28 @@
             <td>What is your username?</td>
             <td><input [(ngModel)]="gameService.gameAndUser.username" placeholder="username"></td>
         </tr>
+        <tr>
+            <td>Points to play to</td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-secondary"
+                                          [class.active]="11 === gameService.pointsToPlayTo"
+                                          (click)="setPoints(11)">
+                        11
+                    </button>
+                    <button type="button" class="btn btn-secondary"
+                                          [class.active]="15 === gameService.pointsToPlayTo"
+                                          (click)="setPoints(15)">
+                        15
+                    </button>
+                    <button type="button" class="btn btn-secondary"
+                                          [class.active]="21 === gameService.pointsToPlayTo"
+                                          (click)="setPoints(21)">
+                        21
+                    </button>
+                </div>
+            </td>
+        </tr>
     </table>
     <br>
     <button class="btn"

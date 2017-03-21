@@ -13,12 +13,13 @@ import { SmearApiService } from './smear-api.service';
 @Injectable()
 export class GameService {
 
-    public gameCreateInput = new GameCreateInput(0, 0);
+    public gameCreateInput = new GameCreateInput(0, 0, 0);
     public gameAndUser = new GameAndUser("", "");
     private welcomeMessage = "";
     private errorMessage = "";
     public disableCreateButton = false;
     public disableJoinButton = false;
+    public pointsToPlayTo: number = 11;
     private numPlayers: number;
     private players: Player[];
     private username: string;
@@ -40,6 +41,7 @@ export class GameService {
         // Increment numHumanPlayers to account for self
         var numHumanPlayers = Number(this.gameCreateInput.numHumanPlayers) + 1
         this.gameCreateInput.numHumanPlayers = numHumanPlayers
+        this.gameCreateInput.pointsToPlayTo = this.pointsToPlayTo;
         this.smearApiService.gameCreate(this.gameCreateInput)
                             .subscribe( gameId => this.gameIsCreated(gameId),
                                         err => this.handleStartError(err, "Unable to create game, make sure you have a valid number of players and try again"));

@@ -9,6 +9,7 @@ import { GameService } from '../game.service';
 })
 export class CreateGameComponent implements OnInit {
     public numPlayers: number = 1;
+    public pointsToPlayTo: number = 11;
     public numHumanPlayers: number = 0;
     public numComputerPlayers: number = 0;
 
@@ -44,6 +45,10 @@ export class CreateGameComponent implements OnInit {
 
     maxComputerPlayersReached() {
         return (this.numHumanPlayers + this.numComputerPlayers) >= 7;
+    }
+
+    setPoints(points: number) {
+        this.gameService.pointsToPlayTo = points;
     }
 
     changePlayers(humans:boolean, increment:boolean) {
