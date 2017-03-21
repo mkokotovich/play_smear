@@ -25,6 +25,7 @@ import { GameStatusComponent } from './game-status/game-status.component';
 import { HandStatusModalComponent } from './hand-status-modal/hand-status-modal.component';
 import { CreateGameComponent } from './create-game/create-game.component';
 import { JoinGameComponent } from './join-game/join-game.component';
+import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 
 @NgModule({
   declarations: [
@@ -37,7 +38,8 @@ import { JoinGameComponent } from './join-game/join-game.component';
     GameStatusComponent,
     HandStatusModalComponent,
     CreateGameComponent,
-    JoinGameComponent
+    JoinGameComponent,
+    ScoreboardComponent
   ],
   imports: [
     AppRoutingModule,

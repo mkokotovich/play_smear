@@ -2,8 +2,13 @@
     <a href="/"><h1>Play Smear</h1></a>
 </div>
 <div>
+    <app-scoreboard>Loading scoreboard</app-scoreboard>
+</div>
+<br>
+<div>
     <app-game-status>Loading game status</app-game-status>
 </div>
+<br>
 <div class="container-fluid small-padding">
     <div class="center">
     <div *ngIf="handService.isBidding() == true">

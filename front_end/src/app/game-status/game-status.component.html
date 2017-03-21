@@ -1,61 +1,4 @@
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-6 col-sm-3 col-md-2"
-             *ngFor="let player of gameService.getPlayers()">
-            <div class="card">
-                <h4 class="card-header card-title" [ngClass]="{'waiting-for': player.name == handService.waitingFor}"> {{ player.name }} </h4>
-                <div class="card-block">
-                    <p class="card-text">
-                        Score: {{ player.score }}
-                    </p>
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item" *ngIf="player.name == handService.dealer">
-                        <b>Dealer</b>
-                    </li>
-                    <li class="list-group-item" *ngIf="player.name == handService.highBid.username">
-                        <b>Bidder</b>, bid {{ handService.highBid.bid }}
-                    </li>
-                    <li class="list-group-item" *ngIf="player.name != handService.highBid.username && handService.hasPlayerBid(player.name)">
-                        {{ handService.getBidForPlayer(player.name) }} 
-                    </li>
-                    <li class="list-group-item" *ngIf="handService.hasPlayerPlayedACard(player.name)">
-                        <div>
-                            <i>Played:</i><br>
-                            <div class="playingCards simpleCards">
-                                <div class="smearcard_status card {{ cardHelper.getCardClass(handService.getCardPlayedForPlayer(player.name)) }}" >
-                                    <span class="rank">{{ cardHelper.getCardRankUpper(handService.getCardPlayedForPlayer(player.name)) }}</span>
-                                    <span class="suit">{{ cardHelper.getCardSuitSymbol(handService.getCardPlayedForPlayer(player.name)) }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    <div *ngIf="handService.showHandResults">
-                        <div *ngFor="let point of handService.getPointsWon(player.name)">
-                            <div *ngIf="point == 'Was set!'" class="redStatus">
-                                <li class="list-group-item redStatus">
-                                    {{ point }}
-                                </li>
-                            </div>
-                            <div *ngIf="point.startsWith('Won')" class="greenStatus">
-                                <li class="list-group-item greenStatus">
-                                    {{ point }}
-                                </li>
-                            </div>
-                            <div *ngIf="!(point.startsWith('Won') || point == 'Was set!')">
-                                <li class="list-group-item">
-                                    {{ point }}
-                                </li>
-                            </div>
-                        </div>
-                    </div>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-<br>
-<div class="container-fluid">
     <div class="card card-block card-text smaller-card">
     <div class="row">
         <div class="center-text col-6 col-sm-3 col-md-2 col-lg-2">
@@ -87,4 +30,3 @@
     </div>
     </div>
 </div>
-<br>
