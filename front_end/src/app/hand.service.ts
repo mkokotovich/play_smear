@@ -388,6 +388,7 @@ export class HandService {
 
     receiveHandResults(handResults: HandResults): void {
         this.handResults = handResults;
+        this.trump = "";
         if (this.handResults.is_game_over) {
             this.setGameStatus("Results of previous hand. Game is now over.");
             this.displayNextHandButton = false;
@@ -441,6 +442,10 @@ export class HandService {
             if (this.highBid.username == player.name && pointsWon < this.highBid.bid ) {
                 player.points.push("Was set!");
             }
+
+            if (this.highBid.username == player.name && pointsWon >= this.highBid.bid ) {
+                player.points.push("Made bid!");
+            }
         }
 
     }
@@ -457,7 +462,6 @@ export class HandService {
     startNextHand(): void {
         this.enableNextHandButton = false;
         this.playersTurn = false;
-        this.trump = "";
         Cookie.set("bid_submitted", "false", 1);
         Cookie.set("trump", "", 1);
         Cookie.set("hand_finished", "false", 1);
@@ -497,6 +501,18 @@ export class HandService {
         }
         // If a bid wasn't found
         return "bid unknown";
+    }
+
+    isPlayerLead(player: string): boolean {
+        for (let cp of this.cardsPlayed) {
+            if (cp.username == player) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        // If a card wasn't found
+        return false;
     }
 
     hasPlayerPlayedACard(player: string): boolean {

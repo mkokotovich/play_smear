@@ -19,9 +19,12 @@
                     <li class="list-group-item" *ngIf="player.name != handService.highBid.username && handService.hasPlayerBid(player.name)">
                         {{ handService.getBidForPlayer(player.name) }} 
                     </li>
-                    <li class="list-group-item" *ngIf="handService.hasPlayerPlayedACard(player.name)">
+                    <li class="list-group-item"
+                        *ngIf="handService.hasPlayerPlayedACard(player.name)"
+                        [ngClass]="{'lead-card': handService.isPlayerLead(player.name)}">
                         <div>
-                            <i>Played:</i><br>
+                            <div *ngIf="handService.isPlayerLead(player.name)"><i>Lead:</i><br></div>
+                            <div *ngIf="!handService.isPlayerLead(player.name)"><i>Played:</i><br></div>
                             <div class="playingCards simpleCards">
                                 <div class="smearcard_status card {{ cardHelper.getCardClass(handService.getCardPlayedForPlayer(player.name)) }}" >
                                     <span class="rank">{{ cardHelper.getCardRankUpper(handService.getCardPlayedForPlayer(player.name)) }}</span>
@@ -37,12 +40,17 @@
                                     {{ point }}
                                 </li>
                             </div>
+                            <div *ngIf="point == 'Made bid!'" class="madeBidStatus">
+                                <li class="list-group-item madeBidStatus">
+                                    {{ point }}
+                                </li>
+                            </div>
                             <div *ngIf="point.startsWith('Won')" class="greenStatus">
                                 <li class="list-group-item greenStatus">
                                     {{ point }}
                                 </li>
                             </div>
-                            <div *ngIf="!(point.startsWith('Won') || point == 'Was set!')">
+                            <div *ngIf="!(point.startsWith('Won') || point == 'Was set!' || point == 'Made bid!')">
                                 <li class="list-group-item">
                                     {{ point }}
                                 </li>
