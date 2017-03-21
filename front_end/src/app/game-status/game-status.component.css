@@ -16,3 +16,32 @@
 .waiting-for {
     font-style: italic;
 }
+
+.trump {
+    font-size: 5em;
+    margin-top: -0.4em;
+}
+.trump.hearts {
+    color: #f00 !important;
+}
+
+.trump.diams {
+    color: #f00 !important;
+}
+
+.trump.clubs {
+    color: #000 !important;
+}
+
+.trump.spades {
+    color: #000 !important;
+}
+
+.center-text {
+    text-align: center;
+    color: #000 !important;
+}
+
+.smaller-card {
+    padding: 10px;
+}

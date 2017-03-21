@@ -55,16 +55,36 @@
     </div>
 </div>
 <br>
-<div class="container" *ngIf="handService.getGameStatus() != ''">
-    <div class="center">
-        <div class="card">
-            <h5 *ngIf="handService.playersTurn" style="font-weight: bold" class="card-header card-title">Your turn</h5>
-            <div class="card-block">
-                <div class="card-text">
-                    {{ handService.getGameStatus() }}
+<div class="container-fluid">
+    <div class="card card-block card-text smaller-card">
+    <div class="row">
+        <div class="center-text col-6 col-sm-3 col-md-2 col-lg-2">
+            <div *ngIf="handService.trump != ''">
+                <b> Trump: </b>
+                <div class="trump {{ cardHelper.getCardClassFromTrump(handService.trump) }}"
+                    [innerHTML]="cardHelper.getCardSuitSymbolFromTrump(handService.trump)"></div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-8 col-lg-8">
+            <div class="card" *ngIf="handService.getGameStatus() != ''">
+                <h5 *ngIf="handService.playersTurn" style="font-weight: bold" class="card-header card-title">Your turn</h5>
+                <div class="card-block">
+                    <div class="card-text">
+                        {{ handService.getGameStatus() }}
+                    </div>
                 </div>
             </div>
         </div>
+        <div class="col-6 col-sm-3 col-md-2 col-lg-2">
+            <div *ngIf="handService.highBid.username != ''">
+                <b>Bidder:</b>
+                {{ handService.highBid.username }}
+                <br>
+                <b>Bid:</b>
+                {{ handService.highBid.bid }}
+            </div>
+        </div>
+    </div>
     </div>
 </div>
 <br>

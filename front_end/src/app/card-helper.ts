@@ -47,6 +47,13 @@ export class CardHelper {
         "Diamonds":"&diams;"
     }
 
+    public suits_trump_status = {
+        "Spades":"spades",
+        "Hearts":"hearts",
+        "Clubs":"clubs",
+        "Diamonds":"diams"
+    }
+
     getCardClass(card: Card):string {
         return "rank-" + this.ranks_lowercase[card.value] + " " + this.suits_lowercase[card.suit];
     }
@@ -57,6 +64,14 @@ export class CardHelper {
 
     getCardSuitSymbol(card: Card):string {
         return this.suits_symbols[card.value];
+    }
+
+    getCardClassFromTrump(trump: string):string {
+        return this.suits_trump_status[trump];
+    }
+
+    getCardSuitSymbolFromTrump(trump: string):string {
+        return this.suits_symbols[trump];
     }
 
     constructor() { }

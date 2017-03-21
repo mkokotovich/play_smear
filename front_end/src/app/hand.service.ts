@@ -97,6 +97,7 @@ export class HandService {
 
     startNewHand(): void {
         this.setGameStatus("Waiting for cards to be dealt");
+        this.trump = "";
         this.allowSelection = false;
         this.showBidInput = false;
         this.showTrumpInput = false;
@@ -456,6 +457,7 @@ export class HandService {
     startNextHand(): void {
         this.enableNextHandButton = false;
         this.playersTurn = false;
+        this.trump = "";
         Cookie.set("bid_submitted", "false", 1);
         Cookie.set("trump", "", 1);
         Cookie.set("hand_finished", "false", 1);
