@@ -16,6 +16,8 @@
 .trump {
     font-size: 5em;
     margin-top: -0.4em;
+    display: block;
+    position: relative;
 }
 .trump.hearts {
     color: #f00 !important;
