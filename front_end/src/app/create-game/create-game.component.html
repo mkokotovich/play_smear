@@ -40,6 +40,34 @@
         <tr>
             <td> Total numer of players (including you):</td>
             <td> {{numPlayers}} </td>
+        </tr>
+        <tr>
+            <td>Play with teams?</td>
+            <td>
+                <button type="button" class="btn btn-secondary" style="margin-right: 10px;"
+                                      [class.active]="0 === gameService.numTeams"
+                                      (click)="setNumTeams(0)">
+                    No
+                </button>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-secondary"
+                                          [class.active]="2 === gameService.numTeams"
+                                          (click)="setNumTeams(2)">
+                        2
+                    </button>
+                    <button type="button" class="btn btn-secondary"
+                                          [class.active]="3 === gameService.numTeams"
+                                          (click)="setNumTeams(3)">
+                        3
+                    </button>
+                    <button type="button" class="btn btn-secondary"
+                                          [class.active]="4 === gameService.numTeams"
+                                          (click)="setNumTeams(4)">
+                        4
+                    </button>
+                </div>
+            </td>
+        </tr>
         <tr>
             <td>What is your username?</td>
             <td><input [(ngModel)]="gameService.gameAndUser.username" placeholder="username"></td>

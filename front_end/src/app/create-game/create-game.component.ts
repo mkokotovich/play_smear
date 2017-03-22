@@ -51,6 +51,10 @@ export class CreateGameComponent implements OnInit {
         this.gameService.pointsToPlayTo = points;
     }
 
+    setNumTeams(teams: number) {
+        this.gameService.numTeams = teams;
+    }
+
     changePlayers(humans:boolean, increment:boolean) {
         if (humans) {
             if (increment) {
