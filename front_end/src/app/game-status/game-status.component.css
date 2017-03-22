@@ -14,7 +14,8 @@
 }
 
 .trump {
-    font-size: 5em;
+    font-family: Arial, sans-serif;
+    font-size: 8.0vw !important;
     margin-top: -0.4em;
     display: block;
     position: relative;

@@ -17,9 +17,11 @@ body {
 
 .smearcard {
     font-size: 4.0vw !important;
+    font-family: Arial, sans-serif;
 }
 .smearcard_status {
     font-size: 2.0vw !important;
+    font-family: Arial, sans-serif;
 }
 
 .heading a {

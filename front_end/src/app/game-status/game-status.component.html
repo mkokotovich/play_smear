@@ -1,14 +1,14 @@
 <div class="container-fluid">
     <div class="card card-block card-text smaller-card">
     <div class="row">
-        <div class="center-text col-6 col-sm-3 col-md-2 col-lg-2">
+        <div class="center-text col-2 col-sm-2 col-md-2 col-lg-2">
             <div *ngIf="handService.trump != ''">
                 <b> Trump: </b>
                 <div class="trump {{ cardHelper.getCardClassFromTrump(handService.trump) }}"
                     [innerHTML]="cardHelper.getCardSuitSymbolFromTrump(handService.trump)"></div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-md-8 col-lg-8">
+        <div class="col-10 col-sm-8 col-md-8 col-lg-8">
             <div class="card" *ngIf="handService.getGameStatus() != ''">
                 <h5 *ngIf="handService.playersTurn" style="font-weight: bold" class="card-header card-title">Your turn</h5>
                 <div class="card-block">
@@ -18,7 +18,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-sm-3 col-md-2 col-lg-2">
+        <div class="col-6 col-sm-2 col-md-2 col-lg-2">
             <div *ngIf="handService.highBid.username != ''">
                 <b>Bidder:</b>
                 {{ handService.highBid.username }}
