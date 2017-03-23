@@ -6,6 +6,7 @@ import { Player } from './model/player';
 import { GameId } from './model/game-id';
 import { GameAndUser } from './model/game-and-user';
 import { GameCreateInput } from './model/game-create-input';
+import { GameJoinResults } from './model/game-join-results';
 import { GameStartStatus } from './model/game-start-status';
 import { HandService } from './hand.service';
 import { SmearApiService } from './smear-api.service';
@@ -68,9 +69,9 @@ export class GameService {
         this.welcomeMessage = "Attempting to rejoin a previous game...";
         this.errorMessage = "";
         this.disableJoinButton = true;
-        this.setGameInfo(this.gameAndUser.game_id, this.gameAndUser.username);
+        this.setGameInfo(this.gameAndUser.game_id, this.gameAndUser.username, 0);
         this.smearApiService.gameRejoin(this.gameAndUser)
-                            .subscribe( gameAndUser => this.checkGameStatus(gameAndUser),
+                            .subscribe( gameJoinResults => this.checkGameStatus(gameJoinResults),
                                         err => this.unableToJoin(err));
     }
 
@@ -86,16 +87,16 @@ export class GameService {
         this.welcomeMessage += "\nJoining game..."
         this.errorMessage = "";
         this.disableJoinButton = true;
-        this.setGameInfo(this.gameAndUser.game_id, this.gameAndUser.username);
+        this.setGameInfo(this.gameAndUser.game_id, this.gameAndUser.username, 0);
         this.smearApiService.gameJoin(this.gameAndUser)
-                            .subscribe( gameAndUser => this.checkGameStatus(gameAndUser),
+                            .subscribe( gameJoinResults => this.checkGameStatus(gameJoinResults),
                                         err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
     }
 
-    checkGameStatus(gameAndUser: GameAndUser) {
-        this.setGameInfo(gameAndUser.game_id, gameAndUser.username);
+    checkGameStatus(gameJoinResults: GameJoinResults) {
+        this.setGameInfo(gameJoinResults.game_id, gameJoinResults.username, gameJoinResults.points_to_play_to);
         this.saveGameInfoInCookie();
-        this.smearApiService.getGameStartStatus(new GameId(gameAndUser.game_id))
+        this.smearApiService.getGameStartStatus(new GameId(gameJoinResults.game_id))
                             .subscribe( gameStartStatus => this.gameIsReady(gameStartStatus),
                                         err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
     }
@@ -116,9 +117,9 @@ export class GameService {
 
 
     //Also reset all globals
-    setGameInfo(gameId: string, username: string):void {
+    setGameInfo(gameId: string, username: string, pointsToPlayTo: number):void {
         this.gameId = new GameId(gameId);
-        this.handService.setGameInfo(this.gameAndUser);
+        this.handService.setGameInfo(gameId, username, pointsToPlayTo);
     }
 
     saveGameInfoInCookie() {

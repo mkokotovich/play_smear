@@ -19,6 +19,8 @@
             </div>
         </div>
         <div class="col-6 col-sm-2 col-md-2 col-lg-2">
+            <b>Playing to:</b>
+            {{ handService.pointsToPlayTo }}
             <div *ngIf="handService.highBid.username != ''">
                 <b>Bidder:</b>
                 {{ handService.highBid.username }}

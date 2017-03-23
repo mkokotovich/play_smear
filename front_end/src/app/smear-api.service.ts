@@ -15,6 +15,7 @@ import { GameId } from './model/game-id';
 import { GameCreateInput } from './model/game-create-input';
 import { GameAndHand } from './model/game-and-hand';
 import { GameAndUser } from './model/game-and-user';
+import { GameJoinResults } from './model/game-join-results';
 import { GameStartStatus } from './model/game-start-status';
 import { GameUserCard } from './model/game-user-card';
 import { GetTrump } from './model/get-trump';
@@ -68,7 +69,7 @@ export class SmearApiService {
                         .catch(this.handleError);
     }
 
-    gameJoin(data: GameAndUser): Observable<GameAndUser> {
+    gameJoin(data: GameAndUser): Observable<GameJoinResults> {
         let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
         let options = new RequestOptions({ headers: headers }); // Create a request option
 
@@ -80,7 +81,7 @@ export class SmearApiService {
                         .catch(this.handleError);
     }
 
-    gameRejoin(data: GameAndUser): Observable<GameAndUser> {
+    gameRejoin(data: GameAndUser): Observable<GameJoinResults> {
         let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
         let options = new RequestOptions({ headers: headers }); // Create a request option
 

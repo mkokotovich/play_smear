@@ -54,6 +54,7 @@ export class HandService {
     public nextHandButtonText: string;
     public showHandResults: boolean;
     private handResults: HandResults;
+    public pointsToPlayTo : number;
     private players: Array<Player>;
     public alerts: any = [];
 
@@ -75,8 +76,9 @@ export class HandService {
         this.handMessage = "Waiting for cards...";
     }
 
-    setGameInfo(gameAndUser: GameAndUser): void {
-        this.gameAndUser = gameAndUser;
+    setGameInfo(game_id: string, username: string, pointsToPlayTo: number): void {
+        this.gameAndUser = new GameAndUser(game_id, username);
+        this.pointsToPlayTo = pointsToPlayTo;
         this.allowSelection = false;
         this.showBidInput = false;
         this.showTrumpInput = false;

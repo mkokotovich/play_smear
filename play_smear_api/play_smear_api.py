@@ -260,7 +260,11 @@ def add_user_to_game(engine, game_id, username):
 # Input (json data from post):
 #  game_id  - string - ID of game to join
 #  username - string - username to use
-# Return - nothing
+# Return
+#  game_id  - string - ID of game we just joined
+#  username - string - username to use
+#  points_to_play_to - int - points the game will go to
+
 @app.route("/api/game/join/", methods=["POST"])
 def join_game():
     params = get_params_or_abort(request)
@@ -277,17 +281,17 @@ def join_game():
     if result is not 0:
         return generate_error(1, "Game {} is already full, contains {} players".format(game_id, result))
 
+    points_to_play_to = engine.get_points_to_play_to()
+
     # Update persistent engine
     update_engine(game_id, engine)
 
-    # Return result, but first set a cookie so the client can rejoin
+    # Return result
     data = {}
     data["game_id"] = game_id
     data["username"] = username
-    resp = make_response(generate_return_string(data))
-    resp.set_cookie("game_id", game_id, max_age=12*60*60, path="/")
-    resp.set_cookie("username", username, max_age=12*60*60, path="/")
-    return resp
+    data["points_to_play_to"] = points_to_play_to
+    return generate_return_string(data)
 
 
 # rejoin a game
@@ -306,17 +310,17 @@ def rejoin_game():
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
 
+    points_to_play_to = engine.get_points_to_play_to()
+
     # Update persistent engine
     update_engine(game_id, engine)
 
-    # Return result, but first set a cookie so the client can rejoin
+    # Return result
     data = {}
     data["game_id"] = game_id
     data["username"] = username
-    resp = make_response(generate_return_string(data))
-    resp.set_cookie("game_id", game_id, max_age=12*60*60, path="/")
-    resp.set_cookie("username", username, max_age=12*60*60, path="/")
-    return resp
+    data["points_to_play_to"] = points_to_play_to
+    return generate_return_string(data)
 
 
 # creates a new game
