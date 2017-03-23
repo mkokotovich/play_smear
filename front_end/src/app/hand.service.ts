@@ -417,33 +417,27 @@ export class HandService {
 
         // Update points won for UI
         for (let player of this.players) {
-            let pointsWon = 0
             if (this.handResults.high_winner == player.name) {
-                pointsWon += 1;
                 player.points.push("Won High");
             }
             if (this.handResults.low_winner == player.name) {
-                pointsWon += 1;
                 player.points.push("Won Low");
             }
             if (this.handResults.jack_winner == player.name) {
-                pointsWon += 1;
                 player.points.push("Won Jack");
             }
             if (this.handResults.jick_winner == player.name) {
-                pointsWon += 1;
                 player.points.push("Won Jick");
             }
             if (this.handResults.game_winner == player.name) {
-                pointsWon += 1;
                 player.points.push("Won Game");
             }
 
-            if (this.highBid.username == player.name && pointsWon < this.highBid.bid ) {
+            if (this.highBid.username == player.name && this.handResults.bidder_set) {
                 player.points.push("Was set!");
             }
 
-            if (this.highBid.username == player.name && pointsWon >= this.highBid.bid ) {
+            if (this.highBid.username == player.name && !this.handResults.bidder_set) {
                 player.points.push("Made bid!");
             }
         }
