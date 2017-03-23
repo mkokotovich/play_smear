@@ -218,13 +218,8 @@ def game_start_status():
     player_names = []
     data = {}
     data["ready"] = engine.all_players_added()
+    player_names = engine.get_player_names()
 
-    if not data["ready"]:
-        return generate_error(12, "Game {} is not ready to start".format(game_id), error_code=503)
-
-    if data["ready"]:
-        player_names = engine.get_player_names()
-        
     # Continue the game play
     continue_game(engine)
 

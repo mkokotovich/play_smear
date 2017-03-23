@@ -3,6 +3,7 @@
 </div>
 <div>
     <p>{{gameService.welcomeMessage}}</p>
+    <p *ngFor="let player of gameService.playersSoFar"> {{player}} has joined</p>
     <p>{{gameService.errorMessage}}</p>
 </div>
 <div class="container">

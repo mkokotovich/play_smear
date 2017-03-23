@@ -24,6 +24,7 @@ export class GameService {
     public numTeams: number = 0;
     private numPlayers: number;
     private players: Player[];
+    private playersSoFar: string[] = new Array<string>();
     private username: string;
     private gameId: GameId;
 
@@ -94,14 +95,24 @@ export class GameService {
     }
 
     checkGameStatus(gameJoinResults: GameJoinResults) {
-        this.setGameInfo(gameJoinResults.game_id, gameJoinResults.username, gameJoinResults.points_to_play_to);
+        if (gameJoinResults) {
+            this.setGameInfo(gameJoinResults.game_id, gameJoinResults.username, gameJoinResults.points_to_play_to);
+        }
         this.saveGameInfoInCookie();
-        this.smearApiService.getGameStartStatus(new GameId(gameJoinResults.game_id))
+        this.smearApiService.getGameStartStatus(this.gameId)
                             .subscribe( gameStartStatus => this.gameIsReady(gameStartStatus),
                                         err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
     }
 
     gameIsReady(gameStartStatus: GameStartStatus) {
+        this.playersSoFar = gameStartStatus.player_names;
+        if (gameStartStatus.ready == false) {
+            // If we aren't ready, check again in two seconds
+            setTimeout(function() { 
+                this.checkGameStatus(null);
+            }.bind(this), 2000);
+            return;
+        }
         this.setPlayers(gameStartStatus.num_players, gameStartStatus.player_names);
         this.router.navigate(['/play']);
         this.manageGame();
