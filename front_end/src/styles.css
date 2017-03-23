@@ -33,3 +33,31 @@ body {
     color: inherit;
     text-decoration: underline;
 }
+
+.trump {
+    font-family: Arial, sans-serif;
+    font-size: 8.0vw !important;
+    margin-top: -0.4em;
+    display: block;
+    position: relative;
+}
+.trump.hearts {
+    color: #f00 !important;
+}
+
+.trump.diams {
+    color: #f00 !important;
+}
+
+.trump.clubs {
+    color: #000 !important;
+}
+
+.trump.spades {
+    color: #000 !important;
+}
+
+.trump.small {
+    font-size: 4.0vw !important;
+}
+

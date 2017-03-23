@@ -41,12 +41,14 @@
     </div>
     <div *ngIf="handService.showTrumpInput == true">
         <div class="btn-group" role="group">
-            <button type="button" class="btn btn-secondary"
-                                  *ngFor="let trump of trumpChoices" 
-                                  [class.active]="trump === get_trump()"
+            <button type="button" class="btn btn-secondary trump-selection"
+                                  *ngFor="let my_trump of trumpChoices" 
+                                  [class.active]="my_trump === get_trump()"
                                   [disabled]="!handService.allowTrumpSelection"
-                                  (click)="save_trump(trump)">
-                {{trump}}
+                                  (click)="save_trump(my_trump)">
+                <div class="trump {{ cardHelper.getCardClassFromTrump(my_trump) }} small trump-selection-symbols"
+                     [innerHTML]="cardHelper.getCardSuitSymbolFromTrump(my_trump)"></div>
+                {{my_trump}}
             </button>
         </div>
         <button type="button" class="btn btn-default" style="margin-left: 10px;"

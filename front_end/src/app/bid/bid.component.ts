@@ -2,6 +2,8 @@ import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 
 import { Card } from '../model/card';
 import { HandService } from '../hand.service';
+import { CardHelper } from '../card-helper';
+
 
 @Component({
   selector: 'app-bid',
@@ -11,6 +13,7 @@ import { HandService } from '../hand.service';
 export class BidComponent implements OnInit {
     public bid:number;
     public selected_trump:string;
+    public cardHelper = new CardHelper();
 
     private trumpChoices = [ "Spades", "Clubs", "Hearts", "Diamonds" ];
 
