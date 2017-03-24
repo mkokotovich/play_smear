@@ -68,7 +68,7 @@ class PlaySmearGameCreateTest(PlaySmearTest):
     def setUp(self):
         PlaySmearTest.setUp(self)
         self.url = "/api/game/create/"
-        self.data = { "numPlayers": self.numPlayers, "numHumanPlayers": 0 }
+        self.data = { "numPlayers": self.numPlayers, "numHumanPlayers": 0, "pointsToPlayTo": 11, "numTeams": 0 }
 
     def tearDown(self):
         pass
@@ -115,6 +115,7 @@ class PlaySmearGameJoinTest(PlaySmearTest):
     def test_game_join_returns_success(self):
         self.add_return_value_to_engine_function("all_players_added", False)
         self.add_return_value_to_engine_function("get_number_of_players", self.numPlayers)
+        self.add_return_value_to_engine_function("get_points_to_play_to", 11)
         params = self.post_data_and_return_data(self.url, self.data)
         self.assertIn("game_id", params)
         tmp_game_id = params["game_id"]
@@ -123,6 +124,7 @@ class PlaySmearGameJoinTest(PlaySmearTest):
     def test_game_join_when_already_full_returns_error(self):
         self.add_return_value_to_engine_function("all_players_added", False)
         self.add_return_value_to_engine_function("get_number_of_players", self.numPlayers)
+        self.add_return_value_to_engine_function("get_points_to_play_to", 11)
         data = { "game_id": self.game_id, "username": self.username }
         # Join the first time
         params = self.post_data_and_return_data(self.url, data)
@@ -538,7 +540,13 @@ class PlaySmearBrothersTest(PlaySmearTest):
     def test_brothers_usecase(self):
         # Create game
         self.url = "/api/game/create/"
-        self.data = { "numPlayers": self.numPlayers, "numHumanPlayers": self.numPlayers, "engineDebug": False}
+        self.data = {
+                "numPlayers": self.numPlayers,
+                "numHumanPlayers": self.numPlayers,
+                "pointsToPlayTo": 11,
+                "engineDebug": False,
+                "numTeams": 0
+                }
         params = self.post_data_and_return_data(self.url, self.data)
         self.assertIn("game_id", params)
         self.game_id = params["game_id"]
