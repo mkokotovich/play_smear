@@ -7,6 +7,7 @@ import json
 from pysmear import smear_engine_api
 from pysmear import smear_utils
 import pydealer
+import random
 
 # Class with common tools
 class PlaySmearTest(unittest.TestCase):
@@ -522,30 +523,31 @@ class PlaySmearHandGetResults(PlaySmearTest):
 
 
 
-class PlaySmearBrothersTest(PlaySmearTest):
+class PlaySmearEndToEnd(PlaySmearTest):
 
     def setUp(self):
         PlaySmearTest.setUp(self)
+        self.cards = {}
+        self.game_id = ""
+
+        # Overwrite these 
+        self.players = [ "p1", "p2", "p3" ]
         self.numPlayers = 3
-        self.matt = "Matt"
-        self.adam = "Adam"
-        self.tim = "Tim"
-        self.cards = {}
-        self.brothers = [ self.matt, self.adam, self.tim ]
-        self.game_id = ""
+        self.points_to_play_to = 5
+        self.num_teams = 0
 
     def tearDown(self):
         pass
 
-    def test_brothers_usecase(self):
+    def create_and_join_game(self):
         # Create game
         self.url = "/api/game/create/"
         self.data = {
                 "numPlayers": self.numPlayers,
                 "numHumanPlayers": self.numPlayers,
-                "pointsToPlayTo": 11,
+                "pointsToPlayTo": self.points_to_play_to,
                 "engineDebug": False,
-                "numTeams": 0
+                "numTeams": self.num_teams
                 }
         params = self.post_data_and_return_data(self.url, self.data)
         self.assertIn("game_id", params)
@@ -554,152 +556,7 @@ class PlaySmearBrothersTest(PlaySmearTest):
         self.assertNotEqual(self.game_id, "")
 
         # Join Game 
-        for brother in self.brothers:
-            self.url = "/api/game/join/"
-            self.data = { "game_id": self.game_id, "username": brother }
-            params = self.post_data_and_return_data(self.url, self.data)
-            self.assertIn("game_id", params)
-            self.assertEqual(params["game_id"], self.game_id)
-
-        # Check if game is ready
-        self.url = "/api/game/startstatus/"
-        self.data = { "game_id": self.game_id }
-        params = self.post_data_and_return_data(self.url, self.data)
-        self.assertIn("ready", params)
-        self.assertTrue(params["ready"])
-        self.assertIn("player_names", params)
-        player_names = params["player_names"]
-        self.assertIsNotNone(player_names)
-        self.assertEqual(len(player_names), self.numPlayers)
-        self.assertIn("num_players", params)
-        num_players = params["num_players"]
-        self.assertEqual(num_players, self.numPlayers)
-
-        # Deal cards
-        for brother in self.brothers:
-            self.url = "/api/hand/deal/"
-            self.data = { "game_id": self.game_id, "username": brother }
-            params = self.post_data_and_return_data(self.url, self.data)
-            self.cards[brother] = pydealer.Stack()
-            for card in params["cards"]:
-                self.cards[brother].add(pydealer.Card(card["value"], card["suit"]))
-            self.assertEquals(6, len(self.cards[brother]))
-            self.hand_id = params["hand_id"]
-
-        bidder = 2
-        for i in range(0, self.numPlayers):
-            # Get bid info
-            self.url = "/api/hand/getbidinfo/"
-            self.data = { "game_id": self.game_id, "username": self.brothers[bidder] }
-            params = self.post_data_and_return_data(self.url, self.data)
-
-            # Submit bid
-            self.url = "/api/hand/submitbid/"
-            self.bid = 0
-            if bidder == 0:
-                self.bid = 3
-            self.data = { "game_id": self.game_id, "username": self.brothers[bidder], "bid": self.bid }
-            params = self.post_data_and_return_data(self.url, self.data)
-
-            bidder = (bidder + 1) % self.numPlayers
-
-        # Get high bid
-        for brother in self.brothers:
-            self.url = "/api/hand/gethighbid/"
-            self.data = { "game_id": self.game_id, "hand_id": self.hand_id }
-            params = self.post_data_and_return_data(self.url, self.data)
-            self.assertIn("bidder", params)
-            self.assertEquals(params["bidder"], self.matt)
-            self.assertIn("current_bid", params)
-            self.assertEquals(params["current_bid"], 3)
-
-        # Submit trump
-        self.url = "/api/hand/gettrump/"
-        self.trump = "Spades"
-        self.data = { "game_id": self.game_id, "username": self.matt, "trump": self.trump }
-        params = self.post_data_and_return_data(self.url, self.data)
-
-        # Get trump
-        for brother in self.brothers:
-            self.url = "/api/hand/gettrump/"
-            self.data = { "game_id": self.game_id, "username": brother, "trump": None }
-            params = self.post_data_and_return_data(self.url, self.data)
-
-        # Play hand
-        for trick in range(0, 6):
-            # For a trick, first get playing info and then submit a card
-            card_played = []
-            while len(card_played) < 3:
-                for brother in self.brothers:
-                    # Skip if he's already played
-                    if brother in card_played:
-                        continue
-
-                    # Get playing info
-                    self.url = "/api/hand/getplayinginfo/"
-                    self.data = { "game_id": self.game_id, "username": brother }
-                    params = self.post_data_and_return_data(self.url, self.data)
-
-                    # only submit card if it is ready for his turn
-                    if not params["ready_to_play"]:
-                        continue
-
-                    # Submit card to play
-                    self.url = "/api/hand/submitcard/"
-                    indices = smear_utils.SmearUtils.get_legal_play_indices(params["lead_suit"], self.trump, self.cards[brother])
-                    card = self.cards[brother][indices[0]]
-                    self.card_to_play = { "suit": card.suit, "value": card.value }
-                    del self.cards[brother][indices[0]]
-                    self.data = { "game_id": self.game_id, "username": brother, "card_to_play": self.card_to_play }
-                    params = self.post_data_and_return_data(self.url, self.data)
-                    card_played.append(brother)
-
-            # Get the results of the trick
-            for brother in self.brothers:
-                self.url = "/api/hand/gettrickresults/"
-                self.data = { "game_id": self.game_id, "username": brother }
-                params = self.post_data_and_return_data(self.url, self.data)
-
-        # Get results of hand
-        for brother in self.brothers:
-            self.url = "/api/hand/getresults/"
-            self.data = { "game_id": self.game_id, "hand_id": self.hand_id, "username": brother }
-
-
-class PlaySmearFamilyTest(PlaySmearTest):
-
-    def setUp(self):
-        PlaySmearTest.setUp(self)
-        self.numPlayers = 4
-        self.matt = "Matt"
-        self.adam = "Adam"
-        self.tim = "Tim"
-        self.dad = "Dad"
-        self.cards = {}
-        self.family = [ self.matt, self.adam, self.tim, self.dad ]
-        self.game_id = ""
-
-    def tearDown(self):
-        pass
-
-    def test_family_usecase(self):
-        # Create game
-        self.url = "/api/game/create/"
-        self.data = {
-                "numPlayers": self.numPlayers,
-                "numHumanPlayers": self.numPlayers,
-                "pointsToPlayTo": 15,
-                "engineDebug": False,
-                "numTeams": 2
-                }
-        params = self.post_data_and_return_data(self.url, self.data)
-        self.assertIn("game_id", params)
-        self.game_id = params["game_id"]
-        self.assertIsNotNone(self.game_id)
-        self.assertNotEqual(self.game_id, "")
-
-        # Join Game 
-        for player in self.family:
+        for player in self.players:
             self.url = "/api/game/join/"
             self.data = { "game_id": self.game_id, "username": player }
             params = self.post_data_and_return_data(self.url, self.data)
@@ -720,8 +577,10 @@ class PlaySmearFamilyTest(PlaySmearTest):
         num_players = params["num_players"]
         self.assertEqual(num_players, self.numPlayers)
 
+
+    def play_hand(self):
         # Deal cards
-        for player in self.family:
+        for player in self.players:
             self.url = "/api/hand/deal/"
             self.data = { "game_id": self.game_id, "username": player }
             params = self.post_data_and_return_data(self.url, self.data)
@@ -731,41 +590,40 @@ class PlaySmearFamilyTest(PlaySmearTest):
             self.assertEquals(6, len(self.cards[player]))
             self.hand_id = params["hand_id"]
 
-        bidder = 2
-        for i in range(0, self.numPlayers):
+        player_bidder = random.choice(self.players)
+        for bidder in range(0, self.numPlayers):
             # Get bid info
             self.url = "/api/hand/getbidinfo/"
-            self.data = { "game_id": self.game_id, "username": self.family[bidder] }
+            self.data = { "game_id": self.game_id, "username": self.players[bidder] }
             params = self.post_data_and_return_data(self.url, self.data)
 
             # Submit bid
             self.url = "/api/hand/submitbid/"
             self.bid = 0
-            if bidder == 0:
+            if self.players[bidder] == player_bidder:
                 self.bid = 3
-            self.data = { "game_id": self.game_id, "username": self.family[bidder], "bid": self.bid }
+            self.data = { "game_id": self.game_id, "username": self.players[bidder], "bid": self.bid }
             params = self.post_data_and_return_data(self.url, self.data)
 
-            bidder = (bidder + 1) % self.numPlayers
 
         # Get high bid
-        for player in self.family:
+        for player in self.players:
             self.url = "/api/hand/gethighbid/"
             self.data = { "game_id": self.game_id, "hand_id": self.hand_id }
             params = self.post_data_and_return_data(self.url, self.data)
             self.assertIn("bidder", params)
-            self.assertEquals(params["bidder"], self.matt)
+            self.assertEquals(params["bidder"], player_bidder)
             self.assertIn("current_bid", params)
             self.assertEquals(params["current_bid"], 3)
 
         # Submit trump
         self.url = "/api/hand/gettrump/"
-        self.trump = "Spades"
-        self.data = { "game_id": self.game_id, "username": self.matt, "trump": self.trump }
+        self.trump = random.choice( [ "Spades", "Clubs", "Diamonds", "Hearts" ] )
+        self.data = { "game_id": self.game_id, "username": player_bidder, "trump": self.trump }
         params = self.post_data_and_return_data(self.url, self.data)
 
         # Get trump
-        for player in self.family:
+        for player in self.players:
             self.url = "/api/hand/gettrump/"
             self.data = { "game_id": self.game_id, "username": player, "trump": None }
             params = self.post_data_and_return_data(self.url, self.data)
@@ -775,7 +633,7 @@ class PlaySmearFamilyTest(PlaySmearTest):
             # For a trick, first get playing info and then submit a card
             card_played = []
             while len(card_played) < self.numPlayers:
-                for player in self.family:
+                for player in self.players:
                     # Skip if he's already played
                     if player in card_played:
                         continue
@@ -792,24 +650,141 @@ class PlaySmearFamilyTest(PlaySmearTest):
                     # Submit card to play
                     self.url = "/api/hand/submitcard/"
                     indices = smear_utils.SmearUtils.get_legal_play_indices(params["lead_suit"], self.trump, self.cards[player])
-                    card = self.cards[player][indices[0]]
+                    card_index = random.choice(indices)
+                    # Pick a random card
+                    card = self.cards[player][card_index]
                     self.card_to_play = { "suit": card.suit, "value": card.value }
-                    del self.cards[player][indices[0]]
+                    del self.cards[player][card_index]
                     self.data = { "game_id": self.game_id, "username": player, "card_to_play": self.card_to_play }
                     params = self.post_data_and_return_data(self.url, self.data)
                     card_played.append(player)
 
             # Get the results of the trick
-            for player in self.family:
+            for player in self.players:
                 self.url = "/api/hand/gettrickresults/"
                 self.data = { "game_id": self.game_id, "username": player }
                 params = self.post_data_and_return_data(self.url, self.data)
 
         # Get results of hand
-        for player in self.family:
+        game_over = False
+        for player in self.players:
             self.url = "/api/hand/getresults/"
             self.data = { "game_id": self.game_id, "hand_id": self.hand_id, "username": player }
+            params = self.post_data_and_return_data(self.url, self.data)
+            self.assertIn("is_game_over", params)
+            if params["is_game_over"]:
+                game_over = True
+
+        return game_over
 
 
+    def play_game(self):
+        self.create_and_join_game()
+        game_over = False
+        while not game_over:
+            game_over = self.play_hand()
+
+
+
+# Three person cut-throat
+class PlaySmearBrothersTest(PlaySmearEndToEnd):
+
+    def setUp(self):
+        PlaySmearEndToEnd.setUp(self)
+        self.players = [ "Matt", "Adam", "Tim" ]
+        self.numPlayers = len(self.players)
+        self.points_to_play_to = 5
+        self.num_teams = 0
+
+    def tearDown(self):
+        pass
+
+    def test_brothers_usecase(self):
+        self.play_game()
+
+
+# 2v2 teams
+class PlaySmearFamilyTest(PlaySmearEndToEnd):
+
+    def setUp(self):
+        PlaySmearEndToEnd.setUp(self)
+        self.players = [ "Matt", "Adam", "Tim", "Dad" ]
+        self.numPlayers = len(self.players)
+        self.points_to_play_to = 5
+        self.num_teams = 2
+
+    def tearDown(self):
+        pass
+
+    def test_family_game(self):
+        self.play_game()
+
+
+# 3 teams of 2
+class PlaySmearThreeTeam(PlaySmearEndToEnd):
+
+    def setUp(self):
+        PlaySmearEndToEnd.setUp(self)
+        self.players = [ "Matt", "Adam", "Tim", "Cari", "Katie", "Brittany" ]
+        self.numPlayers = len(self.players)
+        self.points_to_play_to = 5
+        self.num_teams = 3
+
+    def tearDown(self):
+        pass
+
+    def test_3_teams_of_2(self):
+        self.play_game()
+
+
+# 2 teams of 3
+class PlaySmearTwoTeamsOfThree(PlaySmearEndToEnd):
+
+    def setUp(self):
+        PlaySmearEndToEnd.setUp(self)
+        self.players = [ "Matt", "Adam", "Tim", "Cari", "Katie", "Brittany" ]
+        self.numPlayers = len(self.players)
+        self.points_to_play_to = 5
+        self.num_teams = 2
+
+    def tearDown(self):
+        pass
+
+    def test_2_teams_of_3(self):
+        self.play_game()
+
+
+# 2 person smear
+class PlaySmearTwoPeople(PlaySmearEndToEnd):
+
+    def setUp(self):
+        PlaySmearEndToEnd.setUp(self)
+        self.players = [ "Matt", "Eli" ]
+        self.numPlayers = len(self.players)
+        self.points_to_play_to = 5
+        self.num_teams = 0
+
+    def tearDown(self):
+        pass
+
+    def test_2_person_smear(self):
+        self.play_game()
+
+
+# 2 teams of 4
+class PlaySmearTwoTeamsOfFour(PlaySmearEndToEnd):
+
+    def setUp(self):
+        PlaySmearEndToEnd.setUp(self)
+        self.players = [ "Matt", "Adam", "Tim", "Cari", "Katie", "Brittany", "Steve", "Barb" ]
+        self.numPlayers = len(self.players)
+        self.points_to_play_to = 5
+        self.num_teams = 2
+
+    def tearDown(self):
+        pass
+
+    def test_2_teams_of_4(self):
+        self.play_game()
 if __name__ == '__main__':
     unittest.main()
