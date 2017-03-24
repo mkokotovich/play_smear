@@ -1,6 +1,7 @@
-# play\_smear
-Play the card game smear online
 [![Build Status](https://travis-ci.org/mkokotovich/play_smear.svg?branch=master)](https://travis-ci.org/mkokotovich/play_smear)
+# play\_smear
+
+Play the card game smear online
 
 Angular2 front end
 
