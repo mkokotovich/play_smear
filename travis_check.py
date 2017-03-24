@@ -2,6 +2,7 @@ import urllib2
 import json
 import subprocess
 import time
+import sys
 
 travis_base_url="https://api.travis-ci.org/repos/mkokotovich/play_smear"
 
@@ -31,13 +32,16 @@ def main():
 
         if master_commit_id == travis_commit_id:
             # Commit's match
-            print "Current commit: " + last_build_state
-            if last_build_state == "passed" or last_build_state == "failed":
-                return
+            print "TRAVIS: Current commit: " + last_build_state
+            if last_build_state == "passed":
+                return 0
+            if last_build_state == "failed":
+                return 1
         else:
-            print "Current commit has NOT been picked up by travis yet"
+            print "TRAVIS: Current commit has NOT been picked up by travis yet"
         time.sleep(5)
 
 
 if __name__ == "__main__":
-    main()
+    ret = main()
+    sys.exit(ret)
