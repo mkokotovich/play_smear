@@ -22,6 +22,8 @@
 remote="$1"
 url="$2"
 
+echo $remote
+echo $url
 ret=0
 if [ "${remote}" = "heroku" ] ; then
     python travis_check.py
