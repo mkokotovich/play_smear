@@ -665,5 +665,151 @@ class PlaySmearBrothersTest(PlaySmearTest):
             self.url = "/api/hand/getresults/"
             self.data = { "game_id": self.game_id, "hand_id": self.hand_id, "username": brother }
 
+
+class PlaySmearFamilyTest(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        self.numPlayers = 4
+        self.matt = "Matt"
+        self.adam = "Adam"
+        self.tim = "Tim"
+        self.dad = "Dad"
+        self.cards = {}
+        self.family = [ self.matt, self.adam, self.tim, self.dad ]
+        self.game_id = ""
+
+    def tearDown(self):
+        pass
+
+    def test_family_usecase(self):
+        # Create game
+        self.url = "/api/game/create/"
+        self.data = {
+                "numPlayers": self.numPlayers,
+                "numHumanPlayers": self.numPlayers,
+                "pointsToPlayTo": 15,
+                "engineDebug": False,
+                "numTeams": 2
+                }
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assertIn("game_id", params)
+        self.game_id = params["game_id"]
+        self.assertIsNotNone(self.game_id)
+        self.assertNotEqual(self.game_id, "")
+
+        # Join Game 
+        for player in self.family:
+            self.url = "/api/game/join/"
+            self.data = { "game_id": self.game_id, "username": player }
+            params = self.post_data_and_return_data(self.url, self.data)
+            self.assertIn("game_id", params)
+            self.assertEqual(params["game_id"], self.game_id)
+
+        # Check if game is ready
+        self.url = "/api/game/startstatus/"
+        self.data = { "game_id": self.game_id }
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assertIn("ready", params)
+        self.assertTrue(params["ready"])
+        self.assertIn("player_names", params)
+        player_names = params["player_names"]
+        self.assertIsNotNone(player_names)
+        self.assertEqual(len(player_names), self.numPlayers)
+        self.assertIn("num_players", params)
+        num_players = params["num_players"]
+        self.assertEqual(num_players, self.numPlayers)
+
+        # Deal cards
+        for player in self.family:
+            self.url = "/api/hand/deal/"
+            self.data = { "game_id": self.game_id, "username": player }
+            params = self.post_data_and_return_data(self.url, self.data)
+            self.cards[player] = pydealer.Stack()
+            for card in params["cards"]:
+                self.cards[player].add(pydealer.Card(card["value"], card["suit"]))
+            self.assertEquals(6, len(self.cards[player]))
+            self.hand_id = params["hand_id"]
+
+        bidder = 2
+        for i in range(0, self.numPlayers):
+            # Get bid info
+            self.url = "/api/hand/getbidinfo/"
+            self.data = { "game_id": self.game_id, "username": self.family[bidder] }
+            params = self.post_data_and_return_data(self.url, self.data)
+
+            # Submit bid
+            self.url = "/api/hand/submitbid/"
+            self.bid = 0
+            if bidder == 0:
+                self.bid = 3
+            self.data = { "game_id": self.game_id, "username": self.family[bidder], "bid": self.bid }
+            params = self.post_data_and_return_data(self.url, self.data)
+
+            bidder = (bidder + 1) % self.numPlayers
+
+        # Get high bid
+        for player in self.family:
+            self.url = "/api/hand/gethighbid/"
+            self.data = { "game_id": self.game_id, "hand_id": self.hand_id }
+            params = self.post_data_and_return_data(self.url, self.data)
+            self.assertIn("bidder", params)
+            self.assertEquals(params["bidder"], self.matt)
+            self.assertIn("current_bid", params)
+            self.assertEquals(params["current_bid"], 3)
+
+        # Submit trump
+        self.url = "/api/hand/gettrump/"
+        self.trump = "Spades"
+        self.data = { "game_id": self.game_id, "username": self.matt, "trump": self.trump }
+        params = self.post_data_and_return_data(self.url, self.data)
+
+        # Get trump
+        for player in self.family:
+            self.url = "/api/hand/gettrump/"
+            self.data = { "game_id": self.game_id, "username": player, "trump": None }
+            params = self.post_data_and_return_data(self.url, self.data)
+
+        # Play hand
+        for trick in range(0, 6):
+            # For a trick, first get playing info and then submit a card
+            card_played = []
+            while len(card_played) < self.numPlayers:
+                for player in self.family:
+                    # Skip if he's already played
+                    if player in card_played:
+                        continue
+
+                    # Get playing info
+                    self.url = "/api/hand/getplayinginfo/"
+                    self.data = { "game_id": self.game_id, "username": player }
+                    params = self.post_data_and_return_data(self.url, self.data)
+
+                    # only submit card if it is ready for his turn
+                    if not params["ready_to_play"]:
+                        continue
+
+                    # Submit card to play
+                    self.url = "/api/hand/submitcard/"
+                    indices = smear_utils.SmearUtils.get_legal_play_indices(params["lead_suit"], self.trump, self.cards[player])
+                    card = self.cards[player][indices[0]]
+                    self.card_to_play = { "suit": card.suit, "value": card.value }
+                    del self.cards[player][indices[0]]
+                    self.data = { "game_id": self.game_id, "username": player, "card_to_play": self.card_to_play }
+                    params = self.post_data_and_return_data(self.url, self.data)
+                    card_played.append(player)
+
+            # Get the results of the trick
+            for player in self.family:
+                self.url = "/api/hand/gettrickresults/"
+                self.data = { "game_id": self.game_id, "username": player }
+                params = self.post_data_and_return_data(self.url, self.data)
+
+        # Get results of hand
+        for player in self.family:
+            self.url = "/api/hand/getresults/"
+            self.data = { "game_id": self.game_id, "hand_id": self.hand_id, "username": player }
+
+
 if __name__ == '__main__':
     unittest.main()
