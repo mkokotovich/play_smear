@@ -1,5 +1,14 @@
 <div>
-    <p>{{handService.getHandMessage()}}</p>
+    <table class="hand-message">
+        <tr>
+            <td>
+                {{handService.getHandMessage()}}
+            </td>
+            <td *ngIf="handService.allowSelection" style="padding-left: 30px">
+                Select a card to play, then click it again to submit your choice
+            </td>
+        </tr>
+    </table>
     <div class="container-fluid hand">
         <div class="row playingCards simpleCards"
             dnd-sortable-container [sortableData]="handService.getCards()">

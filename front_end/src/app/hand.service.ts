@@ -99,6 +99,7 @@ export class HandService {
 
     startNewHand(): void {
         this.setGameStatus("Waiting for cards to be dealt");
+        this.showHandResults = false;
         this.trump = "";
         this.allowSelection = false;
         this.showBidInput = false;
@@ -392,11 +393,11 @@ export class HandService {
         this.handResults = handResults;
         this.trump = "";
         if (this.handResults.is_game_over) {
-            this.setGameStatus("Results of previous hand. Game is now over.");
+            this.setGameStatus("Game is now over.");
             this.displayNextHandButton = false;
             this.enableNextHandButton = false;
         } else {
-            this.setGameStatus("Results of previous hand.");
+            this.setGameStatus("");
             this.nextHandButtonText = "Start next hand";
             this.displayNextHandButton = true;
             this.enableNextHandButton = true;
@@ -457,6 +458,7 @@ export class HandService {
 
     startNextHand(): void {
         this.enableNextHandButton = false;
+        this.showHandResults = false;
         this.playersTurn = false;
         Cookie.set("bid_submitted", "false", 1);
         Cookie.set("trump", "", 1);

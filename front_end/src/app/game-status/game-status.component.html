@@ -9,10 +9,25 @@
             </div>
         </div>
         <div class="col-10 col-sm-8 col-md-8 col-lg-8">
-            <div class="card" *ngIf="handService.getGameStatus() != ''">
+            <div *ngIf="handService.displayTrickConfirmationButton == true" style="display: inline-block; padding-top: 10px">
+                <button type="button" class="btn btn-primary btn-lg"
+                                      [disabled]="!handService.enableTrickConfirmationButton"
+                                      (click)="handService.startNextTrick()">
+                    Continue
+                </button>
+            </div>
+            <div *ngIf="handService.displayNextHandButton == true" style="display: inline-block; padding-top: 10px">
+                <button type="button" class="btn btn-primary btn-lg"
+                                      [disabled]="!handService.enableNextHandButton"
+                                      (click)="handService.startNextHand()">
+                    {{ handService.nextHandButtonText }}
+                </button>
+            </div>
+            <div class="card status-message" *ngIf="handService.getGameStatus() != ''">
                 <h5 *ngIf="handService.playersTurn" style="font-weight: bold" class="card-header card-title">Your turn</h5>
                 <div class="card-block">
                     <div class="card-text">
+
                         {{ handService.getGameStatus() }}
                     </div>
                 </div>

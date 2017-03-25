@@ -1,26 +1,6 @@
 <div style="position: fixed; top: 0; left: 50%; width: 400px; margin-left: -200px;" *ngFor="let alert of handService.alerts">
     <alert [type]="alert.type" dismissible="true">{{ alert.msg }}</alert>
 </div>
-
-<div *ngIf="handService.allowSelection">
-    Select a card to play, then click it again to submit your choice
-</div>
-<div *ngIf="handService.displayTrickConfirmationButton == true">
-    <button type="button" class="btn btn-primary btn-lg"
-                          [disabled]="!handService.enableTrickConfirmationButton"
-                          (click)="handService.startNextTrick()">
-        Continue
-    </button>
-</div>
-
-<div *ngIf="handService.displayNextHandButton == true">
-    <button type="button" class="btn btn-primary btn-lg"
-                          [disabled]="!handService.enableNextHandButton"
-                          (click)="handService.startNextHand()">
-        {{ handService.nextHandButtonText }}
-    </button>
-</div>
-<br>
 <div>
     <app-hand>Loading cards</app-hand>
 </div>

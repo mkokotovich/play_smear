@@ -4,12 +4,10 @@
              *ngFor="let player of gameService.getPlayers()">
             <div class="card" [ngClass]="{'card-outline-primary': player.name == handService.waitingFor}">
                 <h4 class="card-header card-title"> {{ player.name }} </h4>
-                <div class="card-block">
-                    <p class="card-text">
-                        Score: {{ player.score }}
-                    </p>
-                </div>
                 <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        Score: {{ player.score }}
+                    </li>
                     <li class="list-group-item" *ngIf="player.name == handService.dealer">
                         <b>Dealer</b>
                     </li>
@@ -29,6 +27,18 @@
                                 <div class="smearcard_status card {{ cardHelper.getCardClass(handService.getCardPlayedForPlayer(player.name)) }}" >
                                     <span class="rank">{{ cardHelper.getCardRankUpper(handService.getCardPlayedForPlayer(player.name)) }}</span>
                                     <span class="suit">{{ cardHelper.getCardSuitSymbol(handService.getCardPlayedForPlayer(player.name)) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="list-group-item"
+                        *ngIf="! handService.hasPlayerPlayedACard(player.name) &&
+                               ! handService.showHandResults &&
+                               handService.highBid.username">
+                        <div>
+                            <div><i>Waiting</i><br></div>
+                            <div class="playingCards simpleCards">
+                                <div class="smearcard_status card back" >
                                 </div>
                             </div>
                         </div>

@@ -38,8 +38,9 @@ body {
     font-family: Arial, sans-serif;
     font-size: 8.0vw !important;
     margin-top: -0.4em;
-    display: block;
-    position: relative;
+    margin-bottom: -0.4em;
+    display: inline-block;
+    vertical-align: middle;
 }
 .trump.hearts {
     color: #f00 !important;
@@ -61,3 +62,14 @@ body {
     font-size: 4.0vw !important;
 }
 
+.list-group-item {
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+}
+
+.card-block {
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+}
+
+.card-header {
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+}
