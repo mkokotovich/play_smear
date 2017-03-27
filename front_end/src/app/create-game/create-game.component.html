@@ -1,6 +1,10 @@
 <div class="container">
     <h5>Choose how many players you'd like to play with, and create a new game</h5>
     <table>
+        <tr>
+            <td>What is your username?</td>
+            <td><input [(ngModel)]="gameService.gameAndUser.username" placeholder="username"></td>
+        </tr>
         <tr *ngIf="playAgainstPeople">
             <td>How many other people will join?</td>
             <td>
@@ -67,10 +71,6 @@
                     </button>
                 </div>
             </td>
-        </tr>
-        <tr>
-            <td>What is your username?</td>
-            <td><input [(ngModel)]="gameService.gameAndUser.username" placeholder="username"></td>
         </tr>
         <tr>
             <td>Points to play to</td>
