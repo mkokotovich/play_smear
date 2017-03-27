@@ -1,7 +1,7 @@
 <div>
     <p> {{ handService.getBidMessage() }} </p>
     <div *ngIf="handService.showBidInput == true">
-        <div class="btn-group" role="group">
+        <div class="btn-group" role="group" style="margin-right: 10px;">
             <button type="button" class="btn btn-secondary"
                                   [disabled]="!handService.allowBid"
                                   [class.active]="0 === bid"
@@ -33,7 +33,7 @@
                 5
             </button>
         </div>
-        <button type="button" class="btn btn-default" style="margin-left: 10px;"
+        <button type="button" class="btn btn-default"
                               [disabled]="!handService.allowBid || bid == undefined"
                               (click)="submit_bid()">
             Submit Bid
