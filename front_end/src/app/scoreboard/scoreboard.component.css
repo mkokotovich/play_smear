@@ -1,4 +1,11 @@
 
+.players {
+    padding: 0px 10px 0px 10px;
+    min-width: 150px;
+    max-width: 300px;
+    word-break: break-word;
+}
+
 .selected {
     background-color: #FFFFC7 !important;
 }
