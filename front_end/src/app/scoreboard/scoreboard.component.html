@@ -1,10 +1,14 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-auto players"
-             *ngFor="let player of gameService.getPlayers()">
+             *ngFor="let player of gameService.getPlayers(); let player_index = index">
             <div class="card" [ngClass]="{'card-outline-primary': player.name == handService.waitingFor}">
                 <h4 class="card-header card-title"> {{ player.name }} </h4>
                 <ul class="list-group list-group-flush">
+                    <li class="list-group-item team-{{handService.getTeamColorName(player_index)}}"
+                        *ngIf="handService.teamId && handService.teamId != ''">
+                        {{ handService.getTeamColorName(player_index) }} team
+                    </li>
                     <li class="list-group-item">
                         Score: {{ player.score }}
                     </li>

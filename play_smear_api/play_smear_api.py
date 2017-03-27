@@ -258,6 +258,8 @@ def add_user_to_game(engine, game_id, username):
 # Return
 #  game_id  - string - ID of game we just joined
 #  username - string - username to use
+#  team_id  - string - ID of the team the player is on
+#  num_teams - number - number of teams total 
 #  points_to_play_to - int - points the game will go to
 
 @app.route("/api/game/join/", methods=["POST"])
@@ -276,6 +278,8 @@ def join_game():
     if result is not 0:
         return generate_error(1, "Game {} is already full, contains {} players".format(game_id, result))
 
+    team_id = engine.get_team_id_for_player(username)
+    num_teams = engine.get_num_teams()
     points_to_play_to = engine.get_points_to_play_to()
 
     # Update persistent engine
@@ -285,6 +289,8 @@ def join_game():
     data = {}
     data["game_id"] = game_id
     data["username"] = username
+    data["team_id"] = str(team_id)
+    data["num_teams"] = num_teams
     data["points_to_play_to"] = points_to_play_to
     return generate_return_string(data)
 
@@ -293,7 +299,12 @@ def join_game():
 # Input (json data from post):
 #  game_id  - string - ID of game to join
 #  username - string - username to use
-# Return - nothing
+# Return
+#  game_id  - string - ID of game we just joined
+#  username - string - username to use
+#  team_id  - string - ID of the team the player is on
+#  num_teams - number - number of teams total 
+#  points_to_play_to - int - points the game will go to
 @app.route("/api/game/rejoin/", methods=["POST"])
 def rejoin_game():
     params = get_params_or_abort(request)
@@ -305,6 +316,8 @@ def rejoin_game():
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
 
+    team_id = engine.get_team_id_for_player(username)
+    num_teams = engine.get_num_teams()
     points_to_play_to = engine.get_points_to_play_to()
 
     # Update persistent engine
@@ -314,6 +327,8 @@ def rejoin_game():
     data = {}
     data["game_id"] = game_id
     data["username"] = username
+    data["team_id"] = str(team_id)
+    data["num_teams"] = num_teams
     data["points_to_play_to"] = points_to_play_to
     return generate_return_string(data)
 

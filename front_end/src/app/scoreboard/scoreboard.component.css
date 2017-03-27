@@ -39,3 +39,44 @@
     padding: 10px;
 }
 
+.team-Green {
+    border-style: solid;
+    border-width: 5px;
+    border-color: palegreen;
+
+}
+.team-Blue {
+    border-style: solid;
+    border-width: 5px;
+    border-color: skyblue;
+}
+.team-Coral {
+    border-style: solid;
+    border-width: 5px;
+    border-color: coral;
+}
+.team-Plum {
+    border-style: solid;
+    border-width: 5px;
+    border-color: plum;
+}
+.team-Khaki {
+    border-style: solid;
+    border-width: 5px;
+    border-color: khaki;
+}
+.team-Silver {
+    border-style: solid;
+    border-width: 5px;
+    border-color: silver;
+}
+.team-Linen {
+    border-style: solid;
+    border-width: 5px;
+    border-color: linen;
+}
+.team-Cyan {
+    border-style: solid;
+    border-width: 5px;
+    border-color: cyan;
+}

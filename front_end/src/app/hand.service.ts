@@ -55,6 +55,8 @@ export class HandService {
     public showHandResults: boolean;
     private handResults: HandResults;
     public pointsToPlayTo : number;
+    public teamId : string;
+    public numTeams : number;
     private players: Array<Player>;
     public alerts: any = [];
 
@@ -76,9 +78,11 @@ export class HandService {
         this.handMessage = "Waiting for cards...";
     }
 
-    setGameInfo(game_id: string, username: string, pointsToPlayTo: number): void {
+    setGameInfo(game_id: string, username: string, teamId: string, numTeams: number, pointsToPlayTo: number): void {
         this.gameAndUser = new GameAndUser(game_id, username);
         this.pointsToPlayTo = pointsToPlayTo;
+        this.teamId = teamId;
+        this.numTeams = numTeams;
         this.allowSelection = false;
         this.showBidInput = false;
         this.showTrumpInput = false;
@@ -605,5 +609,41 @@ export class HandService {
 
     isBidding(): boolean {
         return this.currentlyBidding;
+    }
+
+    getTeamColorName(playerIndex: number): string {
+        let color=""
+        let teamId = playerIndex % this.numTeams;
+        switch (teamId) {
+            case 0:
+                color="Green";
+                break;
+            case 1:
+                color="Blue";
+                break;
+            case 2:
+                color="Coral";
+                break;
+            case 3:
+                color="Plum";
+                break;
+            //These shouldn't be used, but just in case someone puts one person per team
+            case 4:
+                color="Khaki";
+                break;
+            case 5:
+                color="Silver";
+                break;
+            case 6:
+                color="Linen";
+                break;
+            case 7:
+                color="Cyan";
+                break;
+            default:
+                color=teamId.toString()
+                break;
+        }
+        return color;
     }
 }

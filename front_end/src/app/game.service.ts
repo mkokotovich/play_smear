@@ -70,7 +70,6 @@ export class GameService {
         this.welcomeMessage = "Attempting to rejoin a previous game...";
         this.errorMessage = "";
         this.disableJoinButton = true;
-        this.setGameInfo(this.gameAndUser.game_id, this.gameAndUser.username, 0);
         this.smearApiService.gameRejoin(this.gameAndUser)
                             .subscribe( gameJoinResults => this.checkGameStatus(gameJoinResults),
                                         err => this.unableToJoin(err));
@@ -88,7 +87,6 @@ export class GameService {
         this.welcomeMessage += "\nJoining game..."
         this.errorMessage = "";
         this.disableJoinButton = true;
-        this.setGameInfo(this.gameAndUser.game_id, this.gameAndUser.username, 0);
         this.smearApiService.gameJoin(this.gameAndUser)
                             .subscribe( gameJoinResults => this.checkGameStatus(gameJoinResults),
                                         err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
@@ -96,7 +94,11 @@ export class GameService {
 
     checkGameStatus(gameJoinResults: GameJoinResults) {
         if (gameJoinResults) {
-            this.setGameInfo(gameJoinResults.game_id, gameJoinResults.username, gameJoinResults.points_to_play_to);
+            this.setGameInfo(gameJoinResults.game_id,
+                             gameJoinResults.username,
+                             gameJoinResults.team_id,
+                             gameJoinResults.num_teams,
+                             gameJoinResults.points_to_play_to);
         }
         this.saveGameInfoInCookie();
         this.smearApiService.getGameStartStatus(this.gameId)
@@ -128,9 +130,9 @@ export class GameService {
 
 
     //Also reset all globals
-    setGameInfo(gameId: string, username: string, pointsToPlayTo: number):void {
+    setGameInfo(gameId: string, username: string, teamId: string, numTeams: number, pointsToPlayTo: number):void {
         this.gameId = new GameId(gameId);
-        this.handService.setGameInfo(gameId, username, pointsToPlayTo);
+        this.handService.setGameInfo(gameId, username, teamId, numTeams, pointsToPlayTo);
     }
 
     saveGameInfoInCookie() {
