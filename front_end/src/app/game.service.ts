@@ -130,7 +130,7 @@ export class GameService {
 
 
     //Also reset all globals
-    setGameInfo(gameId: string, username: string, teamId: string, numTeams: number, pointsToPlayTo: number):void {
+    setGameInfo(gameId: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number):void {
         this.gameId = new GameId(gameId);
         this.handService.setGameInfo(gameId, username, teamId, numTeams, pointsToPlayTo);
     }

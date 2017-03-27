@@ -258,7 +258,7 @@ def add_user_to_game(engine, game_id, username):
 # Return
 #  game_id  - string - ID of game we just joined
 #  username - string - username to use
-#  team_id  - string - ID of the team the player is on
+#  team_id  - int    - ID of the team the player is on
 #  num_teams - number - number of teams total 
 #  points_to_play_to - int - points the game will go to
 
@@ -302,7 +302,7 @@ def join_game():
 # Return
 #  game_id  - string - ID of game we just joined
 #  username - string - username to use
-#  team_id  - string - ID of the team the player is on
+#  team_id  - int    - ID of the team the player is on
 #  num_teams - number - number of teams total 
 #  points_to_play_to - int - points the game will go to
 @app.route("/api/game/rejoin/", methods=["POST"])

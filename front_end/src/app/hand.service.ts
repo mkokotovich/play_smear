@@ -55,7 +55,7 @@ export class HandService {
     public showHandResults: boolean;
     private handResults: HandResults;
     public pointsToPlayTo : number;
-    public teamId : string;
+    public teamId : number;
     public numTeams : number;
     private players: Array<Player>;
     public alerts: any = [];
@@ -78,7 +78,7 @@ export class HandService {
         this.handMessage = "Waiting for cards...";
     }
 
-    setGameInfo(game_id: string, username: string, teamId: string, numTeams: number, pointsToPlayTo: number): void {
+    setGameInfo(game_id: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number): void {
         this.gameAndUser = new GameAndUser(game_id, username);
         this.pointsToPlayTo = pointsToPlayTo;
         this.teamId = teamId;
