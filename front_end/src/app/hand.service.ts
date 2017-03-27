@@ -56,6 +56,7 @@ export class HandService {
     private handResults: HandResults;
     public pointsToPlayTo : number;
     public teamId : number;
+    public teamsEnabled : boolean = false;
     public numTeams : number;
     private players: Array<Player>;
     public alerts: any = [];
@@ -82,6 +83,9 @@ export class HandService {
         this.gameAndUser = new GameAndUser(game_id, username);
         this.pointsToPlayTo = pointsToPlayTo;
         this.teamId = teamId;
+        if (teamId != null && teamId != undefined) {
+            this.teamsEnabled = true;
+        }
         this.numTeams = numTeams;
         this.allowSelection = false;
         this.showBidInput = false;
