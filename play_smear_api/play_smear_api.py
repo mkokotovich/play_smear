@@ -289,7 +289,7 @@ def join_game():
     data = {}
     data["game_id"] = game_id
     data["username"] = username
-    data["team_id"] = str(team_id)
+    data["team_id"] = team_id
     data["num_teams"] = num_teams
     data["points_to_play_to"] = points_to_play_to
     return generate_return_string(data)
@@ -327,7 +327,7 @@ def rejoin_game():
     data = {}
     data["game_id"] = game_id
     data["username"] = username
-    data["team_id"] = str(team_id)
+    data["team_id"] = team_id
     data["num_teams"] = num_teams
     data["points_to_play_to"] = points_to_play_to
     return generate_return_string(data)
