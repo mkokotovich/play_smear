@@ -623,7 +623,7 @@ export class HandService {
                 color="Blue";
                 break;
             case 1:
-                color="Salmon";
+                color="Orange";
                 break;
             case 2:
                 color="Plum";
