@@ -2,6 +2,32 @@
 /* @import url("../node_modules/bootstrap/dist/css/bootstrap.min.css"); */
 @import url("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css");
 
+.bg-color {
+    background-color: #E3F0DE;
+}
+
+.fg-color {
+    background-color: #FFFFFF;
+}
+
+.jumbo-color {
+    background-color: #84CF64;
+}
+
+.tab-color {
+    background-color: #FFFFFF;
+}
+
+.content-blob {
+    padding-top: 1em;
+    padding-bottom: 1em;
+    border-radius: 15px;
+}
+
+.jumbotron {
+    margin-bottom: 1em;
+}
+
 .center {
     margin: 0 auto;
 }

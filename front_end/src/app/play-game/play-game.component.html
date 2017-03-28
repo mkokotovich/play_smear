@@ -1,23 +1,23 @@
-<div class="jumbotron text-center heading">
+<div class="jumbotron text-center heading jumbo-color">
     <a href="/"><h1>Play Smear</h1></a>
 </div>
-<div class="container-fluid" style="max-width: 1500px">
-<div>
-    <app-scoreboard>Loading scoreboard</app-scoreboard>
-</div>
-<br>
-<div>
-    <app-game-status>Loading game status</app-game-status>
-</div>
-<br>
-<div class="container-fluid small-padding">
-    <div class="center">
-    <div *ngIf="handService.isBidding() == true">
-        <app-bid>Preparing to bid</app-bid>
+<div class="container-fluid fg-color content-blob" style="max-width: 1500px">
+    <div>
+        <app-scoreboard>Loading scoreboard</app-scoreboard>
     </div>
-    <div *ngIf="handService.isBidding() == false">
-        <app-play-hand>Loading next hand</app-play-hand>
+    <br>
+    <div>
+        <app-game-status>Loading game status</app-game-status>
     </div>
+    <br>
+    <div class="container-fluid small-padding">
+        <div class="center">
+            <div *ngIf="handService.isBidding() == true">
+                <app-bid>Preparing to bid</app-bid>
+            </div>
+            <div *ngIf="handService.isBidding() == false">
+                <app-play-hand>Loading next hand</app-play-hand>
+            </div>
+        </div>
     </div>
-</div>
 </div>
