@@ -620,29 +620,29 @@ export class HandService {
         let teamId = playerIndex % this.numTeams;
         switch (teamId) {
             case 0:
-                color="Green";
-                break;
-            case 1:
                 color="Blue";
                 break;
+            case 1:
+                color="Salmon";
+                break;
             case 2:
-                color="Coral";
+                color="Plum";
                 break;
             case 3:
-                color="Plum";
+                color="Sienna";
                 break;
             //These shouldn't be used, but just in case someone puts one person per team
             case 4:
                 color="Khaki";
                 break;
             case 5:
-                color="Silver";
-                break;
-            case 6:
                 color="Linen";
                 break;
-            case 7:
+            case 6:
                 color="Cyan";
+                break;
+            case 7:
+                color="Green";
                 break;
             default:
                 color=teamId.toString()

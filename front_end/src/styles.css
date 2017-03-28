@@ -16,12 +16,22 @@ body {
 }
 
 .smearcard {
-    font-size: 4.0vw !important;
+    font-size: 3.7vw !important;
     font-family: Arial, sans-serif;
 }
+
 .smearcard_status {
     font-size: 2.0vw !important;
     font-family: Arial, sans-serif;
+}
+
+@media only screen and (min-width: 1500px) {
+    .smearcard {
+        font-size: 3.0rem !important;
+    }
+    .smearcard_status {
+        font-size: 2.0rem !important;
+    }
 }
 
 .heading a {
@@ -60,6 +70,15 @@ body {
 
 .trump.small {
     font-size: 4.0vw !important;
+}
+
+@media only screen and (min-width: 1500px) {
+    .trump {
+        font-size: 6.0rem !important;
+    }
+    .trump.small {
+        font-size: 3.0rem !important;
+    }
 }
 
 .list-group-item {
