@@ -2,30 +2,68 @@
 /* @import url("../node_modules/bootstrap/dist/css/bootstrap.min.css"); */
 @import url("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css");
 
+
+/*
+ * Colors
+ */
 .bg-color {
     background-color: #E3F0DE;
 }
 
 .fg-color {
-    background-color: #FFFFFF;
+    background-color: #f0f5f0;
 }
 
-.jumbo-color {
-    background-color: #84CF64;
+.header-color {
+    background-color: #bcd7bc;
 }
 
 .tab-color {
     background-color: #FFFFFF;
 }
 
+.card-title {
+    background-color: #E3F0DE;
+}
+
+/*
+ * Header
+ */
+.page-header {
+    width: 100vw;
+    height: 70px;
+    line-height: 70px;
+    margin-top: -10px;
+    margin-left: -10px;
+    margin-bottom: 10px;
+    text-align: right;
+}
+
+.header-text {
+    font-size: 3.5rem;
+}
+
+.header-symbols {
+    margin-top: -5px;
+}
+
+.page-header a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.page-header a:hover {
+    color: inherit;
+    text-decoration: underline;
+}
+
+/*
+ * Content corner rounding
+ */
 .content-blob {
     padding-top: 1em;
     padding-bottom: 1em;
     border-radius: 15px;
-}
-
-.jumbotron {
-    margin-bottom: 1em;
 }
 
 .center {
@@ -60,16 +98,6 @@ body {
     }
 }
 
-.heading a {
-    color: inherit;
-    text-decoration: none;
-}
-
-.heading a:hover {
-    color: inherit;
-    text-decoration: underline;
-}
-
 .trump {
     font-family: Arial, sans-serif;
     font-size: 8.0vw !important;
@@ -98,6 +126,10 @@ body {
     font-size: 4.0vw !important;
 }
 
+.trump.header {
+    font-size: 4.5em !important;
+}
+
 @media only screen and (min-width: 1500px) {
     .trump {
         font-size: 6.0rem !important;
@@ -117,4 +149,19 @@ body {
 
 .card-header {
     padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+}
+
+@media only screen and (max-width: 600px) {
+    .header-text {
+        font-size: 2.5rem !important;
+    }
+}
+
+@media only screen and (max-width: 500px) {
+    .header-text {
+        font-size: 2.0rem !important;
+    }
+    .trump.header {
+        font-size: 2.5rem !important;
+    }
 }
