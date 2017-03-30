@@ -33,10 +33,8 @@
     width: 100vw;
     height: 70px;
     line-height: 70px;
-    margin-top: -10px;
-    margin-left: -10px;
-    margin-bottom: 10px;
     text-align: right;
+    margin: 0px 10px 0px -10px;
 }
 
 .header-text {
@@ -57,17 +55,35 @@
     text-decoration: underline;
 }
 
+.divider {
+    display:block;
+    width: 100vw;
+    margin: 0px 10px 0px -10px;
+    border: 0px;
+    height:5px;
+    padding:0px;
+}
+
+.divider.light {
+    background-color: #E3F0DE;
+}
+
+.divider.dark {
+    background-color: #bcd7bc;
+}
+
 /*
  * Content corner rounding
  */
 .content-blob {
-    padding-top: 1em;
-    padding-bottom: 1em;
+    padding: 10px 0px 10px 0px;
+    margin-top: 10px;
+    margin-bottom: 10px;
     border-radius: 15px;
 }
 
 .center {
-    margin: 0 auto;
+    margin: 0 auto !important;
 }
 
 .small-padding {
@@ -76,7 +92,7 @@
 }
 
 body {
-    margin: 10px;
+    margin: 0px 10px 0px 10px;
 }
 
 .smearcard {
