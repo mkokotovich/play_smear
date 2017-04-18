@@ -39,6 +39,7 @@
 
 .header-text {
     font-size: 3.5rem;
+    font-family: 'Pacifico', cursive;
 }
 
 .header-symbols {
@@ -93,6 +94,7 @@
 
 body {
     margin: 0px 10px 0px 10px;
+    font-family: 'Roboto', sans-serif;
 }
 
 .smearcard {
