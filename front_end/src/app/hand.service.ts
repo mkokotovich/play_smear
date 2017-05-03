@@ -1,6 +1,5 @@
 import { Cookie } from 'ng2-cookies/ng2-cookies';
 import { Injectable } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { Bid} from './model/bid';
 import { BidInfo } from './model/bid-info';
@@ -61,8 +60,7 @@ export class HandService {
     private players: Array<Player>;
     public alerts: any = [];
 
-    constructor(private smearApiService :SmearApiService,
-                private modalService: NgbModal) {
+    constructor(private smearApiService :SmearApiService) {
         this.allowSelection = false;
         this.showBidInput = false;
         this.showTrumpInput = false;
@@ -100,10 +98,10 @@ export class HandService {
         this.players = players;
     }
 
-    displayHandStatusModal(message: string): void {
-        const modalRef = this.modalService.open(HandStatusModalComponent);
-        modalRef.componentInstance.handStatus = message;
-    }
+    //displayHandStatusModal(message: string): void {
+    //    const modalRef = this.modalService.open(HandStatusModalComponent);
+    //    modalRef.componentInstance.handStatus = message;
+    //}
 
     startNewHand(): void {
         this.setGameStatus("Waiting for cards to be dealt");

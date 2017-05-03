@@ -1,4 +1,4 @@
-import { PlayerInfo } from './model/player-info';
+import { PlayerInfo } from './player-info';
 
 export class HandResults {
     constructor(

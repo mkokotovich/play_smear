@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 
 import { Card } from '../model/card';
 import { HandService } from '../hand.service';
@@ -12,13 +11,10 @@ import { HandStatusModalComponent } from '../hand-status-modal/hand-status-modal
 })
 export class PlayHandComponent implements OnInit {
 
-    constructor(private handService: HandService,
-                private modalService: NgbModal) {
+    constructor(private handService: HandService) {
     }
 
     open() {
-        const modalRef = this.modalService.open(HandStatusModalComponent);
-        modalRef.componentInstance.name = 'World';
     }
 
     playSelectedCard() {

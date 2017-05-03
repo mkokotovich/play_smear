@@ -1,6 +1,5 @@
 import { Angulartics2GoogleAnalytics } from 'angulartics2';
 import { Component } from '@angular/core';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NavigationEnd, Router } from '@angular/router';
 
 import { environment } from '../environments/environment';

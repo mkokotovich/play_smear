@@ -1,14 +1,11 @@
 import { Angulartics2Module, Angulartics2GoogleAnalytics } from 'angulartics2';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
-import { AlertModule } from 'ng2-bootstrap';
-import { TabsModule } from 'ng2-bootstrap/tabs';
+import { AlertModule } from 'ngx-bootstrap/alert';
+import { TabsModule } from 'ngx-bootstrap/tabs';
 import { DndModule } from 'ng2-dnd';
-
-//import { ButtonsModule } from 'ng2-bootstrap';
 
 import { AppRoutingModule } from './app-routing.module';
 
@@ -51,7 +48,6 @@ import { HowToPlayComponent } from './how-to-play/how-to-play.component';
     HttpModule,
     AlertModule.forRoot(),
     TabsModule.forRoot(),
-    NgbModule.forRoot(),
     DndModule.forRoot()
   ],
   providers: [SmearApiService, HandService, GameService],
