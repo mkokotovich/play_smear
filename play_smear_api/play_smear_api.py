@@ -9,6 +9,7 @@ import sys
 import os
 import inspect
 import cPickle as pickle
+import random
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pydealer")
@@ -32,6 +33,18 @@ g_engines = {}
 g_cleanup_queue = Queue.Queue()
 g_cleanup_thread = None
 g_game_timeout = 36000
+
+
+ALL_COMPUTER_NAMES = [
+        "Francis",
+        "Claude",
+        "Ivan",
+        "Marie",
+        "Queen Elizabeth",
+        "Elliot",
+        "Alex",
+        "Maisy"
+]
 
 
 # Creates a new engine in a thread-safe manner
@@ -242,8 +255,10 @@ def add_user_to_game(engine, game_id, username):
         # All humans are in, add the robots and start the game
         num_players = engine.get_desired_number_of_players()
         num_humans = engine.get_desired_number_of_human_players()
+        computers = list(ALL_COMPUTER_NAMES)
         for i in range(1, num_players-num_humans+1):
-            new_player = "computer{}".format(i)
+            new_player = random.choice(computers)
+            computers.remove(new_player)
             app.logger.debug("Adding player {} to game {}".format(new_player, game_id))
             engine.add_player(player_id=new_player, interactive=False)
         engine.start_game()
