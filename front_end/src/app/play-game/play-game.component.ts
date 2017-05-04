@@ -19,10 +19,10 @@ import { SmearApiService } from '../smear-api.service';
 export class PlayGameComponent implements OnInit {
     private gameId: GameId;
 
-    constructor(private smearApiService: SmearApiService,
-                private gameService: GameService,
+    constructor(public smearApiService: SmearApiService,
+                public gameService: GameService,
                 private router: Router,
-                private handService: HandService) { 
+                public handService: HandService) { 
     }
 
     ngOnInit() {

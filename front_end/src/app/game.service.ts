@@ -16,21 +16,21 @@ export class GameService {
 
     public gameCreateInput = new GameCreateInput(0, 0, 0, 0);
     public gameAndUser = new GameAndUser("", "");
-    private welcomeMessage = "";
-    private errorMessage = "";
+    public welcomeMessage = "";
+    public errorMessage = "";
     public disableCreateButton = false;
     public disableJoinButton = false;
     public pointsToPlayTo: number = 11;
     public numTeams: number = 0;
     private numPlayers: number;
     private players: Player[];
-    private playersSoFar: string[] = new Array<string>();
+    public playersSoFar: string[] = new Array<string>();
     private username: string;
     private gameId: GameId;
 
     constructor(private router: Router,
-                private handService: HandService,
-                private smearApiService: SmearApiService) { }
+                public handService: HandService,
+                public smearApiService: SmearApiService) { }
 
     manageGame() {
         this.handService.startNewHand();

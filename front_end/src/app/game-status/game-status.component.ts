@@ -15,9 +15,9 @@ export class GameStatusComponent implements OnInit {
     private numPlayers: number;
     public cardHelper = new CardHelper();
 
-    constructor(private handService: HandService,
-                private gameService: GameService,
-                private smearApiService: SmearApiService) {
+    constructor(public handService: HandService,
+                public gameService: GameService,
+                public smearApiService: SmearApiService) {
     }
 
     ngOnInit() {

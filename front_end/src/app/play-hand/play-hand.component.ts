@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 
 import { Card } from '../model/card';
 import { HandService } from '../hand.service';
-import { HandStatusModalComponent } from '../hand-status-modal/hand-status-modal.component';
 
 @Component({
   selector: 'app-play-hand',
@@ -11,7 +10,7 @@ import { HandStatusModalComponent } from '../hand-status-modal/hand-status-modal
 })
 export class PlayHandComponent implements OnInit {
 
-    constructor(private handService: HandService) {
+    constructor(public handService: HandService) {
     }
 
     open() {

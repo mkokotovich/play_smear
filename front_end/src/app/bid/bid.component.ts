@@ -17,7 +17,7 @@ export class BidComponent implements OnInit {
 
     private trumpChoices = [ "Spades", "Clubs", "Hearts", "Diamonds" ];
 
-    constructor(private handService: HandService) {
+    constructor(public handService: HandService) {
     }
 
     get_bid(): string {

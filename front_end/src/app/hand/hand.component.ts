@@ -11,7 +11,7 @@ import { HandService } from '../hand.service';
 export class HandComponent implements OnInit {
     cardHelper = new CardHelper();
 
-    constructor(private handService: HandService) { 
+    constructor(public handService: HandService) { 
     }
 
     onSelect(card: Card):void {

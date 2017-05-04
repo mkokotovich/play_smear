@@ -13,7 +13,6 @@ import { GameUserCard } from './model/game-user-card';
 import { GetTrump } from './model/get-trump';
 import { HandInfo } from './model/hand-info';
 import { HandResults } from './model/hand-results';
-import { HandStatusModalComponent } from './hand-status-modal/hand-status-modal.component';
 import { Player } from './model/player';
 import { PlayerInfo } from './model/player-info';
 import { PlayingInfo } from './model/playing-info';
@@ -31,7 +30,7 @@ export class HandService {
     public playersTurn: boolean;
     private cards: Card[];
     private selectedCard: Card;
-    private allowSelection: boolean;
+    public allowSelection: boolean;
     private gameStatusMessage: string;
     private gameAndHand: GameAndHand;
     private gameAndUser: GameAndUser;
@@ -45,7 +44,7 @@ export class HandService {
     public playingInfo = new PlayingInfo(new Array<CardPlayed>(), "", false, new Card("", ""), "");
     private handId: string;
     public cardsPlayed = new Array<CardPlayed>();
-    private trump: string;
+    public trump: string;
     public displayTrickConfirmationButton: boolean;
     public enableTrickConfirmationButton: boolean;
     public displayNextHandButton: boolean;
@@ -60,7 +59,7 @@ export class HandService {
     private players: Array<Player>;
     public alerts: any = [];
 
-    constructor(private smearApiService :SmearApiService) {
+    constructor(public smearApiService :SmearApiService) {
         this.allowSelection = false;
         this.showBidInput = false;
         this.showTrumpInput = false;
@@ -97,11 +96,6 @@ export class HandService {
     setPlayers(players: Array<Player>): void {
         this.players = players;
     }
-
-    //displayHandStatusModal(message: string): void {
-    //    const modalRef = this.modalService.open(HandStatusModalComponent);
-    //    modalRef.componentInstance.handStatus = message;
-    //}
 
     startNewHand(): void {
         this.setGameStatus("Waiting for cards to be dealt");
@@ -368,8 +362,6 @@ export class HandService {
         }
         this.waitingFor = "";
         this.setGameStatus("Trick is finished, " + trickResults.winner + " took the trick");
-        // This wasn't working very well.
-        //this.displayHandStatusModal("Trick is finished, " + trickResults.winner + " took the trick");
         this.displayTrickConfirmationButton = true;
         this.enableTrickConfirmationButton = true;
     }

@@ -16,7 +16,7 @@ export class CreateGameComponent implements OnInit {
     @Input()
     public playAgainstPeople: boolean = false;
 
-    constructor(private gameService: GameService) { }
+    constructor(public gameService: GameService) { }
 
     ngOnInit() {
     }
