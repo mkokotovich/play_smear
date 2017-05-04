@@ -37,6 +37,7 @@ export class HandService {
     private handMessage: string;
     public highBid = new Bid("", "", 0);
     public allBids = new Array<Bid>();
+    public currentHighBid = 0;
     private bidder: string;
     private dealer: string;
     private waitingFor: string;
@@ -105,6 +106,7 @@ export class HandService {
         this.showBidInput = false;
         this.showTrumpInput = false;
         this.allowBid = false;
+        this.currentHighBid = 0;
         this.allowTrumpSelection = false;
         this.currentlyBidding = true;
         this.displayTrickConfirmationButton = false;
@@ -185,6 +187,7 @@ export class HandService {
             setTimeout(this.getBidInfo.bind(this), 2000);
             return;
         }
+        this.currentHighBid = bidInfo.current_bid;
         this.allowBid = true;
         this.playersTurn = true;
         this.showBidInput = true;

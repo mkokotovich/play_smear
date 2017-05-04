@@ -9,25 +9,25 @@
                 Pass
             </button>
             <button type="button" class="btn btn-secondary"
-                                  [disabled]="!handService.allowBid"
+                                  [disabled]="!handService.allowBid || handService.currentHighBid >= 2"
                                   [class.active]="2 === bid"
                                   (click)="save_bid(2)">
                 2
             </button>
             <button type="button" class="btn btn-secondary"
-                                  [disabled]="!handService.allowBid"
+                                  [disabled]="!handService.allowBid || handService.currentHighBid >= 3"
                                   [class.active]="3 === bid"
                                   (click)="save_bid(3)">
                 3
             </button>
             <button type="button" class="btn btn-secondary"
-                                  [disabled]="!handService.allowBid"
+                                  [disabled]="!handService.allowBid || handService.currentHighBid >= 4"
                                   [class.active]="4 === bid"
                                   (click)="save_bid(4)">
                 4
             </button>
             <button type="button" class="btn btn-secondary"
-                                  [disabled]="!handService.allowBid"
+                                  [disabled]="!handService.allowBid || handService.currentHighBid >= 5"
                                   [class.active]="5 === bid"
                                   (click)="save_bid(5)">
                 5
