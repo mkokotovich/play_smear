@@ -14,6 +14,7 @@ import random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pydealer")
 from pysmear import smear_engine_api
+from pysmear import smear_exceptions
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -248,22 +249,31 @@ def game_start_status():
 def add_user_to_game(engine, game_id, username):
     if engine.all_players_added():
         # Game is already full
-        return engine.get_desired_number_of_players()
+        return generate_error(1, "Game {} is already full, contains {} players".format(game_id, engine.get_desired_number_of_players()))
 
-    engine.add_player(player_id=username, interactive=True)
+    try:
+        engine.add_player(player_id=username, interactive=True)
+    except smear_exceptions.SmearUserHasSameName as e:
+        return generate_error(20, "Could not add user to game {}, {}".format(game_id, e.strerror))
+
     if engine.all_human_players_joined():
         # All humans are in, add the robots and start the game
         num_players = engine.get_desired_number_of_players()
         num_humans = engine.get_desired_number_of_human_players()
+        num_computers_needed = num_players-num_humans
         computers = list(ALL_COMPUTER_NAMES)
-        for i in range(1, num_players-num_humans+1):
+        while num_computers_needed > 0:
             new_player = random.choice(computers)
             computers.remove(new_player)
             app.logger.debug("Adding player {} to game {}".format(new_player, game_id))
-            engine.add_player(player_id=new_player, interactive=False)
+            try:
+                engine.add_player(player_id=new_player, interactive=False)
+                num_computers_needed -= 1
+            except smear_exceptions.SmearUserHasSameName as e:
+                app.logger.debug("Failed adding computer {} to game {}: {}. Trying the next computer name".format(new_player, game_id, e.strerror))
         engine.start_game()
 
-    return 0
+    return None
 
 
 # join a game
@@ -290,8 +300,8 @@ def join_game():
 
     # Perform game-related logic
     result = add_user_to_game(engine, game_id, username)
-    if result is not 0:
-        return generate_error(1, "Game {} is already full, contains {} players".format(game_id, result))
+    if result is not None:
+        return result
 
     team_id = engine.get_team_id_for_player(username)
     num_teams = engine.get_num_teams()

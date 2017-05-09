@@ -6,6 +6,7 @@ import tempfile
 import json
 from pysmear import smear_engine_api
 from pysmear import smear_utils
+from pysmear import smear_exceptions
 import pydealer
 import random
 
@@ -63,6 +64,10 @@ class PlaySmearTest(unittest.TestCase):
         function = getattr(smear.g_engines[self.game_id], function_name)
         function.assert_called_with(*args, **kwargs)
 
+    def add_side_effect_to_engine_function(self, function_name, exception):
+        attrs = { "{}.side_effect".format(function_name): exception }
+        smear.g_engines[self.game_id].configure_mock(**attrs)
+
 
 
 
@@ -102,6 +107,8 @@ class PlaySmearGameJoinTest(PlaySmearTest):
         PlaySmearTest.setUp(self)
         self.url = "/api/game/join/"
         self.create_default_mock_engine()
+        self.add_return_value_to_engine_function("get_desired_number_of_players", 3)
+        self.add_return_value_to_engine_function("get_desired_number_of_human_players", 3)
         self.data = { "game_id": self.game_id, "username": self.username }
 
     def tearDown(self):
@@ -142,6 +149,25 @@ class PlaySmearGameJoinTest(PlaySmearTest):
         self.assertNotEquals(status["status_id"], 0)
         self.assertIn("message", status)
         self.assertIn("is already full", status["message"])
+
+    def test_game_join_with_name_already_in_use(self):
+        self.add_return_value_to_engine_function("all_players_added", False)
+        self.add_return_value_to_engine_function("get_number_of_players", self.numPlayers)
+        self.add_return_value_to_engine_function("get_points_to_play_to", 11)
+        data = { "game_id": self.game_id, "username": self.username }
+        # Join the first time
+        params = self.post_data_and_return_data(self.url, data)
+        self.assertIn("game_id", params)
+        tmp_game_id = params["game_id"]
+        self.assertEquals(tmp_game_id, self.game_id)
+        # Join again with a different username
+        self.add_side_effect_to_engine_function("add_player", smear_exceptions.SmearUserHasSameName("The name {} is already taken, choose a different name".format(self.username)))
+        data = { "game_id": self.game_id, "username": self.username }
+        status = self.post_data_and_return_status(self.url, data)
+        self.assertIn("status_id", status)
+        self.assertNotEquals(status["status_id"], 0)
+        self.assertIn("message", status)
+        self.assertIn("is already taken", status["message"])
 
 
 class PlaySmearGameStartStatusTest(PlaySmearTest):
