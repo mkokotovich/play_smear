@@ -54,12 +54,8 @@
                 <div style="float: right; display: inline-block;">
                     <b>Playing to:</b>
                     {{ handService.pointsToPlayTo }}
-                    <div *ngIf="handService.highBid.username != ''">
-                        <b>Bidder:</b>
-                        {{ handService.highBid.username }}
-                        <br>
-                        <b>Bid:</b>
-                        {{ handService.highBid.bid }}
+                    <div style="inline-block;">
+                        <app-graph-viewer></app-graph-viewer>
                     </div>
                 </div>
             </div>

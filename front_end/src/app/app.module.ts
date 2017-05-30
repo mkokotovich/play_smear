@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { AlertModule } from 'ngx-bootstrap/alert';
 import { TabsModule } from 'ngx-bootstrap/tabs';
+import { ModalModule } from 'ngx-bootstrap/modal';
 import { DndModule } from 'ng2-dnd';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -23,6 +24,8 @@ import { CreateGameComponent } from './create-game/create-game.component';
 import { JoinGameComponent } from './join-game/join-game.component';
 import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 import { HowToPlayComponent } from './how-to-play/how-to-play.component';
+import { GraphViewerComponent } from './graph-viewer/graph-viewer.component';
+import { GraphLoaderComponent } from './graph-loader/graph-loader.component';
 
 @NgModule({
   declarations: [
@@ -36,7 +39,9 @@ import { HowToPlayComponent } from './how-to-play/how-to-play.component';
     CreateGameComponent,
     JoinGameComponent,
     ScoreboardComponent,
-    HowToPlayComponent
+    HowToPlayComponent,
+    GraphViewerComponent,
+    GraphLoaderComponent
   ],
   imports: [
     AppRoutingModule,
@@ -46,6 +51,7 @@ import { HowToPlayComponent } from './how-to-play/how-to-play.component';
     HttpModule,
     AlertModule.forRoot(),
     TabsModule.forRoot(),
+    ModalModule.forRoot(),
     DndModule.forRoot()
   ],
   providers: [SmearApiService, HandService, GameService],

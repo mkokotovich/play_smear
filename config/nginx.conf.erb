@@ -43,6 +43,12 @@ http {
             proxy_redirect off;
             proxy_pass http://app_server;
         }
+        location /static/ {
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $http_host;
+            proxy_redirect off;
+            proxy_pass http://app_server;
+        }
         location / {
             root front_end/dist;
             try_files $uri /index.html;
