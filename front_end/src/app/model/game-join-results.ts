@@ -4,6 +4,7 @@ export class GameJoinResults {
         public username: string,
         public team_id: number,
         public num_teams: number,
-        public points_to_play_to: number) {
+        public points_to_play_to: number,
+        public graph_prefix: string) {
     }
 }

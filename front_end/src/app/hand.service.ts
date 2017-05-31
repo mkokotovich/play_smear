@@ -33,7 +33,7 @@ export class HandService {
     public allowSelection: boolean;
     private gameStatusMessage: string;
     private gameAndHand: GameAndHand;
-    private gameAndUser: GameAndUser;
+    public gameAndUser: GameAndUser;
     private handMessage: string;
     public highBid = new Bid("", "", 0);
     public allBids = new Array<Bid>();
@@ -43,7 +43,7 @@ export class HandService {
     private waitingFor: string;
     private bidMessage: string;
     public playingInfo = new PlayingInfo(new Array<CardPlayed>(), "", false, new Card("", ""), "");
-    private handId: string;
+    public handId: string;
     public cardsPlayed = new Array<CardPlayed>();
     public trump: string;
     public displayTrickConfirmationButton: boolean;
@@ -52,11 +52,12 @@ export class HandService {
     public enableNextHandButton: boolean;
     public nextHandButtonText: string;
     public showHandResults: boolean;
-    private handResults: HandResults;
+    public handResults: HandResults;
     public pointsToPlayTo : number;
     public teamId : number;
     public teamsEnabled : boolean = false;
     public numTeams : number;
+    public graphPrefix: string;
     private players: Array<Player>;
     public alerts: any = [];
 
@@ -75,11 +76,13 @@ export class HandService {
         this.showHandResults = false;
         this.highBid = new Bid("", "", 0);
         this.handMessage = "Waiting for cards...";
+        this.graphPrefix = "";
     }
 
-    setGameInfo(game_id: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number): void {
+    setGameInfo(game_id: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number, graphPrefix: string): void {
         this.gameAndUser = new GameAndUser(game_id, username);
         this.pointsToPlayTo = pointsToPlayTo;
+        this.graphPrefix = graphPrefix;
         this.teamId = teamId;
         if (teamId != null && teamId != undefined) {
             this.teamsEnabled = true;

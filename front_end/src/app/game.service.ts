@@ -98,7 +98,8 @@ export class GameService {
                              gameJoinResults.username,
                              gameJoinResults.team_id,
                              gameJoinResults.num_teams,
-                             gameJoinResults.points_to_play_to);
+                             gameJoinResults.points_to_play_to,
+                             gameJoinResults.graph_prefix);
         }
         this.saveGameInfoInCookie();
         this.smearApiService.getGameStartStatus(this.gameId)
@@ -130,9 +131,9 @@ export class GameService {
 
 
     //Also reset all globals
-    setGameInfo(gameId: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number):void {
+    setGameInfo(gameId: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number, graphPrefix: string):void {
         this.gameId = new GameId(gameId);
-        this.handService.setGameInfo(gameId, username, teamId, numTeams, pointsToPlayTo);
+        this.handService.setGameInfo(gameId, username, teamId, numTeams, pointsToPlayTo, graphPrefix);
     }
 
     saveGameInfoInCookie() {

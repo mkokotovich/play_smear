@@ -10,6 +10,7 @@ import os
 import inspect
 import cPickle as pickle
 import random
+import uuid
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pydealer")
@@ -306,6 +307,7 @@ def join_game():
     team_id = engine.get_team_id_for_player(username)
     num_teams = engine.get_num_teams()
     points_to_play_to = engine.get_points_to_play_to()
+    graph_prefix = engine.get_graph_prefix()
 
     # Update persistent engine
     update_engine(game_id, engine)
@@ -317,6 +319,7 @@ def join_game():
     data["team_id"] = team_id
     data["num_teams"] = num_teams
     data["points_to_play_to"] = points_to_play_to
+    data["graph_prefix"] = graph_prefix
     return generate_return_string(data)
 
 
@@ -344,6 +347,7 @@ def rejoin_game():
     team_id = engine.get_team_id_for_player(username)
     num_teams = engine.get_num_teams()
     points_to_play_to = engine.get_points_to_play_to()
+    graph_prefix = engine.get_graph_prefix()
 
     # Update persistent engine
     update_engine(game_id, engine)
@@ -355,6 +359,7 @@ def rejoin_game():
     data["team_id"] = team_id
     data["num_teams"] = num_teams
     data["points_to_play_to"] = points_to_play_to
+    data["graph_prefix"] = graph_prefix
     return generate_return_string(data)
 
 
@@ -416,6 +421,8 @@ def create_game():
     engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Unusual error occurred, could not find game that was just created {}".format(game_id))
+    graph_prefix = uuid.uuid4().hex
+    engine.set_graph_details("static", graph_prefix)
     engine.create_new_game(num_players=numPlayers, num_human_players=numHumanPlayers, score_to_play_to=pointsToPlayTo, num_teams=numTeams)
 
     # Update persistent engine
