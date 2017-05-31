@@ -421,8 +421,11 @@ def create_game():
     engine = load_engine(game_id)
     if engine is None:
         return generate_error(4, "Unusual error occurred, could not find game that was just created {}".format(game_id))
-    graph_prefix = uuid.uuid4().hex
-    engine.set_graph_details("static", graph_prefix)
+
+    # Skip graphs if we're disabling debug logging (normally this is only for tests)
+    if engineDebug:
+        graph_prefix = uuid.uuid4().hex
+        engine.set_graph_details("static", graph_prefix)
     engine.create_new_game(num_players=numPlayers, num_human_players=numHumanPlayers, score_to_play_to=pointsToPlayTo, num_teams=numTeams)
 
     # Update persistent engine

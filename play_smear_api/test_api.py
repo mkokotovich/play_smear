@@ -126,6 +126,7 @@ class PlaySmearGameJoinTest(PlaySmearTest):
         self.add_return_value_to_engine_function("all_players_added", False)
         self.add_return_value_to_engine_function("get_number_of_players", self.numPlayers)
         self.add_return_value_to_engine_function("get_points_to_play_to", 11)
+        self.add_return_value_to_engine_function("get_graph_prefix", "abcd")
         params = self.post_data_and_return_data(self.url, self.data)
         self.assertIn("game_id", params)
         tmp_game_id = params["game_id"]
@@ -135,6 +136,7 @@ class PlaySmearGameJoinTest(PlaySmearTest):
         self.add_return_value_to_engine_function("all_players_added", False)
         self.add_return_value_to_engine_function("get_number_of_players", self.numPlayers)
         self.add_return_value_to_engine_function("get_points_to_play_to", 11)
+        self.add_return_value_to_engine_function("get_graph_prefix", "abcd")
         data = { "game_id": self.game_id, "username": self.username }
         # Join the first time
         params = self.post_data_and_return_data(self.url, data)
@@ -154,6 +156,7 @@ class PlaySmearGameJoinTest(PlaySmearTest):
         self.add_return_value_to_engine_function("all_players_added", False)
         self.add_return_value_to_engine_function("get_number_of_players", self.numPlayers)
         self.add_return_value_to_engine_function("get_points_to_play_to", 11)
+        self.add_return_value_to_engine_function("get_graph_prefix", "abcd")
         data = { "game_id": self.game_id, "username": self.username }
         # Join the first time
         params = self.post_data_and_return_data(self.url, data)
