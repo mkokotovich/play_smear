@@ -567,6 +567,9 @@ class PlaySmearEndToEnd(PlaySmearTest):
         self.points_to_play_to = 5
         self.num_teams = 0
 
+        # Change this to enable logging
+        self.engineDebug = False
+
     def tearDown(self):
         pass
 
@@ -577,7 +580,7 @@ class PlaySmearEndToEnd(PlaySmearTest):
                 "numPlayers": self.numPlayers,
                 "numHumanPlayers": self.numPlayers,
                 "pointsToPlayTo": self.points_to_play_to,
-                "engineDebug": False,
+                "engineDebug": self.engineDebug,
                 "numTeams": self.num_teams
                 }
         params = self.post_data_and_return_data(self.url, self.data)

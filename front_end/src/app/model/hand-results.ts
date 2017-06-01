@@ -9,6 +9,7 @@ export class HandResults {
         public game_winner: string,
         public bidder_set: boolean,
         public is_game_over: boolean,
+        public overall_winner: string,
         public player_infos: Array<PlayerInfo>) {
     }
 }

@@ -397,7 +397,7 @@ export class HandService {
         this.handResults = handResults;
         this.trump = "";
         if (this.handResults.is_game_over) {
-            this.setGameStatus("Game is now over.");
+            this.setGameStatus("Game over.  " + this.handResults.overall_winner + " won!");
             this.displayNextHandButton = false;
             this.enableNextHandButton = false;
         } else {

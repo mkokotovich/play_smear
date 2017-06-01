@@ -841,6 +841,7 @@ def get_trick_results():
 #  jick_winner  - string  - The winner of jick
 #  game_winner  - string  - The winner of game
 #  is_game_over - boolean - True if the game is now over
+#  overall_winner - string - If is_game_over is True, set to the player who won the game
 #  bidder_set   - boolean - True if the bidder was set
 #  player_infos - array of player_info  - Updated names and scores for all players
 @app.route("/api/hand/getresults/", methods=["POST"])
