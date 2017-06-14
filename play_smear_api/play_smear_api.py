@@ -36,6 +36,8 @@ g_cleanup_queue = Queue.Queue()
 g_cleanup_thread = None
 g_game_timeout = 36000
 
+mongo_hostname = "localhost"
+mongo_port = "27017"
 
 ALL_COMPUTER_NAMES = [
         "Francis",
@@ -253,7 +255,7 @@ def add_user_to_game(engine, game_id, username):
         return generate_error(1, "Game {} is already full, contains {} players".format(game_id, engine.get_desired_number_of_players()))
 
     try:
-        engine.add_player(player_id=username, interactive=True)
+        engine.add_player(username=username, interactive=True)
     except smear_exceptions.SmearUserHasSameName as e:
         return generate_error(20, "Could not add user to game {}, {}".format(game_id, e.strerror))
 
@@ -427,6 +429,11 @@ def create_game():
         graph_prefix = uuid.uuid4().hex
         static_dir = os.path.dirname(os.path.realpath(__file__)) + "/static"
         engine.set_graph_details(static_dir, graph_prefix)
+
+    # Add details for MongoDB instance
+    engine.set_game_stats_database_details(mongo_hostname, mongo_port)
+
+    # Create new game
     engine.create_new_game(num_players=numPlayers, num_human_players=numHumanPlayers, score_to_play_to=pointsToPlayTo, num_teams=numTeams)
 
     # Update persistent engine
