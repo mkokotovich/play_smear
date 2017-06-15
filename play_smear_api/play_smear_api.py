@@ -34,8 +34,6 @@ global g_cleanup_thread
 global g_cleanup_queue
 global g_game_timeout
 global g_mongo_client
-global g_mongo_hostname
-global g_mongo_port
 
 g_game_id = 0
 g_game_id_lock = threading.Lock()
@@ -45,8 +43,6 @@ g_cleanup_queue = Queue.Queue()
 g_cleanup_thread = None
 g_game_timeout = 36000
 g_mongo_client = None
-g_mongo_hostname = "localhost"
-g_mongo_port = "27017"
 
 ALL_COMPUTER_NAMES = [
         "Francis",
@@ -56,7 +52,7 @@ ALL_COMPUTER_NAMES = [
         "Queen Elizabeth",
         "Elliot",
         "Alex",
-        "Maisy"
+        "Maisie"
 ]
 
 
@@ -220,13 +216,22 @@ def cleanup_thread_function(engine_queue, game_timeout):
 
 def initialize(cleanup_thread, cleanup_queue, game_timeout):
     global g_mongo_client
-    global g_mongo_hostname
-    global g_mongo_port
+    mongo_default_hostname = "localhost"
+    mongo_default_port = "27017"
+
+    # Start cleanup thread
     if cleanup_thread is None:
         cleanup_thread = threading.Thread(target=cleanup_thread_function, args = ( cleanup_queue, game_timeout, ))
         cleanup_thread.daemon = True
         cleanup_thread.start()
-    g_mongo_client = MongoClient("{}:{}".format(g_mongo_hostname, g_mongo_port))
+
+    # Connect to database
+    if "MONGODB_URI" in os.environ:
+        g_mongo_client = MongoClient(os.environ["MONGODB_URI"])
+    else:
+        g_mongo_client = MongoClient("{}:{}".format(mongo_default_hostname, mongo_default_port))
+
+    # Signal that app is initialized
     with open("/tmp/app-initialized", 'a'):
         os.utime("/tmp/app-initialized", None)
 

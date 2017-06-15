@@ -7,7 +7,7 @@
     </div>
     <div class="container-flud">
         <div align="right" style="padding-right: 15px">
-            <input [(ngModel)]="gameService.userEmail" placeholder="email">
+            <input style="width: 250px" [(ngModel)]="gameService.userEmail" [disabled]="gameService.loggedIn" placeholder="email">
             <button class="btn btn-default" [disabled]="gameService.disableAuthButton || !gameService.userEmail" (click)="gameService.authButtonClicked()">{{ gameService.authButtonString }}</button>
         </div>
     </div>

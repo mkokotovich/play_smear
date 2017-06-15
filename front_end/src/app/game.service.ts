@@ -63,7 +63,7 @@ export class GameService {
                 this.loggedIn = true;
             } else {
                 this.authButtonString = "Log in or Sign up";
-                this.loggedIn = true;
+                this.loggedIn = false;
             }
         }
     }
