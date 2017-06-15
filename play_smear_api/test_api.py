@@ -9,6 +9,7 @@ from pysmear import smear_utils
 from pysmear import smear_exceptions
 import pydealer
 import random
+import mongomock
 
 # Class with common tools
 class PlaySmearTest(unittest.TestCase):
@@ -20,6 +21,8 @@ class PlaySmearTest(unittest.TestCase):
         self.game_id = "1"
         self.username = "matt"
         self.numPlayers = 3
+        smear.g_mongo_client = mongomock.MongoClient()
+
 
     def post_data_and_return_data(self, url, data):
         rv = self.app.post(url,

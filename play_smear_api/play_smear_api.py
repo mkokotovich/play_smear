@@ -1,5 +1,6 @@
 from flask import Flask, abort, request, make_response
 from flask_cors import CORS, cross_origin
+from flask_login import LoginManager, current_user
 import json
 import threading
 from collections import namedtuple
@@ -11,6 +12,7 @@ import inspect
 import cPickle as pickle
 import random
 import uuid
+from pymongo import MongoClient
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pydealer")
@@ -19,6 +21,9 @@ from pysmear import smear_exceptions
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+login_manager = LoginManager()
+login_manager.init_app(app)
+
 
 global g_game_id
 global g_game_id_lock
@@ -27,6 +32,9 @@ global g_engines
 global g_cleanup_thread
 global g_cleanup_queue
 global g_game_timeout
+global g_mongo_client
+global g_mongo_hostname
+global g_mongo_port
 
 g_game_id = 0
 g_game_id_lock = threading.Lock()
@@ -35,9 +43,9 @@ g_engines = {}
 g_cleanup_queue = Queue.Queue()
 g_cleanup_thread = None
 g_game_timeout = 36000
-
-mongo_hostname = "localhost"
-mongo_port = "27017"
+g_mongo_client = None
+g_mongo_hostname = "localhost"
+g_mongo_port = "27017"
 
 ALL_COMPUTER_NAMES = [
         "Francis",
@@ -49,6 +57,62 @@ ALL_COMPUTER_NAMES = [
         "Alex",
         "Maisy"
 ]
+
+
+###### User Auth section ######
+
+class User():
+
+    def __init__(self, email):
+        self.email = email
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return self.email
+
+
+@login_manager.user_loader
+def load_user(email):  
+    user = g_mongo_client.smear.players.find_one({"email": email})
+    if not user:
+        return None
+    return User(user["email"])
+
+
+# Validate a user's login. TODO, support https and passwords and such.
+# Allows us to access logged in user via current_user
+# Input (json data from post):
+#  email - string - user's email address
+# Return
+#  success - boolean - true if successfully logged in
+@app.route("/api/user/login/", methods=["POST"])
+def user_login():
+    global g_mongo_client
+    params = get_params_or_abort(request)
+    email = get_value_from_params(params, "email", abort_if_absent=False)
+
+    # Verify user exists and has correct credentials
+    user = g_mongo_client.smear.players.find_one({"email": email})
+    if not user:
+        insert_result = g_mongo_client.smear.players.insert_one({"email": email})
+        if not insert_result.awknowledged:
+            return generate_error(0, "Problem logging in")
+    login_user(User(email))
+
+    data = {}
+    data["success"] = True
+    return generate_return_string(data)
+
+
+##############################
 
 
 # Creates a new engine in a thread-safe manner
@@ -141,10 +205,14 @@ def cleanup_thread_function(engine_queue, game_timeout):
 
 
 def initialize(cleanup_thread, cleanup_queue, game_timeout):
+    global g_mongo_client
+    global g_mongo_hostname
+    global g_mongo_port
     if cleanup_thread is None:
         cleanup_thread = threading.Thread(target=cleanup_thread_function, args = ( cleanup_queue, game_timeout, ))
         cleanup_thread.daemon = True
         cleanup_thread.start()
+    g_mongo_client = MongoClient("{}:{}".format(g_mongo_hostname, g_mongo_port))
     with open("/tmp/app-initialized", 'a'):
         os.utime("/tmp/app-initialized", None)
 
@@ -255,7 +323,7 @@ def add_user_to_game(engine, game_id, username):
         return generate_error(1, "Game {} is already full, contains {} players".format(game_id, engine.get_desired_number_of_players()))
 
     try:
-        engine.add_player(username=username, interactive=True)
+        engine.add_player(username=username, interactive=True, email = current_user.get_id() if current_user.is_authenticated else None)
     except smear_exceptions.SmearUserHasSameName as e:
         return generate_error(20, "Could not add user to game {}, {}".format(game_id, e.strerror))
 
@@ -431,7 +499,7 @@ def create_game():
         engine.set_graph_details(static_dir, graph_prefix)
 
     # Add details for MongoDB instance
-    engine.set_game_stats_database_details(mongo_hostname, mongo_port)
+    engine.set_game_stats_database_details(client=g_mongo_client)
 
     # Create new game
     engine.create_new_game(num_players=numPlayers, num_human_players=numHumanPlayers, score_to_play_to=pointsToPlayTo, num_teams=numTeams)
@@ -895,6 +963,7 @@ def get_hand_results():
     # Return the playing_info
     data = hand_results
     return generate_return_string(data)
+
 
 
 initialize(g_cleanup_thread, g_cleanup_queue, g_game_timeout)
