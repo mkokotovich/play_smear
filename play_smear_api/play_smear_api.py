@@ -34,6 +34,7 @@ global g_cleanup_thread
 global g_cleanup_queue
 global g_game_timeout
 global g_mongo_client
+global g_mongo_db
 
 g_game_id = 0
 g_game_id_lock = threading.Lock()
@@ -43,6 +44,7 @@ g_cleanup_queue = Queue.Queue()
 g_cleanup_thread = None
 g_game_timeout = 36000
 g_mongo_client = None
+g_mongo_db = "heroku_fxcc65rq"
 
 ALL_COMPUTER_NAMES = [
         "Francis",
@@ -78,7 +80,7 @@ class User():
 
 @login_manager.user_loader
 def load_user(email):  
-    user = g_mongo_client.smear.players.find_one({"email": email})
+    user = g_mongo_client[g_mongo_db].players.find_one({"email": email})
     if not user:
         return None
     return User(user["email"])
@@ -97,9 +99,9 @@ def user_login():
     email = get_value_from_params(params, "email", abort_if_absent=False)
 
     # Verify user exists and has correct credentials
-    user = g_mongo_client.smear.players.find_one({"email": email})
+    user = g_mongo_client[g_mongo_db].players.find_one({"email": email})
     if not user:
-        insert_result = g_mongo_client.smear.players.insert_one({"email": email})
+        insert_result = g_mongo_client[g_mongo_db].players.insert_one({"email": email})
         if not insert_result.acknowledged:
             return generate_error(0, "Problem logging in")
     login_user(User(email), remember=True)
@@ -522,7 +524,7 @@ def create_game():
         engine.set_graph_details(static_dir, graph_prefix)
 
     # Add details for MongoDB instance
-    engine.set_game_stats_database_details(client=g_mongo_client)
+    engine.set_game_stats_database_details(client=g_mongo_client, database=g_mongo_db)
 
     # Create new game
     engine.create_new_game(num_players=numPlayers, num_human_players=numHumanPlayers, score_to_play_to=pointsToPlayTo, num_teams=numTeams)
