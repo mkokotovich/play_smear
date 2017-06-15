@@ -8,6 +8,8 @@ import 'rxjs/add/operator/catch';
 
 import { environment } from '../environments/environment';
 
+import { AuthInfo } from './model/auth-info';
+import { AuthResults } from './model/auth-results';
 import { Bid } from './model/bid';
 import { BidInfo } from './model/bid-info';
 import { Card } from './model/card';
@@ -42,12 +44,42 @@ export class SmearApiService {
     private handGetTrickResultsUrl = this.baseUrl + "hand/gettrickresults/";
     private handGetTrumpUrl = this.baseUrl + "hand/gettrump/";
     private handSubmitCardToPlayUrl = this.baseUrl + "hand/submitcard/";
+    private userLoginUrl = this.baseUrl + "user/login/";
+    private userLogoutUrl = this.baseUrl + "user/logout/";
 
     constructor(private http: Http) { }
 
-    getGameStartStatus(data: GameId): Observable<GameStartStatus> {
+    generateHTTPOptions(): RequestOptions {
         let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = new RequestOptions({ withCredentials: true, headers: headers }); // Create a request option
+        return options
+    }
+
+    loginUser(data: AuthInfo): Observable<AuthResults> {
+        let options = this.generateHTTPOptions();
+
+        return this.http.post(this.userLoginUrl, data, options)
+                        .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
+                        .catch(this.handleError);
+    }
+
+    logoutUser(): Observable<AuthResults> {
+        let options = this.generateHTTPOptions();
+        let data = null;
+
+        return this.http.post(this.userLogoutUrl, data, options)
+                        .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
+                        .catch(this.handleError);
+    }
+
+    getGameStartStatus(data: GameId): Observable<GameStartStatus> {
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.gameStartStatusUrl, data, options)
                         .map(this.extractData)
@@ -58,8 +90,7 @@ export class SmearApiService {
     }
 
     gameCreate(data: GameCreateInput): Observable<GameId> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.gameCreateUrl, data, options)
                         .map(this.extractData)
@@ -70,8 +101,7 @@ export class SmearApiService {
     }
 
     gameJoin(data: GameAndUser): Observable<GameJoinResults> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.gameJoinUrl, data, options)
                         .map(this.extractData)
@@ -82,8 +112,7 @@ export class SmearApiService {
     }
 
     gameRejoin(data: GameAndUser): Observable<GameJoinResults> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.gameRejoinUrl, data, options)
                         .map(this.extractData)
@@ -94,8 +123,7 @@ export class SmearApiService {
     }
 
     handDeal(data: GameAndUser): Observable<HandInfo> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.handDealUrl, data, options)
                         .map(this.extractData)
@@ -106,8 +134,7 @@ export class SmearApiService {
     }
 
     handGetBidInfo(data: GameAndUser): Observable<BidInfo> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.handGetBidInfoUrl, data, options)
                         .map(this.extractData)
@@ -118,8 +145,7 @@ export class SmearApiService {
     }
 
     handSubmitBid(data: Bid): Observable<any> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.handSubmitBidUrl, data, options)
                         .map(this.extractData)
@@ -130,8 +156,7 @@ export class SmearApiService {
     }
 
     handGetHighBid(data: GameAndHand): Observable<BidInfo> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.handGetHighBidUrl, data, options)
                         .map(this.extractData)
@@ -142,8 +167,7 @@ export class SmearApiService {
     }
 
     handGetTrump(data: GetTrump): Observable<Trump> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.handGetTrumpUrl, data, options)
                         .map(this.extractData)
@@ -154,8 +178,7 @@ export class SmearApiService {
     }
 
     handGetPlayingInfo(data: GameAndUser): Observable<PlayingInfo> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.handGetPlayingInfoUrl, data, options)
                         .map(this.extractData)
@@ -166,8 +189,7 @@ export class SmearApiService {
     }
 
     handSubmitCardToPlay(data: GameUserCard): Observable<any> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.handSubmitCardToPlayUrl, data, options)
                         .map(this.extractData)
@@ -178,8 +200,7 @@ export class SmearApiService {
     }
 
     handGetTrickResults(data: GameAndUser): Observable<TrickResults> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.handGetTrickResultsUrl, data, options)
                         .map(this.extractData)
@@ -190,8 +211,7 @@ export class SmearApiService {
     }
 
     handGetResults(data: GameAndHand): Observable<HandResults> {
-        let headers = new Headers({ 'Content-Type': 'application/json' }); // ... Set content type to JSON
-        let options = new RequestOptions({ headers: headers }); // Create a request option
+        let options = this.generateHTTPOptions();
 
         return this.http.post(this.handGetResultsUrl, data, options)
                         .map(this.extractData)

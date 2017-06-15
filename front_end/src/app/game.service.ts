@@ -2,6 +2,8 @@ import { Cookie } from 'ng2-cookies/ng2-cookies';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { AuthInfo } from './model/auth-info';
+import { AuthResults } from './model/auth-results';
 import { Player } from './model/player';
 import { GameId } from './model/game-id';
 import { GameAndUser } from './model/game-and-user';
@@ -16,6 +18,7 @@ export class GameService {
 
     public gameCreateInput = new GameCreateInput(0, 0, 0, 0);
     public gameAndUser = new GameAndUser("", "");
+    public authInfo = new AuthInfo("");
     public welcomeMessage = "";
     public errorMessage = "";
     public disableCreateButton = false;
@@ -27,10 +30,54 @@ export class GameService {
     public playersSoFar: string[] = new Array<string>();
     private username: string;
     private gameId: GameId;
+    public userEmail: string;
+    public authButtonString: string = "Log in or Sign up";
+    public loggedIn: Boolean = false;
+    public disableAuthButton: Boolean = false;
 
     constructor(private router: Router,
                 public handService: HandService,
                 public smearApiService: SmearApiService) { }
+
+    loginUserWithEmail(email:string) {
+        this.authInfo.email = email;
+        this.disableAuthButton = true;
+        this.smearApiService.loginUser(this.authInfo)
+                            .subscribe( authResults => this.authReturned(authResults),
+                                        err => this.handleStartError(err, "Unable to log in with the supplied email, try again later"));
+    }
+
+    logoutUser() {
+        this.disableAuthButton = true;
+        this.smearApiService.logoutUser()
+                            .subscribe( authResults => this.authReturned(authResults),
+                                        err => this.handleStartError(err, "Unable to log out, try again later"));
+    }
+
+    authReturned(authResults:AuthResults) {
+        this.disableAuthButton = false;
+        if (authResults.success) {
+            //TODO Save email to cookie
+            if (this.loggedIn == false) {
+                this.authButtonString = "Log out";
+                this.loggedIn = true;
+            } else {
+                this.authButtonString = "Log in or Sign up";
+                this.loggedIn = true;
+            }
+        }
+    }
+
+    public authButtonClicked() {
+        if (this.loggedIn == false) {
+            // The user is now trying to log in
+            this.loginUserWithEmail(this.userEmail)
+        } else {
+            this.logoutUser()
+        }
+    }
+
+
 
     manageGame() {
         this.handService.startNewHand();
@@ -127,6 +174,7 @@ export class GameService {
         console.log(err);
         this.disableCreateButton = false;
         this.disableJoinButton = false;
+        this.disableAuthButton = false;
     }
 
 

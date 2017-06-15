@@ -26,7 +26,7 @@ class PlaySmearTest(unittest.TestCase):
 
     def post_data_and_return_data(self, url, data):
         rv = self.app.post(url,
-                data=json.dumps(data),
+                data=json.dumps(data) if data else None,
                 follow_redirects=True,
                 content_type='application/json')
         result = json.loads(rv.get_data())
@@ -72,6 +72,39 @@ class PlaySmearTest(unittest.TestCase):
         smear.g_engines[self.game_id].configure_mock(**attrs)
 
 
+class PlaySmearUserLogin(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        self.url = "/api/user/login/"
+        self.email = "smearplayer@gmail.com"
+        self.data = { "email": self.email }
+
+    def tearDown(self):
+        pass
+
+    def test_user_login_with_email(self):
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assertIn("success", params)
+        success = params["success"]
+        self.assertEqual(success, True)
+
+
+class PlaySmearUserLogout(PlaySmearTest):
+
+    def setUp(self):
+        PlaySmearTest.setUp(self)
+        self.url = "/api/user/logout/"
+
+    def tearDown(self):
+        pass
+
+    def test_user_logout_with_email(self):
+        params = self.post_data_and_return_data("/api/user/login/", { "email": "a@b.c" })
+        params = self.post_data_and_return_data(self.url, None)
+        self.assertIn("success", params)
+        success = params["success"]
+        self.assertEqual(success, True)
 
 
 class PlaySmearGameCreateTest(PlaySmearTest):

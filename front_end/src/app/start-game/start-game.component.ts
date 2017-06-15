@@ -11,6 +11,7 @@ export class StartGameComponent implements OnInit {
 
     constructor(public gameService: GameService) { }
 
+
     ngOnInit() {
     }
 

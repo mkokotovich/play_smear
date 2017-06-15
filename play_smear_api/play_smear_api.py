@@ -1,6 +1,6 @@
 from flask import Flask, abort, request, make_response
 from flask_cors import CORS, cross_origin
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager, current_user, login_user, login_required, logout_user
 import json
 import threading
 from collections import namedtuple
@@ -20,6 +20,7 @@ from pysmear import smear_engine_api
 from pysmear import smear_exceptions
 
 app = Flask(__name__)
+app.secret_key = "top secret key"
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -103,14 +104,27 @@ def user_login():
     user = g_mongo_client.smear.players.find_one({"email": email})
     if not user:
         insert_result = g_mongo_client.smear.players.insert_one({"email": email})
-        if not insert_result.awknowledged:
+        if not insert_result.acknowledged:
             return generate_error(0, "Problem logging in")
-    login_user(User(email))
+    login_user(User(email), remember=True)
 
     data = {}
     data["success"] = True
     return generate_return_string(data)
 
+
+# Logs a user out
+# Input (json data from post):
+#  None
+# Return
+#  success - boolean - true if successfully logged out
+@app.route("/api/user/logout/", methods=["POST"])
+@login_required
+def user_logout():
+    logout_user()
+    data = {}
+    data["success"] = True
+    return generate_return_string(data)
 
 ##############################
 
@@ -217,6 +231,10 @@ def initialize(cleanup_thread, cleanup_queue, game_timeout):
         os.utime("/tmp/app-initialized", None)
 
 
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 def generate_error(status_id, message, error_code=500):
     func = inspect.currentframe().f_back.f_code
@@ -338,7 +356,7 @@ def add_user_to_game(engine, game_id, username):
             computers.remove(new_player)
             app.logger.debug("Adding player {} to game {}".format(new_player, game_id))
             try:
-                engine.add_player(player_id=new_player, interactive=False)
+                engine.add_player(username=new_player, interactive=False)
                 num_computers_needed -= 1
             except smear_exceptions.SmearUserHasSameName as e:
                 app.logger.debug("Failed adding computer {} to game {}: {}. Trying the next computer name".format(new_player, game_id, e.strerror))
