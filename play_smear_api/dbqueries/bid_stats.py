@@ -35,14 +35,16 @@ def main():
         'player3',
     ]
 
-    for email in player_emails:
-        player_id = stat.find_player_id(player_email=email)
-        if player_id:
-            print_stats_for_player_id(stat, player_id, email)
-    for username in player_usernames:
-        player_id = stat.find_player_id(player_username=username)
-        if player_id:
-            print_stats_for_player_id(stat, player_id, username)
+    #for email in player_emails:
+    #    player_id = stat.find_player_id(player_email=email)
+    #    if player_id:
+    #        print_stats_for_player_id(stat, player_id, email)
+    #for username in player_usernames:
+    #    player_id = stat.find_player_id(player_username=username)
+    #    if player_id:
+    #        print_stats_for_player_id(stat, player_id, username)
+    for player in stat.find_all_players():
+        print_stats_for_player_id(stat, player['_id'], player['email'] or player['username'])
 
 
 if __name__ == '__main__':

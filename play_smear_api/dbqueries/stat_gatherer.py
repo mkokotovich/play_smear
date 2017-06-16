@@ -9,16 +9,23 @@ class StatGatherer():
 
     def connect_to_db(self, default_host="localhost", default_port="27017", default_db="smear"):
         # Connect to database
+        database = None
+        uri = None
         if "MONGODB_URI" in os.environ:
-            mongo_uri = os.environ["MONGODB_URI"]
-            database = mongo_uri.split('/')[-1]
-            client = MongoClient(mongo_uri)
-            self.db = client[database]
+            uri = os.environ["MONGODB_URI"]
+            database = uri.split('/')[-1]
         else:
-            client = MongoClient("{}:{}".format(default_host, default_port))
-            self.db = client[default_db]
+            uri = "{}:{}".format(default_host, default_port)
+            database = default_db
+        print "Connecting to {} on {}".format(database, uri)
+        client = MongoClient(uri)
+        self.db = client[database]
 
     
+    def find_all_players(self):
+        players = self.db.players.find()
+        return list(players)
+
     def find_player_id(self, player_email=None, player_username=None):
         player = None
         player_id = None
