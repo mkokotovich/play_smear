@@ -12,8 +12,8 @@ def print_stats_for_player_id(stat, player_id, player):
     for bid in high_bids:
         total_points_won += bid['points_won'] or 0
         total_points_lost += bid['points_lost'] or 0
-    average_points_won = float(total_points_won)/float(high_bids_count)
-    average_points_lost = float(total_points_lost)/float(high_bids_count)
+    average_points_won = float(total_points_won)/float(high_bids_count) if high_bids_count else 0
+    average_points_lost = float(total_points_lost)/float(high_bids_count) if high_bids_count else 0
 
     print ""
     print "{} bid {} times, and was the high bid {} of those times.".format(player, total_bids_count, high_bids_count)
@@ -44,7 +44,8 @@ def main():
     #    if player_id:
     #        print_stats_for_player_id(stat, player_id, username)
     for player in stat.find_all_players():
-        print_stats_for_player_id(stat, player['_id'], player['email'] or player['username'])
+        player_name = player['email'] if "email" in player else player['username']
+        print_stats_for_player_id(stat, player['_id'], player_name)
 
 
 if __name__ == '__main__':
