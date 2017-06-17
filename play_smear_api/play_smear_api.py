@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pydealer")
 from pysmear import smear_engine_api
 from pysmear import smear_exceptions
+from dbqueries.bid_stats import BidStats
 
 app = Flask(__name__)
 app.secret_key = "top secret key"
@@ -989,6 +990,27 @@ def get_hand_results():
     data = hand_results
     return generate_return_string(data)
 
+
+# Retrieve stats about a player
+# Input (json data from post):
+# Return (json data):
+# total_bids   - Int
+# high_bids    - Int
+# bids_won     - Int
+# bids_set     - Int
+# average_points_won   - Int
+# average_points_lost  - Int
+#
+@app.route("/api/user/stats/", methods=["POST"])
+@login_required
+def get_bid_stats_for_user():
+    # Use current_user.get_id for the email
+    bid_stats = BidStats()
+    player_stats = bid_stats.get_stats_for_email(current_user.get_id())
+
+    # Return the playing_info
+    data = player_stats
+    return generate_return_string(data)
 
 
 initialize(g_cleanup_thread, g_cleanup_queue, g_game_timeout)

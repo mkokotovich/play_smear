@@ -1,5 +1,33 @@
 <div class="container fg-color content-blob" style="padding: 20px 10px 20px 10px;">
 <p><a routerLink="/start">Back to start page</a></p>
 <h3>Welcome, {{ gameService.userEmail }} </h3>
-<p>Check back soon for stats about your previous games and bidding history!</p>
+<p *ngIf="!gameService.bidStats">Retrieving bid stats...</p>
+<div *ngIf="gameService.bidStats">
+    <table>
+        <tr>
+            <td> Total bids </td>
+            <td> {{ gameService.bidStats.total_bids }}</td>
+        </tr>
+        <tr>
+            <td> Bids where you were the high bid </td>
+            <td> {{ gameService.bidStats.high_bids }}</td>
+        </tr>
+        <tr>
+            <td> Bids you won </td>
+            <td> {{ gameService.bidStats.bids_won }}</td>
+        </tr>
+        <tr>
+            <td> Bids you were set</td>
+            <td> {{ gameService.bidStats.bids_set }}</td>
+        </tr>
+        <tr>
+            <td> Average points won when you were the bidder </td>
+            <td> {{ gameService.bidStats.average_points_won | number:".2"}}</td>
+        </tr>
+        <tr>
+            <td> Average points lost when you were the bidder</td>
+            <td> {{ gameService.bidStats.average_points_lost | number:".2"}}</td>
+        </tr>
+    </table>
+</div>
 </div>

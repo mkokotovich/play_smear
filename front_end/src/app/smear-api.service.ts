@@ -12,6 +12,7 @@ import { AuthInfo } from './model/auth-info';
 import { AuthResults } from './model/auth-results';
 import { Bid } from './model/bid';
 import { BidInfo } from './model/bid-info';
+import { BidStats } from './model/bid-stats';
 import { Card } from './model/card';
 import { GameId } from './model/game-id';
 import { GameCreateInput } from './model/game-create-input';
@@ -46,6 +47,7 @@ export class SmearApiService {
     private handSubmitCardToPlayUrl = this.baseUrl + "hand/submitcard/";
     private userLoginUrl = this.baseUrl + "user/login/";
     private userLogoutUrl = this.baseUrl + "user/logout/";
+    private userStatsUrl = this.baseUrl + "user/stats/";
 
     constructor(private http: Http) { }
 
@@ -214,6 +216,18 @@ export class SmearApiService {
         let options = this.generateHTTPOptions();
 
         return this.http.post(this.handGetResultsUrl, data, options)
+                        .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
+                        .catch(this.handleError);
+    }
+
+    getBidStats(): Observable<BidStats> {
+        let options = this.generateHTTPOptions();
+        let data = null;
+
+        return this.http.post(this.userStatsUrl, data, options)
                         .map(this.extractData)
                         .retryWhen((error) => {
                             return this.handleErrorRetry(error);

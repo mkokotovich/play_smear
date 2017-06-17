@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 
 import { AuthInfo } from './model/auth-info';
 import { AuthResults } from './model/auth-results';
+import { BidStats } from './model/bid-stats';
 import { Player } from './model/player';
 import { GameId } from './model/game-id';
 import { GameAndUser } from './model/game-and-user';
@@ -19,6 +20,7 @@ export class GameService {
     public gameCreateInput = new GameCreateInput(0, 0, 0, 0);
     public gameAndUser = new GameAndUser("", "");
     public authInfo = new AuthInfo("");
+    public bidStats: BidStats;
     public welcomeMessage = "";
     public errorMessage = "";
     public disableCreateButton = false;
@@ -89,7 +91,18 @@ export class GameService {
         }
     }
 
+    public getUserStats() {
+        if (this.loggedIn == false) {
+            return;
+        }
+        this.smearApiService.getBidStats()
+                            .subscribe( bidStats => this.bidStatsReturned(bidStats),
+                                        err => this.handleStartError(err, "Unable to retrieve bid stats"));
+    }
 
+    bidStatsReturned(bidStats: BidStats) {
+        this.bidStats = bidStats;
+    }
 
     manageGame() {
         this.handService.startNewHand();
