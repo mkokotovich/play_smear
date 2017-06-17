@@ -13,6 +13,7 @@ export class StartGameComponent implements OnInit {
 
 
     ngOnInit() {
+        this.gameService.loginUserFromCookie();
     }
 
 }

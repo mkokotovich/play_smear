@@ -39,8 +39,18 @@ export class GameService {
                 public handService: HandService,
                 public smearApiService: SmearApiService) { }
 
+    loginUserFromCookie() {
+        if (!this.loggedIn) {
+            this.userEmail = Cookie.get("user_email");
+            if (this.userEmail && this.userEmail.length != 0) {
+                this.loginUserWithEmail(this.userEmail);
+            }
+        }
+    }
+
     loginUserWithEmail(email:string) {
         this.authInfo.email = email;
+        Cookie.set("user_email", email, 1);
         this.disableAuthButton = true;
         this.smearApiService.loginUser(this.authInfo)
                             .subscribe( authResults => this.authReturned(authResults),
@@ -49,6 +59,8 @@ export class GameService {
 
     logoutUser() {
         this.disableAuthButton = true;
+        Cookie.set("user_email", "", 1);
+        this.userEmail = "";
         this.smearApiService.logoutUser()
                             .subscribe( authResults => this.authReturned(authResults),
                                         err => this.handleStartError(err, "Unable to log out, try again later"));
