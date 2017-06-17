@@ -26,6 +26,7 @@ import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 import { HowToPlayComponent } from './how-to-play/how-to-play.component';
 import { GraphViewerComponent } from './graph-viewer/graph-viewer.component';
 import { GraphLoaderComponent } from './graph-loader/graph-loader.component';
+import { StatsComponent } from './stats/stats.component';
 
 @NgModule({
   declarations: [
@@ -41,7 +42,8 @@ import { GraphLoaderComponent } from './graph-loader/graph-loader.component';
     ScoreboardComponent,
     HowToPlayComponent,
     GraphViewerComponent,
-    GraphLoaderComponent
+    GraphLoaderComponent,
+    StatsComponent
   ],
   imports: [
     AppRoutingModule,

@@ -7,13 +7,14 @@
     </div>
     <div class="container-flud">
         <div align="right" style="padding-right: 15px">
-            <input style="width: 250px" [(ngModel)]="gameService.userEmail" [disabled]="gameService.loggedIn" placeholder="email">
+            <input *ngIf="!gameService.loggedIn" style="width: 250px" [(ngModel)]="gameService.userEmail" [disabled]="gameService.loggedIn" placeholder="email">
+            <a *ngIf="gameService.loggedIn" routerLink="/stats"> {{ gameService.userEmail }} </a>
             <button class="btn btn-default" [disabled]="gameService.disableAuthButton || !gameService.userEmail" (click)="gameService.authButtonClicked()">{{ gameService.authButtonString }}</button>
         </div>
     </div>
     <div class="container-fluid">
         <h4>Welcome to Play Smear</h4>
-        <p>Play the card game Smear online against the computer or friends. <a href="/rules">Click here for more information and the rules of the game</a>.</p>
+        <p>Play the card game Smear online against the computer or friends. <a routerLink="/rules">Click here for more information and the rules of the game</a>.</p>
         <br>
         <tabset>
         <tab heading="Play against computer" active=true><div class="tab-content tab-color"><app-create-game [playAgainstPeople]=false></app-create-game></div></tab> 
