@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
+import { GameService } from '../game.service';
+
 @Component({
   selector: 'app-stats',
   templateUrl: './stats.component.html',
@@ -7,9 +9,10 @@ import { Component, OnInit } from '@angular/core';
 })
 export class StatsComponent implements OnInit {
 
-  constructor() { }
+    constructor(public gameService: GameService) { }
 
-  ngOnInit() {
-  }
+    ngOnInit() {
+    }
 
 }
+

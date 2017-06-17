@@ -8,7 +8,7 @@
     <div class="container-flud">
         <div align="right" style="padding-right: 15px">
             <input *ngIf="!gameService.loggedIn" style="width: 250px" [(ngModel)]="gameService.userEmail" [disabled]="gameService.loggedIn" placeholder="email">
-            <a *ngIf="gameService.loggedIn" routerLink="/stats"> {{ gameService.userEmail }} </a>
+            <a *ngIf="gameService.loggedIn" style="padding-right: 10px" routerLink="/stats"> {{ gameService.userEmail }} </a>
             <button class="btn btn-default" [disabled]="gameService.disableAuthButton || !gameService.userEmail" (click)="gameService.authButtonClicked()">{{ gameService.authButtonString }}</button>
         </div>
     </div>
