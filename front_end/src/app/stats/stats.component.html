@@ -5,6 +5,18 @@
 <div *ngIf="gameService.bidStats">
     <table>
         <tr>
+            <td> Games played </td>
+            <td> {{ gameService.bidStats.games_played }}</td>
+        </tr>
+        <tr>
+            <td> Games won </td>
+            <td> {{ gameService.bidStats.games_won }}</td>
+        </tr>
+        <tr>
+            <td> Games lost </td>
+            <td> {{ gameService.bidStats.games_lost }}</td>
+        </tr>
+        <tr>
             <td> Total bids </td>
             <td> {{ gameService.bidStats.total_bids }}</td>
         </tr>
