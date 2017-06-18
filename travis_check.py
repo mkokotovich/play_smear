@@ -43,5 +43,7 @@ def main():
 
 
 if __name__ == "__main__":
+    # Uncomment this to skip this check
+    # sys.exit(0)
     ret = main()
     sys.exit(ret)
