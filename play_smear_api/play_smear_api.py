@@ -82,7 +82,11 @@ class User():
 
 @login_manager.user_loader
 def load_user(email):  
-    user = g_mongo_client[g_mongo_db].players.find_one({"email": email})
+    try:
+        user = g_mongo_client[g_mongo_db].players.find_one({"email": email})
+    except Exception as ex:
+        print "Error: unable to connect to mongo service looking for {}: {}".format(email, str(ex))
+        user = None
     if not user:
         return None
     return User(user["email"])
@@ -100,8 +104,17 @@ def user_login():
     params = get_params_or_abort(request)
     email = get_value_from_params(params, "email", abort_if_absent=False)
 
+    # If mongo hasn't been initialized (or failed last time) try again
+    if g_mongo_client is None:
+        g_mongo_client = initialize_mongo()
+
     # Verify user exists and has correct credentials
-    user = g_mongo_client[g_mongo_db].players.find_one({"email": email})
+    try:
+        user = g_mongo_client[g_mongo_db].players.find_one({"email": email})
+    except Exception as ex:
+        print "Error: unable to connect to mongo service looking for {}: {}".format(email, str(ex))
+        g_mongo_client = None
+        return generate_error(0, "Error connecting to database, unable to log in user")
     if not user:
         insert_result = g_mongo_client[g_mongo_db].players.insert_one({"email": email})
         if not insert_result.acknowledged:
@@ -218,10 +231,20 @@ def cleanup_thread_function(engine_queue, game_timeout):
                         remove_engine(game.game_id)
 
 
-def initialize(cleanup_thread, cleanup_queue, game_timeout):
-    global g_mongo_client
+def initialize_mongo():
+    mongo_client = None
     mongo_default_hostname = "localhost"
     mongo_default_port = "27017"
+
+    if "MONGODB_URI" in os.environ:
+        mongo_client = MongoClient(os.environ["MONGODB_URI"])
+    else:
+        mongo_client = MongoClient("{}:{}".format(mongo_default_hostname, mongo_default_port))
+    return mongo_client
+
+
+def initialize(cleanup_thread, cleanup_queue, game_timeout):
+    global g_mongo_client
 
     # Start cleanup thread
     if cleanup_thread is None:
@@ -230,10 +253,7 @@ def initialize(cleanup_thread, cleanup_queue, game_timeout):
         cleanup_thread.start()
 
     # Connect to database
-    if "MONGODB_URI" in os.environ:
-        g_mongo_client = MongoClient(os.environ["MONGODB_URI"])
-    else:
-        g_mongo_client = MongoClient("{}:{}".format(mongo_default_hostname, mongo_default_port))
+    g_mongo_client = initialize_mongo()
 
     # Signal that app is initialized
     with open("/tmp/app-initialized", 'a'):
@@ -525,8 +545,9 @@ def create_game():
         static_dir = os.path.dirname(os.path.realpath(__file__)) + "/static"
         engine.set_graph_details(static_dir, graph_prefix)
 
-    # Add details for MongoDB instance
-    engine.set_game_stats_database_details(client=g_mongo_client, database=g_mongo_db)
+    # Add details for MongoDB instance, if available
+    if g_mongo_client:
+        engine.set_game_stats_database_details(client=g_mongo_client, database=g_mongo_db)
 
     # Create new game
     engine.create_new_game(num_players=numPlayers, num_human_players=numHumanPlayers, score_to_play_to=pointsToPlayTo, num_teams=numTeams)

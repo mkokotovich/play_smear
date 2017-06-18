@@ -33,7 +33,7 @@ export class GameService {
     private username: string;
     private gameId: GameId;
     public userEmail: string;
-    public authButtonString: string = "Log in or Sign up";
+    public authButtonString: string = "Sign in";
     public loggedIn: Boolean = false;
     public disableAuthButton: Boolean = false;
 
@@ -73,10 +73,10 @@ export class GameService {
         if (authResults.success) {
             //TODO Save email to cookie
             if (this.loggedIn == false) {
-                this.authButtonString = "Log out";
+                this.authButtonString = "Sign out";
                 this.loggedIn = true;
             } else {
-                this.authButtonString = "Log in or Sign up";
+                this.authButtonString = "Sign in";
                 this.loggedIn = false;
             }
         }
@@ -105,6 +105,12 @@ export class GameService {
     }
 
     manageGame() {
+        this.playersSoFar = new Array<string>();
+        this.welcomeMessage = "";
+        this.errorMessage = "";
+        this.disableCreateButton = false;
+        this.disableJoinButton = false;
+        this.disableAuthButton = false;
         this.handService.startNewHand();
     }
 

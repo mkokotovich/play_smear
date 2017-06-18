@@ -183,3 +183,18 @@ body {
         font-size: 2.5rem !important;
     }
 }
+
+
+/* Fix for modal bug in bootstrap 4
+ * https://github.com/shlomiassaf/angular2-modal/issues/280 */
+.fade.in {
+      opacity: 1;
+  }
+.modal.in .modal-dialog {
+    -webkit-transform: translate(0, 0);
+    -o-transform: translate(0, 0);
+    transform: translate(0, 0);
+}
+.modal-backdrop.in {
+    opacity: 0.5;
+}
