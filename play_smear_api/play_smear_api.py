@@ -46,7 +46,7 @@ g_cleanup_queue = Queue.Queue()
 g_cleanup_thread = None
 g_game_timeout = 36000
 g_mongo_client = None
-g_mongo_db = "heroku_fxcc65rq"
+g_mongo_db = "smear"
 
 ALL_COMPUTER_NAMES = [
         "Francis",
@@ -232,28 +232,31 @@ def cleanup_thread_function(engine_queue, game_timeout):
 
 
 def initialize_mongo():
+    global g_mongo_db
+
     mongo_client = None
     mongo_default_hostname = "localhost"
     mongo_default_port = "27017"
+    mongo_default_database = "smear"
 
     if "MONGODB_URI" in os.environ:
-        mongo_client = MongoClient(os.environ["MONGODB_URI"])
+        uri = os.environ["MONGODB_URI"]
+        mongo_client = MongoClient(uri)
+        g_mongo_db = uri.split('/')[-1]
+        app.logger.debug("Using {} for mongodb database server, database: {}".format(uri.split('@')[-1].split('/')[0]), g_mongo_db)
     else:
         mongo_client = MongoClient("{}:{}".format(mongo_default_hostname, mongo_default_port))
+        g_mongo_db = mongo_default_database
+        app.logger.debug("Using {}:{} for mongodb database server, database: {}".format(mongo_default_hostname, mongo_default_port, g_mongo_db))
     return mongo_client
 
 
 def initialize(cleanup_thread, cleanup_queue, game_timeout):
-    global g_mongo_client
-
     # Start cleanup thread
     if cleanup_thread is None:
         cleanup_thread = threading.Thread(target=cleanup_thread_function, args = ( cleanup_queue, game_timeout, ))
         cleanup_thread.daemon = True
         cleanup_thread.start()
-
-    # Connect to database
-    g_mongo_client = initialize_mongo()
 
     # Signal that app is initialized
     with open("/tmp/app-initialized", 'a'):
@@ -490,6 +493,7 @@ def rejoin_game():
 #  game_id    - String  - Id of the game to be used in future API calls
 @app.route("/api/game/create/", methods=["POST"])
 def create_game():
+    global g_mongo_client
     # Read input
     params = get_params_or_abort(request)
     numPlayerInput = get_value_from_params(params, "numPlayers")
@@ -546,6 +550,8 @@ def create_game():
         engine.set_graph_details(static_dir, graph_prefix)
 
     # Add details for MongoDB instance, if available
+    if g_mongo_client is None:
+        g_mongo_client = initialize_mongo()
     if g_mongo_client:
         engine.set_game_stats_database_details(client=g_mongo_client, database=g_mongo_db)
 
