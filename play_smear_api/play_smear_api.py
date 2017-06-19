@@ -243,7 +243,7 @@ def initialize_mongo():
         uri = os.environ["MONGODB_URI"]
         mongo_client = MongoClient(uri)
         g_mongo_db = uri.split('/')[-1]
-        app.logger.debug("Using {} for mongodb database server, database: {}".format(uri.split('@')[-1].split('/')[0]), g_mongo_db)
+        app.logger.debug("Using {} for mongodb database server, database: {}".format(uri.split('@')[-1].split('/')[0], g_mongo_db))
     else:
         mongo_client = MongoClient("{}:{}".format(mongo_default_hostname, mongo_default_port))
         g_mongo_db = mongo_default_database
