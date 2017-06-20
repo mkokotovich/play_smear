@@ -18,7 +18,7 @@ def initialize_mongo_db():
     else:
         mongo_client = MongoClient("{}:{}".format(mongo_default_hostname, mongo_default_port))
         mongo_db = mongo_default_database
-        "Using {}:{} for mongodb database server, database: {}".format(mongo_default_hostname, mongo_default_port, g_mongo_db)
+        print "Using {}:{} for mongodb database server, database: {}".format(mongo_default_hostname, mongo_default_port, mongo_db)
 
     return mongo_client[mongo_db]
 
