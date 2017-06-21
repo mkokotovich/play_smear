@@ -54,16 +54,24 @@ class DailyStatus():
 
 
     def print_game_stats(self):
-        print "There have been {} games played since {}:".format(len(self.game_list), self.local_time)
-        print ""
+        message = ""
+        message += "\n"
+        message += "There have been {} games played since {}:".format(len(self.game_list), self.local_time)
+        message += "\n"
+        message += "\n"
         for game in self.game_list:
-            print "  Game {}:".format(game["_id"])
-            print "    Players: {}".format(", ".join(self.find_player_names_from_ids(game["players"])))
-            print "    Number of hands played: {}".format(len(game["hands"]))
+            message += "  Game {}:".format(game["_id"])
+            message += "\n"
+            message += "    Players: {}".format(", ".join(self.find_player_names_from_ids(game["players"])))
+            message += "\n"
+            message += "    Number of hands played: {}".format(len(game["hands"]))
+            message += "\n"
             if game["winners"]:
-                print "    Final score: {} - {}".format(self.find_winning_score(game), ", ".join(str(x) for x in self.find_losing_scores(game)))
-                print "    Winners: {}".format(", ".join(self.find_player_names_from_ids(game["winners"])))
-            print ""
+                message += "    Final score: {} - {}".format(self.find_winning_score(game), ", ".join(str(x) for x in self.find_losing_scores(game)))
+                message += "\n"
+                message += "    Winners: {}".format(", ".join(self.find_player_names_from_ids(game["winners"])))
+                message += "\n"
+        return message
 
 
 def main():
@@ -76,8 +84,7 @@ def main():
             print "Invalide number of days: " + sys.argv[1]
     daily_status = DailyStatus()
     daily_status.load_stats_since_previous_date(number_of_days)
-    daily_status.print_game_stats()
-
+    print daily_status.print_game_stats()
 
 
 if __name__ == '__main__':
