@@ -37,14 +37,33 @@ class DailyStatus():
         return player_names
 
     
+    def find_winning_score(self, game):
+        for result in game["results"]:
+            if result["player"] in game["winners"]:
+                return result["final_score"]
+    
+
+    def find_losing_scores(self, game):
+        losing_scores = []
+        losing_teams = []
+        for result in game["results"]:
+            if result["player"] not in game["winners"] and result["team_id"] not in losing_teams:
+                losing_scores.append(result["final_score"])
+                losing_teams.append(result["team_id"])
+        return losing_scores
+
+
     def print_game_stats(self):
         print "There have been {} games played since {}:".format(len(self.game_list), self.local_time)
+        print ""
         for game in self.game_list:
             print "  Game {}:".format(game["_id"])
             print "    Players: {}".format(", ".join(self.find_player_names_from_ids(game["players"])))
             print "    Number of hands played: {}".format(len(game["hands"]))
             if game["winners"]:
+                print "    Final score: {} - {}".format(self.find_winning_score(game), ", ".join(str(x) for x in self.find_losing_scores(game)))
                 print "    Winners: {}".format(", ".join(self.find_player_names_from_ids(game["winners"])))
+            print ""
 
 
 def main():
