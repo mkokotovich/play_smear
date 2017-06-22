@@ -71,6 +71,7 @@ class DailyStatus():
                 message += "\n"
                 message += "    Winners: {}".format(", ".join(self.find_player_names_from_ids(game["winners"])))
                 message += "\n"
+            message += "\n"
         return message
 
 
