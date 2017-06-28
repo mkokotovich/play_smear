@@ -53,6 +53,10 @@ class DailyStatus():
         return losing_scores
 
 
+    def get_num_games(self):
+        return len(self.game_list)
+
+
     def print_game_stats(self):
         message = ""
         message += "\n"

@@ -16,13 +16,13 @@ def load_mailgun_key():
     return auth_key
 
 
-def send_status_message(key, status):
+def send_status_message(key, num_games, status):
     return requests.post(
         "https://api.mailgun.net/v3/mg.playsmear.com/messages",
         auth=("api", key),
         data={"from": "Play Smear <admin@playsmear.com>",
               "to": ["mkokotovich@gmail.com"],
-              "subject": "Play Smear Daily Status for {}".format(datetime.now().strftime("%x")),
+              "subject": "{} Games - Play Smear Daily Status for {}".format(num_games, datetime.now().strftime("%x")),
               "text": status,
               "html": "<html><pre>{}</pre><br><br><br><a href='www.playsmear.com'>Unsubscribe</a></html>".format(status)})
 
@@ -32,10 +32,11 @@ def main():
     daily_status = DailyStatus()
     daily_status.load_stats_since_previous_date(1)
     stats = daily_status.print_game_stats()
+    num_games = daily_status.get_num_games()
 
     auth_key = load_mailgun_key()
 
-    ret = send_status_message(auth_key, stats)
+    ret = send_status_message(auth_key, num_games, stats)
 
     if ret.status_code != 200:
         print "Failed to send email"
