@@ -27,6 +27,12 @@ class BidStats():
             total_points_lost += bid['points_lost'] or 0
         player_stats['average_points_won'] = float(total_points_won)/float(player_stats['high_bids']) if player_stats['high_bids'] else 0
         player_stats['average_points_lost'] = float(total_points_lost)/float(player_stats['high_bids']) if player_stats['high_bids'] else 0
+        games_played = list(self.stat.db.games.find({"players": {"$in": [player_id]}, "winners": { "$exists": True, "$ne": [] } }))
+        hand_count = 0
+        for game in games_played:
+            hand_count += len(game['hands'])
+        player_stats['hands_played'] = hand_count
+        player_stats['average_points_per_hand_from_bidding'] = float(total_points_won)/float(player_stats['hands_played']) if player_stats['hands_played'] else 0
         return player_stats
 
 
@@ -34,8 +40,9 @@ class BidStats():
         player_stats = self.format_stats_for_player_id(player_id)
         print ""
         print "{} bid {} times, and was the high bid {} of those times.".format(player_name, player_stats['total_bids'], player_stats['high_bids'])
-        print "{} won {} of those bids, and was set {} times.".format(player_name, player_stats['bids_won'], player_stats['bids_set'])
+        print "{} won {} of those bids, and was set {} times ({}% successful).".format(player_name, player_stats['bids_won'], player_stats['bids_set'], 100*float(player_stats['bids_won'])/float(player_stats['high_bids']))
         print "The average points won during a bid was {}, and the average points lost was {}".format(player_stats['average_points_won'], player_stats['average_points_lost'])
+        print "{} played {} hands, and on average won {} points per hand from bidding".format(player_name, player_stats['hands_played'], player_stats['average_points_per_hand_from_bidding'])
 
 
 def main():
