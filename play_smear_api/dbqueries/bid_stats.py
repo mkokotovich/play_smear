@@ -40,7 +40,7 @@ class BidStats():
         player_stats = self.format_stats_for_player_id(player_id)
         print ""
         print "{} bid {} times, and was the high bid {} of those times.".format(player_name, player_stats['total_bids'], player_stats['high_bids'])
-        print "{} won {} of those bids, and was set {} times ({}% successful).".format(player_name, player_stats['bids_won'], player_stats['bids_set'], 100*float(player_stats['bids_won'])/float(player_stats['high_bids']))
+        print "{} won {} of those bids, and was set {} times ({}% successful).".format(player_name, player_stats['bids_won'], player_stats['bids_set'], 100*float(player_stats['bids_won'])/float(player_stats['high_bids']) if player_stats['high_bids'] else 0)
         print "The average points won during a bid was {}, and the average points lost was {}".format(player_stats['average_points_won'], player_stats['average_points_lost'])
         print "{} played {} hands, and on average won {} points per hand from bidding".format(player_name, player_stats['hands_played'], player_stats['average_points_per_hand_from_bidding'])
 
