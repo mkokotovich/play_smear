@@ -52,7 +52,7 @@ export class GameService {
 
     loginUserWithEmail(email:string) {
         this.authInfo.email = email;
-        Cookie.set("user_email", email, 1);
+        Cookie.set("user_email", email);
         this.disableAuthButton = true;
         this.smearApiService.loginUser(this.authInfo)
                             .subscribe( authResults => this.authReturned(authResults),
@@ -61,7 +61,7 @@ export class GameService {
 
     logoutUser() {
         this.disableAuthButton = true;
-        Cookie.set("user_email", "", 1);
+        Cookie.delete("user_email");
         this.userEmail = "";
         this.smearApiService.logoutUser()
                             .subscribe( authResults => this.authReturned(authResults),
@@ -161,13 +161,22 @@ export class GameService {
     }
 
     joinGame() {
-        Cookie.deleteAll();
+        this.deleteGameCookies();
         this.welcomeMessage += "\nJoining game..."
         this.errorMessage = "";
         this.disableJoinButton = true;
         this.smearApiService.gameJoin(this.gameAndUser)
                             .subscribe( gameJoinResults => this.checkGameStatus(gameJoinResults),
                                         err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
+    }
+
+    deleteGameCookies() {
+        Cookie.delete("bid_submitted");
+        Cookie.delete("game_id");
+        Cookie.delete("hand_finished");
+        Cookie.delete("hand_id");
+        Cookie.delete("trump");
+        Cookie.delete("username");
     }
 
     checkGameStatus(gameJoinResults: GameJoinResults) {
