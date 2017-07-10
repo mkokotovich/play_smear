@@ -49,7 +49,8 @@ class DailyStatus():
         for result in game["results"]:
             if result["player"] not in game["winners"] and result["team_id"] not in losing_teams:
                 losing_scores.append(result["final_score"])
-                losing_teams.append(result["team_id"])
+                if result["team_id"] != None:
+                    losing_teams.append(result["team_id"])
         return losing_scores
 
 
