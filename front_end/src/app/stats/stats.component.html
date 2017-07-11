@@ -1,44 +1,12 @@
 <div class="container fg-color content-blob" style="padding: 20px 10px 20px 10px;">
 <p><a routerLink="/start">Back to start page</a></p>
 <h3>Welcome, {{ gameService.userEmail }} </h3>
-<p *ngIf="!gameService.bidStats">Retrieving bid stats...</p>
-<div *ngIf="gameService.bidStats">
+<p *ngIf="!gameService.playerStats">Retrieving stats...</p>
+<div *ngIf="gameService.playerStats">
     <table>
-        <tr>
-            <td> Games played </td>
-            <td> {{ gameService.bidStats.games_played }}</td>
-        </tr>
-        <tr>
-            <td> Games won </td>
-            <td> {{ gameService.bidStats.games_won }}</td>
-        </tr>
-        <tr>
-            <td> Games lost </td>
-            <td> {{ gameService.bidStats.games_lost }}</td>
-        </tr>
-        <tr>
-            <td> Total bids </td>
-            <td> {{ gameService.bidStats.total_bids }}</td>
-        </tr>
-        <tr>
-            <td> Bids where you were the high bid </td>
-            <td> {{ gameService.bidStats.high_bids }}</td>
-        </tr>
-        <tr>
-            <td> Bids you won </td>
-            <td> {{ gameService.bidStats.bids_won }}</td>
-        </tr>
-        <tr>
-            <td> Bids you were set</td>
-            <td> {{ gameService.bidStats.bids_set }}</td>
-        </tr>
-        <tr>
-            <td> Average points won when you were the bidder </td>
-            <td> {{ gameService.bidStats.average_points_won | number:".2"}}</td>
-        </tr>
-        <tr>
-            <td> Average points lost when you were the bidder</td>
-            <td> {{ gameService.bidStats.average_points_lost | number:".2"}}</td>
+        <tr *ngFor="let stat of gameService.playerStats.stats">
+            <td> {{ stat.description }} </td>
+            <td> {{ stat.value }}</td>
         </tr>
     </table>
 </div>

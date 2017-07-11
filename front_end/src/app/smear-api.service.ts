@@ -12,7 +12,6 @@ import { AuthInfo } from './model/auth-info';
 import { AuthResults } from './model/auth-results';
 import { Bid } from './model/bid';
 import { BidInfo } from './model/bid-info';
-import { BidStats } from './model/bid-stats';
 import { Card } from './model/card';
 import { GameId } from './model/game-id';
 import { GameCreateInput } from './model/game-create-input';
@@ -24,6 +23,7 @@ import { GameUserCard } from './model/game-user-card';
 import { GetTrump } from './model/get-trump';
 import { HandInfo } from './model/hand-info';
 import { HandResults } from './model/hand-results';
+import { PlayerStats } from './model/player-stats';
 import { PlayingInfo } from './model/playing-info';
 import { TrickResults } from './model/trick-results';
 import { Trump } from './model/trump';
@@ -223,7 +223,7 @@ export class SmearApiService {
                         .catch(this.handleError);
     }
 
-    getBidStats(): Observable<BidStats> {
+    getPlayerStats(): Observable<PlayerStats> {
         let options = this.generateHTTPOptions();
         let data = null;
 

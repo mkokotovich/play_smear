@@ -12,20 +12,18 @@ class GameStats():
 
 
     def format_stats_for_player_id(self, player_id):
-        player_stats = {}
+        player_stats = []
         games_played = self.stat.db.games.find({"players": {"$in": [player_id]}, "winners": { "$exists": True, "$ne": [] } })
-        player_stats['games_played'] = games_played.count()
+        player_stats.append({'description':'Games played', 'value':str(games_played.count())})
         games_won = self.stat.db.games.find({"winners": {"$in": [player_id]}})
-        player_stats['games_won'] = games_won.count()
-        player_stats['games_lost'] = games_played.count() - games_won.count()
+        player_stats.append({'description':"Games won", "value":str(games_won.count())})
+        player_stats.append({'description':"Games lost", "value":str(games_played.count() - games_won.count())})
 
         return player_stats
 
-
     def print_stats_for_player_id(self, player_id, player_name):
         player_stats = self.format_stats_for_player_id(player_id)
-        print ""
-        print "{} played in {} games, and won {}".format(player_name, player_stats['games_played'], player_stats['games_won'])
+        StatGatherer.print_stats(player_stats, player_name)
 
 
 def main():

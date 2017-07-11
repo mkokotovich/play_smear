@@ -2,7 +2,7 @@ from pymongo import MongoClient
 import os
 
 
-class StatGatherer():
+class StatGatherer(object):
     def __init__(self):
         self.db = None
 
@@ -39,4 +39,16 @@ class StatGatherer():
             player_id = player["_id"]
         return player_id
 
+
+    @staticmethod
+    def add_stat_to_list(stat_list, description, value):
+        stat_list.append({"description": description, "value": str(value)})
+
+
+    @staticmethod
+    def print_stats(player_stats, player_name):
+        print ""
+        print "Stats for " + player_name + ":"
+        for stat in player_stats:
+            print stat['description'] + ": " + stat['value']
 

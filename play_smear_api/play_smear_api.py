@@ -1022,15 +1022,7 @@ def get_hand_results():
 # Retrieve stats about a player
 # Input (json data from post):
 # Return (json data):
-# games_played - Int
-# games_won    - Int
-# games_lost   - Int
-# total_bids   - Int
-# high_bids    - Int
-# bids_won     - Int
-# bids_set     - Int
-# average_points_won   - Int
-# average_points_lost  - Int
+# List of key-value pairs, description and value
 #
 @app.route("/api/user/stats/", methods=["POST"])
 @login_required
@@ -1044,9 +1036,8 @@ def get_stats_for_user():
     bid_stat_results = bid_stats.get_stats_for_email(current_user.get_id())
 
     # Return the playing_info
-    data = {}
-    data.update(game_stat_results)
-    data.update(bid_stat_results)
+    all_stats = game_stat_results + bid_stat_results
+    data = { "stats": all_stats }
     return generate_return_string(data)
 
 
