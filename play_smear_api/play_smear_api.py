@@ -53,10 +53,16 @@ ALL_COMPUTER_NAMES = [
         "Claude",
         "Ivan",
         "Marie",
-        "Queen Elizabeth",
+        #"Queen Elizabeth",
         "Elliot",
         "Alex",
-        "Maisie"
+        "Maisie",
+        "Barack",
+        "Leif",
+        "Hermione",
+        "Harry",
+        "Ron",
+        "Hagrid",
 ]
 
 
