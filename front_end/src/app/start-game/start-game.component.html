@@ -3,7 +3,7 @@
     <div>
         <div>{{gameService.welcomeMessage}}</div>
         <p *ngFor="let player of gameService.playersSoFar"> {{player}} has joined</p>
-        <div> {{gameService.errorMessage}} </div>
+        <div style="color: red; padding-left: 15px;"> {{gameService.errorMessage}} </div>
     </div>
     <div class="container-flud">
         <div align="right" style="padding-right: 15px">
@@ -17,9 +17,9 @@
         <p>Play the card game Smear online against the computer or friends. <a routerLink="/rules">Click here for more information and the rules of the game</a>.</p>
         <br>
         <tabset>
-        <tab heading="Play against computer" active=true><div class="tab-content tab-color"><app-create-game [playAgainstPeople]=false></app-create-game></div></tab> 
-        <tab heading="Play against friends"><div class="tab-content tab-color"><app-create-game [playAgainstPeople]=true></app-create-game></div></tab> 
-        <tab heading="Join an existing game"><div class="tab-content tab-color"><app-join-game></app-join-game></div></tab> 
+        <tab heading="Play against computer" active=true><div class="tab-content tab-color"><app-create-game [playAgainstPeople]=false></app-create-game></div></tab>
+        <tab heading="Play against friends"><div class="tab-content tab-color"><app-create-game [playAgainstPeople]=true></app-create-game></div></tab>
+        <tab heading="Join an existing game"><div class="tab-content tab-color"><app-join-game></app-join-game></div></tab>
         </tabset>
     </div>
     </div>
