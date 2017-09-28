@@ -1,17 +1,17 @@
 version: '3'
 services:
     front_end:
-        build: front_end
+        build: docker/front_end
         ports:
             - "4200:4200"
         volumes:
-            - /Users/matthew.kokotovich/smear_docker/play_smear:/play_smear
+            - .:/play_smear
     back_end:
-        build: back_end
+        build: docker/back_end
         ports:
             - "5000:5000"
         volumes:
-            - /Users/matthew.kokotovich/smear_docker/play_smear:/play_smear
+            - .:/play_smear
         environment:
             - MONGODB_URI=mongodb://mongo/smear
     mongo:
