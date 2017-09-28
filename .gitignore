@@ -3,6 +3,10 @@
 *~
 *.png
 
+# Logs from local docker testing
+front_end.log
+back_end.log
+
 # compiled output
 /dist
 /tmp
