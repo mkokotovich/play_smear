@@ -62,6 +62,9 @@ export class SmearApiService {
 
         return this.http.post(this.userLoginUrl, data, options)
                         .map((res:Response) => res)
+                        .retryWhen((error) => {
+                          return this.handleErrorRetry(error);
+                        })
                         .catch(this.handleError);
     }
 
@@ -246,7 +249,6 @@ export class SmearApiService {
     }
 
     private handleError (error: Response | any) {
-        // In a real world app, we might use a remote logging infrastructure
         return Observable.throw(error.json().error || 'Unknown server error');
     }
 }

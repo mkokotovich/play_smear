@@ -212,7 +212,7 @@ export class GameService {
 
     handleStartError(err: any, message: string) {
         this.welcomeMessage = "";
-        this.errorMessage = message + "\nError: " + <any>err;
+        this.errorMessage = message + ". " + <any>err;
         console.log(err);
         this.disableCreateButton = false;
         this.disableJoinButton = false;
