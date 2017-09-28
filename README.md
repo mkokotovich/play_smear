@@ -10,6 +10,7 @@ Python/Flask back end, using github.com/mkokotovich/pysmear for smear game logic
 
 ## To use Docker for testing:
 cd play_smear
+
 docker-compose up -d
 
 Using _docker-compose stop_ and _docker-compose start_ will stop and start the containers without having to rebuild all the node modules.
