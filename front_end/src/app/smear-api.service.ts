@@ -61,7 +61,7 @@ export class SmearApiService {
         let options = this.generateHTTPOptions();
 
         return this.http.post(this.userLoginUrl, data, options)
-                        .map((res:Response) => res)
+                        .map(this.extractData) //(res:Response) => res)
                         .retryWhen((error) => {
                           return this.handleErrorRetry(error);
                         })
