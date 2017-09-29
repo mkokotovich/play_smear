@@ -55,8 +55,10 @@ export class GameService {
         Cookie.set("user_email", email);
         this.disableAuthButton = true;
         this.smearApiService.loginUser(this.authInfo)
-                            .subscribe( authResults => this.authReturned(authResults),
-                                        err => this.handleStartError(err, "Unable to log in with the supplied email, try again later"));
+          .subscribe(
+            authResults => this.authReturned(authResults),
+            err => this.handleStartError(err, "Unable to log in with the supplied email, try again later")
+          );
     }
 
     logoutUser() {
@@ -198,7 +200,7 @@ export class GameService {
         this.playersSoFar = gameStartStatus.player_names;
         if (gameStartStatus.ready == false) {
             // If we aren't ready, check again in two seconds
-            setTimeout(function() { 
+            setTimeout(function() {
                 this.checkGameStatus(null);
             }.bind(this), 2000);
             return;
@@ -209,8 +211,8 @@ export class GameService {
     }
 
     handleStartError(err: any, message: string) {
-        this.welcomeMessage = message;
-        this.errorMessage = <any>err;
+        this.welcomeMessage = "";
+        this.errorMessage = message + ". " + <any>err;
         console.log(err);
         this.disableCreateButton = false;
         this.disableJoinButton = false;
