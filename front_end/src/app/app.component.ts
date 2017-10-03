@@ -4,6 +4,8 @@ import { NavigationEnd, Router } from '@angular/router';
 
 import { environment } from '../environments/environment';
 
+import { GameService } from './game.service';
+
 declare var ga: any;
 
 @Component({
@@ -16,6 +18,13 @@ export class AppComponent {
     title = 'Play Smear';
 
     // This logic helps track page views using google analytics
-    constructor(router:Router, angulartics2GoogleAnalytics: Angulartics2GoogleAnalytics) {
+    constructor(public router:Router,
+                angulartics2GoogleAnalytics: Angulartics2GoogleAnalytics,
+                public gameService: GameService) {
+    }
+
+    resetApp() {
+        this.gameService.resetGame();
+        this.router.navigate(['/start']);
     }
 }
