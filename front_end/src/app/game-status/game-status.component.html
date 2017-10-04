@@ -40,6 +40,15 @@
                             {{ handService.getGameStatus() }}
                         </div>
                     </div>
+                    <div class="col-auto"
+                         *ngIf="handService.handResults && handService.handResults.is_game_over" >
+                         <div style="display: inline-block; padding-top: 10px">
+                             <button type="button" class="btn btn-primary btn-lg"
+                                                   (click)="playAgain()">
+                                 Play Again
+                             </button>
+                         </div>
+                    </div>
                 </div> <!-- End sub-row -->
             </div> <!-- End first half-page col -->
             <div class="col-12 col-sm-12 col-md-5">

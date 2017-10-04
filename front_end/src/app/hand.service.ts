@@ -79,6 +79,30 @@ export class HandService {
         this.graphPrefix = "";
     }
 
+    resetHand(): void {
+        this.allowSelection = false;
+        this.showBidInput = false;
+        this.showTrumpInput = false;
+        this.allowBid = false;
+        this.allowTrumpSelection = false;
+        this.playersTurn = false;
+        this.currentlyBidding = false;
+        this.displayTrickConfirmationButton = false;
+        this.enableTrickConfirmationButton = false;
+        this.displayNextHandButton = false;
+        this.enableNextHandButton = false;
+        this.showHandResults = false;
+        this.highBid = new Bid("", "", 0);
+        this.handMessage = "";
+        this.graphPrefix = "";
+        this.gameAndUser = new GameAndUser("", "");
+        this.pointsToPlayTo = 0;
+        this.teamId = null;
+        this.teamsEnabled = false;
+        this.numTeams = 0;
+        this.currentlyBidding = true;
+    }
+
     setGameInfo(game_id: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number, graphPrefix: string): void {
         this.gameAndUser = new GameAndUser(game_id, username);
         this.pointsToPlayTo = pointsToPlayTo;

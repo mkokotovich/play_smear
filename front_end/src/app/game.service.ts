@@ -31,15 +31,35 @@ export class GameService {
     private players: Player[];
     public playersSoFar: string[] = new Array<string>();
     private username: string;
-    private gameId: GameId;
+    private gameId: GameId = new GameId("");
     public userEmail: string;
     public authButtonString: string = "Sign in";
     public loggedIn: Boolean = false;
     public disableAuthButton: Boolean = false;
+    private cancellingGame: Boolean = false;
+    public gameIsActive: Boolean = false;
 
     constructor(private router: Router,
                 public handService: HandService,
                 public smearApiService: SmearApiService) { }
+
+    resetGame() {
+        this.cancellingGame = true;
+        this.gameIsActive = false;
+        this.pointsToPlayTo = 11;
+        this.numTeams = 0;
+        this.numPlayers = 0;
+        this.players = new Array<Player>();
+        this.playersSoFar = new Array<string>();
+        this.gameAndUser.game_id = "";
+        this.gameId.game_id = "";
+        this.welcomeMessage = "";
+        this.errorMessage = "";
+        this.disableCreateButton = false;
+        this.disableJoinButton = false;
+        this.disableAuthButton = false;
+        this.handService.resetHand();
+    }
 
     loginUserFromCookie() {
         if (!this.loggedIn) {
@@ -133,6 +153,7 @@ export class GameService {
     }
 
     gameIsCreated(gameId: GameId) {
+        this.gameIsActive = true;
         this.gameAndUser.game_id = gameId.game_id;
         this.welcomeMessage = "Game " + this.gameAndUser.game_id + " created successfully!";
         if (this.gameCreateInput.numHumanPlayers != 0) {
@@ -159,12 +180,14 @@ export class GameService {
         this.welcomeMessage = "Unable to join any existing games, create or join a game to play";
         this.errorMessage = <any>err;
         this.disableJoinButton = false;
+        this.gameIsActive = false;
         this.router.navigate(['/start']);
     }
 
     joinGame() {
         this.deleteGameCookies();
         this.welcomeMessage += "\nJoining game..."
+        this.cancellingGame = false;
         this.errorMessage = "";
         this.disableJoinButton = true;
         this.smearApiService.gameJoin(this.gameAndUser)
@@ -182,6 +205,11 @@ export class GameService {
     }
 
     checkGameStatus(gameJoinResults: GameJoinResults) {
+        if (this.cancellingGame) {
+            this.cancellingGame = false;
+            return;
+        }
+        this.gameIsActive = true;
         if (gameJoinResults) {
             this.setGameInfo(gameJoinResults.game_id,
                              gameJoinResults.username,
@@ -197,6 +225,10 @@ export class GameService {
     }
 
     gameIsReady(gameStartStatus: GameStartStatus) {
+        if (this.cancellingGame) {
+            this.cancellingGame = false;
+            return;
+        }
         this.playersSoFar = gameStartStatus.player_names;
         if (gameStartStatus.ready == false) {
             // If we aren't ready, check again in two seconds
@@ -217,12 +249,13 @@ export class GameService {
         this.disableCreateButton = false;
         this.disableJoinButton = false;
         this.disableAuthButton = false;
+        this.gameIsActive = false;
     }
 
 
     //Also reset all globals
     setGameInfo(gameId: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number, graphPrefix: string):void {
-        this.gameId = new GameId(gameId);
+        this.gameId.game_id = gameId;
         this.handService.setGameInfo(gameId, username, teamId, numTeams, pointsToPlayTo, graphPrefix);
     }
 

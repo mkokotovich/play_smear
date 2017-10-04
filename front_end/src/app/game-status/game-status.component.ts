@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { CardHelper } from '../card-helper';
 import { GameService } from '../game.service';
@@ -17,6 +18,7 @@ export class GameStatusComponent implements OnInit {
 
     constructor(public handService: HandService,
                 public gameService: GameService,
+                public router: Router,
                 public smearApiService: SmearApiService) {
     }
 
@@ -24,4 +26,8 @@ export class GameStatusComponent implements OnInit {
         this.numPlayers = this.gameService.getNumPlayers();
     }
 
+    playAgain() {
+        this.gameService.resetGame();
+        this.router.navigate(['/start']);
+    }
 }
