@@ -12,6 +12,8 @@ import inspect
 import cPickle as pickle
 import random
 import uuid
+from datetime import datetime
+import requests
 from pymongo import MongoClient
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
@@ -1045,6 +1047,60 @@ def get_stats_for_user():
     all_stats = game_stat_results + bid_stat_results
     data = { "stats": all_stats }
     return generate_return_string(data)
+
+
+# Helper functions for contact api
+def load_mailgun_key():
+    auth_key = None
+    if "MAILGUN_KEY" in os.environ:
+        auth_key = os.environ["MAILGUN_KEY"]
+    if not auth_key:
+        app.logger.error("Could not find MAILGUN_KEY environmental variable")
+    return auth_key
+
+
+def send_feedback_email(user_email, subject, body):
+    auth_key = load_mailgun_key()
+    if not auth_key:
+        return False
+    full_body = "Feedback received from {} on {}\n\n".format(user_email, datetime.now().strftime("%x"))
+    full_body += "Subject: {}\n".format(subject)
+    full_body += "Message: {}\n".format(body)
+    r = requests.post(
+        "https://api.mailgun.net/v3/mg.playsmear.com/messages",
+        auth=("api", auth_key),
+        data={"from": "Play Smear Feedback <feedback@playsmear.com>",
+              "to": ["mkokotovich+smearfeedback@gmail.com"],
+              "subject": "Play Smear Feedback: {}".format(subject),
+              "text": full_body,
+              "html": "<html><pre>{}</pre><br><br><br><a href='www.playsmear.com'>Unsubscribe</a></html>".format(full_body)})
+    if r.status_code != 200:
+        app.logger.error("Failed to send feedback email: {}".format(r.text))
+        return False
+    return True
+
+
+# Sends an email with feedback from the user
+# Input (json data from post):
+#  email
+#  subject
+#  body
+# Return (json data):
+#  Nothing, just status
+#
+@app.route("/api/feedback/", methods=["POST"])
+def submit_feedback():
+    # Read input
+    params = get_params_or_abort(request)
+    email = get_value_from_params(params, "email")
+    subject = get_value_from_params(params, "subject")
+    body = get_value_from_params(params, "body")
+
+    if send_feedback_email(email, subject, body):
+        return generate_return_string()
+    else:
+        return generate_error(20, "Unable to submit feedback now, try again later")
+
 
 
 initialize(g_cleanup_thread, g_cleanup_queue, g_game_timeout)
