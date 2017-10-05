@@ -48,40 +48,35 @@
   </div>
 </div>
 
+<!-- Contact Us -->
 <div class="bg-color" style="display: flex; justify-content: center; align-items: center; height: 20px; width: 100%;">
   <button type="link" class="btn btn-link" (click)="contactModal.show()">Contact Us</button>
 </div>
-
 <div bsModal #contactModal="bs-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-md">
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="modal-title pull-left">Contact Us</h4>
-        <button type="button" class="close pull-right" (click)="contactModal.hide();" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <button class="close pull-right" (click)="resetContactUsData(); contactModal.hide();" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <div class="form-group">
           <label for="contactUsEmail">Email Address:</label>
-          <input #contactUsEmail t class="form-control" id="contactUsEmail">
+          <input id="contactUsEmail" class="form-control" placeholder="{{email}}" [(ngModel)]="email">
         </div>
         <div class="form-group">
           <label for="contactUsSubject">Subject:</label>
-          <input #contactUsSubject class="form-control" id="contactUsSubject">
+          <input id="contactUsSubject" class="form-control" placeholder="{{subject}}" [(ngModel)]="subject">
         </div>
-
         <div class="form-group">
           <label for="contactUsMessage">Message:</label>
-          <input #contactUsMessage class="form-control" id="contactUsMessage">
+          <input id="contactUsMessage" class="form-control" placeholder="{{message}}" [(ngModel)]="message">
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-default" (click)="contactModal.hide();">Cancel</button>
-        <button class="btn btn-primary" (click)="contactModal.hide(); sendContactUsEmail(contactUsEmail.value, contactUsSubject.value, contactUsMessage.value);">Send</button>
+        <button class="btn btn-default" (click)="resetContactUsData(); contactModal.hide();">Cancel</button>
+        <button class="btn btn-primary" (click)="contactModal.hide(); sendContactUsEmail();">Send</button>
       </div>
     </div>
   </div>
 </div>
-
-

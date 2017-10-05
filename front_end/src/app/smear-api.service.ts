@@ -32,6 +32,7 @@ import { constants } from '../host-specific-constants';
 @Injectable()
 export class SmearApiService {
     private baseUrl = environment.apiBaseUrl + '/api/';
+    private contactUsUrl = this.baseUrl + '/api/feedback';
     private gameCreateUrl = this.baseUrl + "game/create/";
     private gameJoinUrl = this.baseUrl + "game/join/";
     private gameRejoinUrl = this.baseUrl + "game/rejoin/";
@@ -48,6 +49,7 @@ export class SmearApiService {
     private userLoginUrl = this.baseUrl + "user/login/";
     private userLogoutUrl = this.baseUrl + "user/logout/";
     private userStatsUrl = this.baseUrl + "user/stats/";
+
 
     constructor(private http: Http) { }
 
@@ -234,6 +236,19 @@ export class SmearApiService {
                         })
                         .catch(this.handleError);
     }
+
+  sendContactUsEmail(email: string, subject: string, body: string): Observable<any> {
+    let options = this.generateHTTPOptions();
+    let data: any = {'email': email, 'subject': subject, 'body': body};
+
+    return this.http
+      .post(this.contactUsUrl, data, options)
+      .map(this.extractData)
+      .retryWhen((error) => {
+        return this.handleErrorRetry(error);
+      })
+      .catch(this.handleError);
+  }
 
     private extractData(res: Response) {
         let body = res.json();
