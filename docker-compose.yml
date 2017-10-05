@@ -14,6 +14,7 @@ services:
             - .:/play_smear
         environment:
             - MONGODB_URI=mongodb://mongo/smear
+            - MAILGUN_KEY=${SECRET_MAILGUN_KEY}
     mongo:
         image: mongo:latest
         ports:
