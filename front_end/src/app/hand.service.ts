@@ -101,6 +101,7 @@ export class HandService {
         this.teamsEnabled = false;
         this.numTeams = 0;
         this.currentlyBidding = true;
+        this.handResults = null;
     }
 
     setGameInfo(game_id: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number, graphPrefix: string): void {
