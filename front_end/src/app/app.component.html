@@ -21,18 +21,13 @@
           </div>
       </div>
   </div>
-
-
-
   <div class="divider light">&nbsp;</div>
   <div class="divider dark">&nbsp;</div>
 </div>
 
 <!-- Game Content -->
 <div id="content" style="height: calc(100% - 90px); display: flex; flex-direction: column">
-  <div>
-    <router-outlet></router-outlet>
-  </div>
+  <router-outlet></router-outlet>
   <div *ngIf="!gameService.gameIsActive" class="bg-color" style="align-self: flex-end; display: flex; justify-content: center; align-items: center; height: 20px; width: 100%; margin-top: auto; margin-bottom: 9px;">
     <button type="link" class="btn btn-link" (click)="contactModal.show()">Contact Us</button>
   </div>
