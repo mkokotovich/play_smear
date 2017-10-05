@@ -19,9 +19,9 @@ declare var ga: any;
 export class AppComponent {
   title = 'Play Smear';
 
-  private email: string = '';
-  private subject: string = '';
-  private message: string = '';
+  public email: string = '';
+  public subject: string = '';
+  public message: string = '';
 
   // This logic helps track page views using google analytics
   constructor(public smearApiService: SmearApiService, public router:Router, angulartics2GoogleAnalytics: Angulartics2GoogleAnalytics, public gameService: GameService) {}
