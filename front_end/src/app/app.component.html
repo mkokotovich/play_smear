@@ -1,33 +1,44 @@
 <!-- Enable bootstrap 4 theme -->
 <script>window.__theme = 'bs4';</script>
-<div class="divider dark">&nbsp;</div>
-<div class="divider light">&nbsp;</div>
-<div class="page-header header-color container-fluid">
-    <div class="row">
-        <div class="col-6 header-text" style="text-align: left">
-            <div *ngIf="gameService.gameIsActive">
-                <span class="link" (click)="resetAppModal.show()">Play Smear</span>
-            </div>
-            <div *ngIf="!gameService.gameIsActive">
-                <span class="link" (click)="resetApp()">Play Smear</span>
-            </div>
-        </div>
-        <div class="col-6 header-symbols" style="text-align: right">
-            <span class="trump spades header">&spades;</span>
-            <span class="trump hearts header">&hearts;</span>
-            <span class="trump clubs header">&clubs;</span>
-            <span class="trump diams header">&diams;</span>
-        </div>
-    </div>
+<div id="heading" style="height: 90px">
+  <div class="divider dark">&nbsp;</div>
+  <div class="divider light">&nbsp;</div>
+  <div class="page-header header-color container-fluid">
+      <div class="row">
+          <div class="col-6 header-text" style="text-align: left">
+              <div *ngIf="gameService.gameIsActive">
+                  <span class="link" (click)="resetAppModal.show()">Play Smear</span>
+              </div>
+              <div *ngIf="!gameService.gameIsActive">
+                  <span class="link" (click)="resetApp()">Play Smear</span>
+              </div>
+          </div>
+          <div class="col-6 header-symbols" style="text-align: right">
+              <span class="trump spades header">&spades;</span>
+              <span class="trump hearts header">&hearts;</span>
+              <span class="trump clubs header">&clubs;</span>
+              <span class="trump diams header">&diams;</span>
+          </div>
+      </div>
+  </div>
+
+
+
+  <div class="divider light">&nbsp;</div>
+  <div class="divider dark">&nbsp;</div>
 </div>
 
-<div class="divider light">&nbsp;</div>
-<div class="divider dark">&nbsp;</div>
-
-<div >
-<router-outlet></router-outlet>
+<!-- Game Content -->
+<div id="content" style="height: calc(100% - 90px); display: flex; flex-direction: column">
+  <div>
+    <router-outlet></router-outlet>
+  </div>
+  <div *ngIf="!gameService.gameIsActive" class="bg-color" style="align-self: flex-end; display: flex; justify-content: center; align-items: center; height: 20px; width: 100%; margin-top: auto; margin-bottom: 9px;">
+    <button type="link" class="btn btn-link" (click)="contactModal.show()">Contact Us</button>
+  </div>
 </div>
 
+<!-- Reset Game Modal -->
 <div bsModal #resetAppModal="bs-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-md">
     <div class="modal-content">
@@ -38,20 +49,17 @@
         </button>
       </div>
       <div class="modal-body">
-          Are you sure you want to leave the game?
+        Are you sure you want to leave the game?
       </div>
       <div class="modal-footer">
-          <button class="btn btn-default" (click)="resetAppModal.hide()">No</button>
-          <button class="btn btn-primary" (click)="resetAppModal.hide(); resetApp()">Yes</button>
+        <button class="btn btn-default" (click)="resetAppModal.hide()">No</button>
+        <button class="btn btn-primary" (click)="resetAppModal.hide(); resetApp()">Yes</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Contact Us -->
-<div class="bg-color" style="display: flex; justify-content: center; align-items: center; height: 20px; width: 100%;">
-  <button type="link" class="btn btn-link" (click)="contactModal.show()">Contact Us</button>
-</div>
+<!-- Contact Us Modal -->
 <div bsModal #contactModal="bs-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-md">
     <div class="modal-content">

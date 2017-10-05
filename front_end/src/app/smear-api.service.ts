@@ -32,7 +32,7 @@ import { constants } from '../host-specific-constants';
 @Injectable()
 export class SmearApiService {
     private baseUrl = environment.apiBaseUrl + '/api/';
-    private contactUsUrl = this.baseUrl + '/api/feedback';
+    private contactUsUrl = this.baseUrl + 'feedback/';
     private gameCreateUrl = this.baseUrl + "game/create/";
     private gameJoinUrl = this.baseUrl + "game/join/";
     private gameRejoinUrl = this.baseUrl + "game/rejoin/";
@@ -49,7 +49,6 @@ export class SmearApiService {
     private userLoginUrl = this.baseUrl + "user/login/";
     private userLogoutUrl = this.baseUrl + "user/logout/";
     private userStatsUrl = this.baseUrl + "user/stats/";
-
 
     constructor(private http: Http) { }
 

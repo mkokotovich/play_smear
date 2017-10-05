@@ -33,8 +33,11 @@ export class AppComponent {
 
   sendContactUsEmail() {
     console.log('Sending email to: ' + this.email + ', with the subject: ' + this.subject + ', and the message: ' + this.message);
-    this.smearApiService.sendContactUsEmail(this.email, this.subject, this.message);
-    this.resetContactUsData();
+    this.smearApiService.sendContactUsEmail(this.email, this.subject, this.message).subscribe(
+      res => res,
+      err => console.log(err, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    );
+    this.resetContactUsData()
   }
 
   resetContactUsData() {
