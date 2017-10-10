@@ -1102,6 +1102,35 @@ def submit_feedback():
         return generate_error(20, "Unable to submit feedback now, try again later")
 
 
+# Returns a hint for which card a player should play
+# Input (json data from post):
+#  game_id  - string - ID of game we're playing
+#  username - string - username of player
+# Return (json data):
+#  card
+#
+@app.route("/api/hand/hint/", methods=["POST"])
+def get_hint_for_player():
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    username = get_value_from_params(params, "username")
+
+    # Check input
+    engine = load_engine(game_id)
+    if engine is None:
+        return generate_error(4, "Could not find game {}".format(game_id))
+    if username not in engine.get_player_names():
+        return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
+
+    # Perform game-related logic
+    card_to_play = engine.get_hint_for_player(username) 
+    if card_to_play == None:
+        return generate_error(21, "Unable to get hint for {}".format(username))
+
+    # Return the playing_info
+    return generate_return_string(card_to_play)
+
 
 initialize(g_cleanup_thread, g_cleanup_queue, g_game_timeout)
 

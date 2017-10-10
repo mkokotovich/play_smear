@@ -41,6 +41,7 @@ export class SmearApiService {
     private handGetBidInfoUrl = this.baseUrl + "hand/getbidinfo/";
     private handSubmitBidUrl = this.baseUrl + "hand/submitbid/";
     private handGetHighBidUrl = this.baseUrl + "hand/gethighbid/";
+    private handGetHintUrl = this.baseUrl + "hand/hint/";
     private handGetPlayingInfoUrl = this.baseUrl + "hand/getplayinginfo/";
     private handGetResultsUrl = this.baseUrl + "hand/getresults/";
     private handGetTrickResultsUrl = this.baseUrl + "hand/gettrickresults/";
@@ -242,6 +243,18 @@ export class SmearApiService {
 
     return this.http
       .post(this.contactUsUrl, data, options)
+      .map(this.extractData)
+      .retryWhen((error) => {
+        return this.handleErrorRetry(error);
+      })
+      .catch(this.handleError);
+  }
+
+  handGetHint(data: GameAndUser): Observable<Card> {
+    let options = this.generateHTTPOptions();
+
+    return this.http
+      .post(this.handGetHintUrl, data, options)
       .map(this.extractData)
       .retryWhen((error) => {
         return this.handleErrorRetry(error);

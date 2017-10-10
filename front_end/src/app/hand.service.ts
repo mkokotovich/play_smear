@@ -671,4 +671,17 @@ export class HandService {
         }
         return color;
     }
+
+    getHint(): void {
+        this.smearApiService.handGetHint(this.gameAndUser)
+                            .subscribe( cardToPlay => this.hintReceived(cardToPlay),
+                                        err => this.handleHandError(err, "Unable to retrieve hint"));
+    }
+
+    hintReceived(cardToPlay: Card): void {
+        
+        this.unSelectCard();
+        this.selectCard(cardToPlay);
+    }
+
 }

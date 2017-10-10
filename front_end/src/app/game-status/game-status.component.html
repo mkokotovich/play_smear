@@ -66,6 +66,15 @@
                     <div style="inline-block;">
                         <app-graph-viewer></app-graph-viewer>
                     </div>
+                    <div 
+                         *ngIf="handService.playersTurn" >
+                         <div style="display: inline-block; padding-top: 5px">
+                             <button type="button" class="btn btn-default btn-sm"
+                                                   (click)="handService.getHint()">
+                                 Hint
+                             </button>
+                         </div>
+                    </div>
                 </div>
             </div>
         </div>
