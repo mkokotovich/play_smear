@@ -67,7 +67,7 @@
                         <app-graph-viewer></app-graph-viewer>
                     </div>
                     <div 
-                         *ngIf="handService.playersTurn" >
+                         *ngIf="handService.allowSelection" >
                          <div style="display: inline-block; padding-top: 5px">
                              <button type="button" class="btn btn-default btn-sm"
                                                    (click)="handService.getHint()">

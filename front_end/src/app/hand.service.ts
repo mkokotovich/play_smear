@@ -585,6 +585,15 @@ export class HandService {
         }
     }
 
+    selectCardFromHint(card: Card):void {
+        for (let c of this.cards) {
+            if (c.suit == card.suit && c.value == card.value) {
+                this.selectedCard = c;
+                break;
+            }
+        }
+    }
+
     unSelectCard():void {
         this.selectedCard = undefined;
     }
@@ -679,9 +688,7 @@ export class HandService {
     }
 
     hintReceived(cardToPlay: Card): void {
-        
-        this.unSelectCard();
-        this.selectCard(cardToPlay);
+        this.selectCardFromHint(cardToPlay);
     }
 
 }
