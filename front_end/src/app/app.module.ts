@@ -10,6 +10,7 @@ import { DndModule } from 'ng2-dnd';
 
 import { AppRoutingModule } from './app-routing.module';
 
+import { AlertService } from './alert.service';
 import { AppComponent } from './app.component';
 import { BidComponent } from './bid/bid.component';
 import { GameService } from './game.service';
@@ -56,7 +57,7 @@ import { StatsComponent } from './stats/stats.component';
     ModalModule.forRoot(),
     DndModule.forRoot()
   ],
-  providers: [SmearApiService, HandService, GameService],
+  providers: [SmearApiService, HandService, GameService, AlertService],
   entryComponents: [],
   bootstrap: [AppComponent]
 })

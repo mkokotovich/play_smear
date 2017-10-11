@@ -14,10 +14,10 @@
               </div>
           </div>
           <div class="col-6 header-symbols" style="text-align: right">
-              <span (click)="handService.getHint()" class="trump spades header">&spades;</span>
-              <span class="trump hearts header">&hearts;</span>
-              <span class="trump clubs header">&clubs;</span>
-              <span class="trump diams header">&diams;</span>
+              <span (click)="getHint()" class="trump spades header">&spades;</span>
+              <span (click)="secretCode('hearts')"class="trump hearts header">&hearts;</span>
+              <span (click)="secretCode('clubs')"class="trump clubs header">&clubs;</span>
+              <span (click)="secretCode('diams')"class="trump diams header">&diams;</span>
           </div>
       </div>
   </div>
@@ -31,6 +31,11 @@
   <div *ngIf="!gameService.gameIsActive" class="bg-color" style="align-self: flex-end; display: flex; justify-content: center; align-items: center; height: 20px; width: 100%; margin-top: auto; margin-bottom: 9px;">
     <button type="link" class="btn btn-link" (click)="contactModal.show()">Contact Us</button>
   </div>
+</div>
+
+<!-- Alerts -->
+<div style="position: fixed; top: 0; left: 50%; width: 400px; margin-left: -200px; margin-top: 20px" *ngFor="let alert of alertService.getAlerts()">
+    <alert [type]="alert.type" dismissible="true">{{ alert.msg }}</alert>
 </div>
 
 <!-- Reset Game Modal -->

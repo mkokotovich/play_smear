@@ -1,6 +1,7 @@
 import { Cookie } from 'ng2-cookies/ng2-cookies';
 import { Injectable } from '@angular/core';
 
+import { AlertService } from './alert.service';
 import { Bid} from './model/bid';
 import { BidInfo } from './model/bid-info';
 import { Card } from './model/card';
@@ -60,8 +61,12 @@ export class HandService {
     public graphPrefix: string;
     private players: Array<Player>;
     public alerts: any = [];
+    public autoPilot : boolean = false;
+    public secretCodeCount : number = 0;
+    public secretCodeState : number = 0;
 
-    constructor(public smearApiService :SmearApiService) {
+    constructor(public smearApiService :SmearApiService,
+                public alertService: AlertService) {
         this.allowSelection = false;
         this.showBidInput = false;
         this.showTrumpInput = false;
@@ -102,6 +107,10 @@ export class HandService {
         this.numTeams = 0;
         this.currentlyBidding = true;
         this.handResults = null;
+        this.autoPilot = false;
+        this.secretCodeCount = 0;
+        this.secretCodeState = 0;
+        this.alertService.clearAlerts();
     }
 
     setGameInfo(game_id: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number, graphPrefix: string): void {
@@ -340,6 +349,10 @@ export class HandService {
         } else {
             this.setGameStatus("Trump is " + this.trump + ", it is your lead");
         }
+
+        if (this.autoPilot) {
+            this.getHintForAutoPilot();
+        }
     }
 
     submitCardToPlay(cardToPlay: Card): void {
@@ -395,6 +408,10 @@ export class HandService {
         this.setGameStatus("Trick is finished, " + trickResults.winner + " took the trick");
         this.displayTrickConfirmationButton = true;
         this.enableTrickConfirmationButton = true;
+
+        if (this.autoPilot) {
+            setTimeout(this.startNextTrick.bind(this), 2000);
+        }
     }
 
     startNextTrick(): void {
@@ -691,6 +708,56 @@ export class HandService {
 
     hintReceived(cardToPlay: Card): void {
         this.selectCardFromHint(cardToPlay);
+    }
+
+    getHintForAutoPilot(): void {
+        this.smearApiService.handGetHint(this.gameAndUser)
+                        .subscribe( cardToPlay => this.autoPilotMoveReceived(cardToPlay),
+                                    err => this.handleHandError(err, "Unable to retrieve auto pilot move, play it yourself"));
+    }
+
+    autoPilotMoveReceived(cardToPlay: Card): void {
+        this.selectCardFromHint(cardToPlay);
+        setTimeout(this.autoPilotPlaySelectedCard.bind(this), 2000);
+    }
+
+    autoPilotPlaySelectedCard(): void {
+        if (this.selectedCard) {
+            this.submitCardToPlay(this.selectedCard);
+        }
+    }
+
+    secretCode(suit: string) : void {
+        this.secretCodeCount += 1;
+
+        if (suit == 'hearts') {
+            this.secretCodeState += 1;
+        }
+        else if (suit == 'clubs') {
+            this.secretCodeState += 2;
+        }
+        else if (suit == 'diams') {
+            this.secretCodeState += 4;
+        }
+
+        if (this.secretCodeCount == 3) {
+
+            if (this.secretCodeState == 7) {
+                this.autoPilot = !this.autoPilot;
+                if (this.autoPilot) {
+                    this.alertService.clearAlerts();
+                    this.alertService.addAlert("warning", "AutoPilot mode is enabled");
+                    if (this.allowSelection) {
+                        this.getHintForAutoPilot();
+                    }
+                } else {
+                    this.alertService.clearAlerts();
+                }
+            }
+
+            this.secretCodeState = 0;
+            this.secretCodeCount = 0;
+        }
     }
 
 }
