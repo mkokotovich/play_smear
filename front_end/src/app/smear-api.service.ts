@@ -11,6 +11,7 @@ import { environment } from '../environments/environment';
 import { AuthInfo } from './model/auth-info';
 import { AuthResults } from './model/auth-results';
 import { Bid } from './model/bid';
+import { BidHint } from './model/bid-hint';
 import { BidInfo } from './model/bid-info';
 import { Card } from './model/card';
 import { GameId } from './model/game-id';
@@ -41,6 +42,7 @@ export class SmearApiService {
     private handGetBidInfoUrl = this.baseUrl + "hand/getbidinfo/";
     private handSubmitBidUrl = this.baseUrl + "hand/submitbid/";
     private handGetHighBidUrl = this.baseUrl + "hand/gethighbid/";
+    private handGetBidHintUrl = this.baseUrl + "hand/bidhint/";
     private handGetHintUrl = this.baseUrl + "hand/hint/";
     private handGetPlayingInfoUrl = this.baseUrl + "hand/getplayinginfo/";
     private handGetResultsUrl = this.baseUrl + "hand/getresults/";
@@ -255,6 +257,18 @@ export class SmearApiService {
 
     return this.http
       .post(this.handGetHintUrl, data, options)
+      .map(this.extractData)
+      .retryWhen((error) => {
+        return this.handleErrorRetry(error);
+      })
+      .catch(this.handleError);
+  }
+
+  handGetBidHint(data: GameAndUser): Observable<BidHint> {
+    let options = this.generateHTTPOptions();
+
+    return this.http
+      .post(this.handGetBidHintUrl, data, options)
       .map(this.extractData)
       .retryWhen((error) => {
         return this.handleErrorRetry(error);

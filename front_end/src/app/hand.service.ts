@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 
 import { AlertService } from './alert.service';
 import { Bid} from './model/bid';
+import { BidHint } from './model/bid-hint';
 import { BidInfo } from './model/bid-info';
 import { Card } from './model/card';
 import { CardPlayed } from './model/card-played';
@@ -39,6 +40,8 @@ export class HandService {
     public highBid = new Bid("", "", 0);
     public allBids = new Array<Bid>();
     public currentHighBid = 0;
+    public bid: number = 0;
+    public bidTrump : string = "";
     private bidder: string;
     private dealer: string;
     private waitingFor: string;
@@ -85,6 +88,8 @@ export class HandService {
     }
 
     resetHand(): void {
+        this.bid = 0;
+        this.bidTrump = "";
         this.allowSelection = false;
         this.showBidInput = false;
         this.showTrumpInput = false;
@@ -238,6 +243,10 @@ export class HandService {
         } else {
             this.setBidMessage(bidInfo.bidder + " has the highest bid of " + bidInfo.current_bid);
         }
+
+        if (this.autoPilot) {
+            this.getBidHintForAutoPilot();
+        }
     }
 
     declareBid(bidNum: number): void {
@@ -282,12 +291,16 @@ export class HandService {
             if (this.highBid.bid == 0) {
                 this.setGameStatus("Dealer was forced to take a two set");
                 // TODO: Handle the case where bid == 0 - a forced two set
-                this.startNextHand();
+                setTimeout(this.startNextHand.bind(this), 2000);
             } else if (this.highBid.username == this.gameAndUser.username) {
                 this.setGameStatus("You are the bidder, enter your choice for trump below");
                 this.allowTrumpSelection = true;
                 this.showTrumpInput = true;
                 this.playersTurn = true;
+
+                if (this.autoPilot) {
+                    this.autoPilotSelectTrump();
+                }
             } else {
                 this.setGameStatus(this.highBid.username + " bid: " + this.highBid.bid + ". Finding out what trump will be");
                 this.getOrSubmitTrump("");
@@ -491,6 +504,11 @@ export class HandService {
             }
         }
 
+        if (this.autoPilot) {
+            if (!this.handResults.is_game_over) {
+                setTimeout(this.startNextHand.bind(this), 2000);
+            }
+        }
     }
 
     getPointsWon(player: string): Array<string> {
@@ -698,6 +716,24 @@ export class HandService {
         return color;
     }
 
+    getBidHintForAutoPilot(): void {
+        if (this.allowBid) {
+            this.smearApiService.handGetBidHint(this.gameAndUser)
+                            .subscribe( bidHint => this.bidHintReceived(bidHint),
+                                        err => this.handleHandError(err, "Unable to retrieve bid hint"));
+        }
+    }
+
+    bidHintReceived(bidHint: BidHint): void {
+        this.bid = bidHint.bid;
+        this.bidTrump = bidHint.trump;
+        setTimeout(this.autoPilotDeclareSavedBid.bind(this), 2000);
+    }
+
+    autoPilotDeclareSavedBid(): void {
+        this.declareBid(this.bid);
+    }
+
     getHint(): void {
         if (this.allowSelection) {
             this.smearApiService.handGetHint(this.gameAndUser)
@@ -724,6 +760,16 @@ export class HandService {
     autoPilotPlaySelectedCard(): void {
         if (this.selectedCard) {
             this.submitCardToPlay(this.selectedCard);
+        }
+    }
+
+    autoPilotSelectTrump(): void {
+        setTimeout(this.autoPilotSubmitSavedTrump.bind(this), 2000);
+    }
+
+    autoPilotSubmitSavedTrump(): void {
+        if (this.bidTrump != "") {
+            this.submitTrump(this.bidTrump);
         }
     }
 

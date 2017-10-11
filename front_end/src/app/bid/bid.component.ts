@@ -11,8 +11,6 @@ import { CardHelper } from '../card-helper';
   styleUrls: ['./bid.component.css']
 })
 export class BidComponent implements OnInit {
-    public bid:number;
-    public selected_trump:string;
     public cardHelper = new CardHelper();
 
     private trumpChoices = [ "Spades", "Clubs", "Hearts", "Diamonds" ];
@@ -22,35 +20,35 @@ export class BidComponent implements OnInit {
 
     get_bid(): string {
         let bid_str = ""
-        if (this.bid == 0) {
+        if (this.handService.bid == 0) {
             bid_str = "Pass";
         } else {
-            bid_str = this.bid.toString();
+            bid_str = this.handService.bid.toString();
         }
 
         return bid_str;
     }
 
     save_bid(bid: number) {
-        this.bid = bid;
+        this.handService.bid = bid;
     }
 
     submit_bid() {
-        console.log("bid submitted: " + this.bid);
-        this.handService.declareBid(this.bid);
+        console.log("bid submitted: " + this.handService.bid);
+        this.handService.declareBid(this.handService.bid);
     }
 
     save_trump(trump: string) {
-        this.selected_trump = trump;
+        this.handService.bidTrump = trump;
     }
 
     submit_trump() {
-        console.log("trump submitted: " + this.selected_trump);
-        this.handService.submitTrump(this.selected_trump);
+        console.log("trump submitted: " + this.handService.bidTrump);
+        this.handService.submitTrump(this.handService.bidTrump);
     }
 
     get_trump(): string {
-        return this.selected_trump;
+        return this.handService.bidTrump;
     }
 
     ngOnInit() {

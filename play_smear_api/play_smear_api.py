@@ -1132,6 +1132,38 @@ def get_hint_for_player():
     return generate_return_string(card_to_play)
 
 
+# Returns a hint for what bid a player should make
+# Input (json data from post):
+#  game_id  - string - ID of game we're playing
+#  username - string - username of player
+# Return (json data):
+#  bid
+#  trump
+#
+@app.route("/api/hand/bidhint/", methods=["POST"])
+def get_bid_hint_for_player():
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    username = get_value_from_params(params, "username")
+
+    # Check input
+    engine = load_engine(game_id)
+    if engine is None:
+        return generate_error(4, "Could not find game {}".format(game_id))
+    if username not in engine.get_player_names():
+        return generate_error(5, "Could not find user {} in game {}".format(username, game_id))
+
+    # Perform game-related logic
+    bid_hint = engine.get_bid_hint_for_player(username) 
+    if bid_hint == None:
+        return generate_error(22, "Unable to get bid hint for {}".format(username))
+
+    # Return the playing_info
+    return generate_return_string(bid_hint)
+
+
+
 initialize(g_cleanup_thread, g_cleanup_queue, g_game_timeout)
 
 if __name__ == '__main__':
