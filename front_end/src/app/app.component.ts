@@ -7,6 +7,7 @@ import { SmearApiService } from './smear-api.service';
 import { environment } from '../environments/environment';
 
 import { GameService } from './game.service';
+import { HandService } from './hand.service';
 
 declare var ga: any;
 
@@ -24,7 +25,11 @@ export class AppComponent {
   public message: string = '';
 
   // This logic helps track page views using google analytics
-  constructor(public smearApiService: SmearApiService, public router:Router, angulartics2GoogleAnalytics: Angulartics2GoogleAnalytics, public gameService: GameService) {}
+  constructor(public smearApiService: SmearApiService,
+              public router:Router,
+              angulartics2GoogleAnalytics: Angulartics2GoogleAnalytics,
+              public handService: HandService,
+              public gameService: GameService) {}
 
   resetApp() {
     this.gameService.resetGame();

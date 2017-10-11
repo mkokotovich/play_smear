@@ -682,9 +682,11 @@ export class HandService {
     }
 
     getHint(): void {
-        this.smearApiService.handGetHint(this.gameAndUser)
+        if (this.allowSelection) {
+            this.smearApiService.handGetHint(this.gameAndUser)
                             .subscribe( cardToPlay => this.hintReceived(cardToPlay),
                                         err => this.handleHandError(err, "Unable to retrieve hint"));
+        }
     }
 
     hintReceived(cardToPlay: Card): void {
