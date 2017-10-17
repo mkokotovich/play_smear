@@ -52,7 +52,7 @@
             </button>
         </div>
         <button type="button" class="btn btn-default" style="margin-left: 10px;"
-                              [disabled]="!handService.allowTrumpSelection || selected_trump == undefined"
+                              [disabled]="!handService.allowTrumpSelection || handService.bidTrump == undefined"
                               (click)="submit_trump()">
             Submit trump
         </button>

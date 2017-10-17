@@ -41,7 +41,7 @@ export class HandService {
     public allBids = new Array<Bid>();
     public currentHighBid = 0;
     public bid: number = 0;
-    public bidTrump : string = "";
+    public bidTrump : string = undefined;
     private bidder: string;
     private dealer: string;
     private waitingFor: string;
@@ -89,7 +89,7 @@ export class HandService {
 
     resetHand(): void {
         this.bid = 0;
-        this.bidTrump = "";
+        this.bidTrump = undefined;
         this.allowSelection = false;
         this.showBidInput = false;
         this.showTrumpInput = false;
@@ -768,7 +768,7 @@ export class HandService {
     }
 
     autoPilotSubmitSavedTrump(): void {
-        if (this.bidTrump != "") {
+        if (this.bidTrump != undefined) {
             this.submitTrump(this.bidTrump);
         }
     }
