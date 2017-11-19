@@ -16,12 +16,14 @@ from datetime import datetime
 import requests
 from pymongo import MongoClient
 
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pydealer")
 from pysmear import smear_engine_api
 from pysmear import smear_exceptions
 from dbqueries.bid_stats import BidStats
 from dbqueries.game_stats import GameStats
+from dbqueries.daily_status import DailyStatus
 
 app = Flask(__name__)
 app.secret_key = "top secret key"
@@ -1080,6 +1082,24 @@ def send_feedback_email(user_email, subject, body):
     return True
 
 
+def send_status_message(num_games, status):
+    auth_key = load_mailgun_key()
+    if not auth_key:
+        return False
+    r = requests.post(
+        "https://api.mailgun.net/v3/mg.playsmear.com/messages",
+        auth=("api", auth_key),
+        data={"from": "Play Smear <admin@playsmear.com>",
+              "to": ["mkokotovich@gmail.com"],
+              "subject": "{} Games - Play Smear Daily Status for {}".format(num_games, datetime.now().strftime("%x")),
+              "text": status,
+              "html": "<html><pre>{}</pre><br><br><br><a href='www.playsmear.com'>Unsubscribe</a></html>".format(status)})
+    if r.status_code != 200:
+        app.logger.error("Failed to send status email: {}".format(r.text))
+        return False
+    return True
+
+
 # Sends an email with feedback from the user
 # Input (json data from post):
 #  email
@@ -1100,6 +1120,26 @@ def submit_feedback():
         return generate_return_string()
     else:
         return generate_error(20, "Unable to submit feedback now, try again later")
+
+
+# Sends an email with daily status
+# Input (json data from post):
+#  None
+# Return (json data):
+#  Nothing, just status
+#
+@app.route("/api/status/", methods=["POST", "GET"])
+def send_daily_status():
+    daily_status = DailyStatus()
+    daily_status.load_stats_since_previous_date(1)
+    stats = daily_status.print_game_stats()
+    num_games = daily_status.get_num_games()
+
+    if send_status_message(num_games, stats):
+        return generate_return_string()
+    else:
+        return generate_error(20, "Unable to send status email now, try again later")
+
 
 
 # Returns a hint for which card a player should play
