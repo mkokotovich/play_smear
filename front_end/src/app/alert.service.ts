@@ -7,15 +7,24 @@ export class AlertService {
 
     constructor() { }
 
-    addAlert(typeStr: string, msgStr: string) {
+    addAlert(typeStr: string, msgStr: string, dismissibleVal:boolean = true) {
         this.alerts.push({
             type: typeStr,
-            msg: msgStr
+            msg: msgStr,
+            dismissible: dismissibleVal
         });
     }
 
-    clearAlerts() {
-        this.alerts.length = 0;
+    clearAlerts(forceAll = false) {
+        if (forceAll) {
+            this.alerts.length = 0;
+        } else {
+            for (var i = this.alerts.length - 1; i >= 0; i--) {
+                if (this.alerts[i].dismissible) { 
+                    this.alerts.splice(i, 1);
+                }
+            }
+        }
     }
 
     getAlerts(): any[] {

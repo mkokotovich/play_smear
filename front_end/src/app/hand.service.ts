@@ -791,13 +791,13 @@ export class HandService {
             if (this.secretCodeState == 7) {
                 this.autoPilot = !this.autoPilot;
                 if (this.autoPilot) {
-                    this.alertService.clearAlerts();
-                    this.alertService.addAlert("warning", "AutoPilot mode is enabled");
+                    this.alertService.clearAlerts(true);
+                    this.alertService.addAlert("warning", "AutoPilot mode is enabled", false);
                     if (this.allowSelection) {
                         this.getHintForAutoPilot();
                     }
                 } else {
-                    this.alertService.clearAlerts();
+                    this.alertService.clearAlerts(true);
                 }
             }
 

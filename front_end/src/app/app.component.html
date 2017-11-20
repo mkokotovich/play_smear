@@ -35,7 +35,7 @@
 
 <!-- Alerts -->
 <div style="position: fixed; top: 0; left: 50%; width: 400px; margin-left: -200px; margin-top: 20px" *ngFor="let alert of alertService.getAlerts()">
-    <alert [type]="alert.type" dismissible="true">{{ alert.msg }}</alert>
+    <alert [type]="alert.type" [dismissible]="alert.dismissible">{{ alert.msg }}</alert>
 </div>
 
 <!-- Reset Game Modal -->
