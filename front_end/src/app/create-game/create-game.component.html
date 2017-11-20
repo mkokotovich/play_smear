@@ -9,17 +9,13 @@
             <td>How many other people will join?</td>
             <td>
                 <div class="input-group">
-                    <span class="input-group-btn">
-                        <button class="btn btn-default btn-sm" [disabled]="minHumanPlayersReached()" (click)="changePlayers(true, false)">
-                            -
-                        </button>
-                    </span>
+                    <button class="btn btn-secondary btn-sm" [disabled]="minHumanPlayersReached()" (click)="changePlayers(true, false)">
+                        -
+                    </button>
                     <input type="text" class="playerEntryBox" [(ngModel)]="numHumanPlayers">
-                    <span class="input-group-btn">
-                        <button class="btn btn-default btn-sm" [disabled]="maxHumanPlayersReached()" (click)="changePlayers(true, true)">
-                            +
-                        </button>
-                    </span>
+                    <button class="btn btn-secondary btn-sm" [disabled]="maxHumanPlayersReached()" (click)="changePlayers(true, true)">
+                        +
+                    </button>
                 </div>
             </td>
         </tr>
@@ -27,17 +23,13 @@
             <td>How many computer players do you want to add?</td>
             <td>
                 <div class="input-group">
-                    <span class="input-group-btn">
-                        <button class="btn btn-default btn-sm" [disabled]="minComputerPlayersReached()" (click)="changePlayers(false, false)">
-                            -
-                        </button>
-                    </span>
+                    <button class="btn btn-secondary btn-sm" [disabled]="minComputerPlayersReached()" (click)="changePlayers(false, false)">
+                        -
+                    </button>
                     <input type="text" class="playerEntryBox" [(ngModel)]="numComputerPlayers">
-                    <span class="input-group-btn">
-                        <button class="btn btn-default btn-sm" [disabled]="maxComputerPlayersReached()" (click)="changePlayers(false, true)">
-                            +
-                        </button>
-                    </span>
+                    <button class="btn btn-secondary btn-sm" [disabled]="maxComputerPlayersReached()" (click)="changePlayers(false, true)">
+                        +
+                    </button>
                 </div>
             </td>
         </tr>
@@ -96,7 +88,7 @@
         </tr>
     </table>
     <br>
-    <button class="btn"
+    <button class="btn btn-primary"
             (click)="createAndJoinGame()"
             [disabled]="!gameCreateInputIsValid()">
         Create new game

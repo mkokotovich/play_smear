@@ -33,7 +33,7 @@
                 5
             </button>
         </div>
-        <button type="button" class="btn btn-default"
+        <button type="button" class="btn btn-primary"
                               [disabled]="!handService.allowBid || handService.bid == undefined"
                               (click)="submit_bid()">
             Submit Bid
@@ -41,7 +41,7 @@
     </div>
     <div *ngIf="handService.showTrumpInput == true">
         <div class="btn-group" role="group">
-            <button type="button" class="btn btn-secondary trump-selection"
+            <button type="button" class="btn btn-light trump-selection"
                                   *ngFor="let my_trump of trumpChoices" 
                                   [class.active]="my_trump === get_trump()"
                                   [disabled]="!handService.allowTrumpSelection"
@@ -51,7 +51,7 @@
                 {{my_trump}}
             </button>
         </div>
-        <button type="button" class="btn btn-default" style="margin-left: 10px;"
+        <button type="button" class="btn btn-primary" style="margin-left: 10px;"
                               [disabled]="!handService.allowTrumpSelection || handService.bidTrump == undefined"
                               (click)="submit_trump()">
             Submit trump

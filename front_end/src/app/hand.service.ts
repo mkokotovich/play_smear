@@ -732,6 +732,7 @@ export class HandService {
 
     autoPilotDeclareSavedBid(): void {
         this.declareBid(this.bid);
+        this.bid = 0;
     }
 
     getHint(): void {
@@ -771,6 +772,7 @@ export class HandService {
         if (this.bidTrump != undefined) {
             this.submitTrump(this.bidTrump);
         }
+        this.bidTrump = undefined;
     }
 
     secretCode(suit: string) : void {
