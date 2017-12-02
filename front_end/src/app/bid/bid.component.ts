@@ -36,6 +36,7 @@ export class BidComponent implements OnInit {
     submit_bid() {
         console.log("bid submitted: " + this.handService.bid);
         this.handService.declareBid(this.handService.bid);
+        this.handService.bid = 0;
     }
 
     save_trump(trump: string) {
@@ -45,6 +46,7 @@ export class BidComponent implements OnInit {
     submit_trump() {
         console.log("trump submitted: " + this.handService.bidTrump);
         this.handService.submitTrump(this.handService.bidTrump);
+        this.handService.trump = undefined;
     }
 
     get_trump(): string {
