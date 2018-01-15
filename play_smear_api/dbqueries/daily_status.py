@@ -1,6 +1,7 @@
 from stat_gatherer import StatGatherer
 from datetime import datetime, timedelta
 from dateutil import tz
+from collections import Counter
 import sys
 
 class DailyStatus():
@@ -57,6 +58,14 @@ class DailyStatus():
     def get_num_games(self):
         return len(self.game_list)
 
+    def print_player_summary(self, first_players):
+        player_summary = "Summary of players:\n"
+        count_list = Counter(first_players).most_common()
+        for name, count in count_list:
+            player_summary += "{} played {} games\n".format(name, count)
+        player_summary += "\n"
+        return player_summary
+
 
     def print_game_stats(self):
         message = ""
@@ -64,19 +73,25 @@ class DailyStatus():
         message += "There have been {} games played since {}:".format(len(self.game_list), self.local_time)
         message += "\n"
         message += "\n"
+        first_players = []
         for game in self.game_list:
-            message += "  Game {}:".format(game["_id"])
-            message += "\n"
-            message += "    Players: {}".format(", ".join(self.find_player_names_from_ids(game["players"])))
-            message += "\n"
-            message += "    Number of hands played: {}".format(len(game["hands"]))
-            message += "\n"
+            game_summaries += "  Game {}:".format(game["_id"])
+            game_summaries += "\n"
+            player_list = self.find_player_names_from_ids(game["players"])
+            first_players += player_list[0]
+            game_summaries += "    Players: {}".format(", ".join(player_list))
+            game_summaries += "\n"
+            game_summaries += "    Number of hands played: {}".format(len(game["hands"]))
+            game_summaries += "\n"
             if game["winners"]:
-                message += "    Final score: {} - {}".format(self.find_winning_score(game), ", ".join(str(x) for x in self.find_losing_scores(game)))
-                message += "\n"
-                message += "    Winners: {}".format(", ".join(self.find_player_names_from_ids(game["winners"])))
-                message += "\n"
-            message += "\n"
+                game_summaries += "    Final score: {} - {}".format(self.find_winning_score(game), ", ".join(str(x) for x in self.find_losing_scores(game)))
+                game_summaries += "\n"
+                game_summaries += "    Winners: {}".format(", ".join(self.find_player_names_from_ids(game["winners"])))
+                game_summaries += "\n"
+            game_summaries += "\n"
+
+        message += self.print_player_summary(first_players)
+        message += game_summaries
         return message
 
 
