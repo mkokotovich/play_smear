@@ -74,11 +74,12 @@ class DailyStatus():
         message += "\n"
         message += "\n"
         first_players = []
+        game_summaries = ""
         for game in self.game_list:
             game_summaries += "  Game {}:".format(game["_id"])
             game_summaries += "\n"
             player_list = self.find_player_names_from_ids(game["players"])
-            first_players += player_list[0]
+            first_players.append(player_list[0])
             game_summaries += "    Players: {}".format(", ".join(player_list))
             game_summaries += "\n"
             game_summaries += "    Number of hands played: {}".format(len(game["hands"]))
@@ -102,7 +103,7 @@ def main():
         try:
             number_of_days = int(sys.argv[1])
         except ValueError:
-            print "Invalide number of days: " + sys.argv[1]
+            print "Invalid number of days: " + sys.argv[1]
     daily_status = DailyStatus()
     daily_status.load_stats_since_previous_date(number_of_days)
     print daily_status.print_game_stats()
