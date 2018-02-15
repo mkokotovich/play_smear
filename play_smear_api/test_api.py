@@ -231,6 +231,7 @@ class PlaySmearGameStartStatusTest(PlaySmearTest):
     def test_game_startstatus_returns_player_names(self):
         self.add_return_value_to_engine_function("all_players_added", True)
         self.add_return_value_to_engine_function("game_is_started", True)
+        self.add_return_value_to_engine_function("get_desired_number_of_players", self.numPlayers)
         params = self.post_data_and_return_data(self.url, self.data)
         self.assertIn("ready", params)
         ready = params["ready"]
