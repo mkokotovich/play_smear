@@ -298,6 +298,9 @@ export class GameService {
     }
 
     areTeamsValid(): boolean {
+        if (this.numTeams == 0) {
+            return true;
+        }
         var maxLength = 0;
         var minLength = 100;
         for (var i = 0; i < this.teamMembers.length; i++) {
