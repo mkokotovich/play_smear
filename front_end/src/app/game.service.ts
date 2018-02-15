@@ -7,11 +7,13 @@ import { AuthInfo } from './model/auth-info';
 import { AuthResults } from './model/auth-results';
 import { Player } from './model/player';
 import { PlayerStats } from './model/player-stats';
+import { PlayerTeam } from './model/player-team';
 import { GameId } from './model/game-id';
 import { GameAndUser } from './model/game-and-user';
 import { GameCreateInput } from './model/game-create-input';
 import { GameJoinResults } from './model/game-join-results';
 import { GameStartStatus } from './model/game-start-status';
+import { SetTeamParams } from './model/set-team-params';
 import { HandService } from './hand.service';
 import { SmearApiService } from './smear-api.service';
 
@@ -314,13 +316,28 @@ export class GameService {
         return (maxLength - minLength == 0)
     }
 
-    startGame() {
+    setTeamsAndStart() {
         if (!this.areTeamsValid()) {
             this.alertService.addAlert('danger', 'Please balance the teams before starting');
             return;
         } else {
             this.alertService.clearAlerts();
         }
+
+        var playerTeamList = new Array<PlayerTeam>();
+        for (var i = 0; i < this.teamMembers.length; i++) {
+            for (var j = 0; j < this.teamMembers[i].length; j++) {
+                var pt = new PlayerTeam(this.teamMembers[i][j], i);
+                playerTeamList.push(pt);
+            }
+        }
+
+        this.smearApiService.gameSetTeams(new SetTeamParams(this.gameId.game_id, playerTeamList))
+            .subscribe(res => this.startGame(),
+                err => this.handleStartError(err, "Unable to set teams, try creating one or joining another game"));
+    }
+
+    startGame() {
         this.smearApiService.gameStart(this.gameId)
             .subscribe(res => console.log(''),
                 err => this.handleStartError(err, "Unable to start game, try creating one or joining another game"));

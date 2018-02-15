@@ -30,7 +30,7 @@
             </div>
             <button type="button" class="btn btn-primary btn-lg"
                                   [disabled]="!gameService.readyToStartGame()"
-                                  (click)="gameService.startGame()">
+                                  (click)="gameService.setTeamsAndStart()">
                 Start Game!
             </button>
         </div>

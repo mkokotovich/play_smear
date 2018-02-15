@@ -26,6 +26,7 @@ import { HandInfo } from './model/hand-info';
 import { HandResults } from './model/hand-results';
 import { PlayerStats } from './model/player-stats';
 import { PlayingInfo } from './model/playing-info';
+import { SetTeamParams } from './model/set-team-params';
 import { TrickResults } from './model/trick-results';
 import { Trump } from './model/trump';
 import { constants } from '../host-specific-constants';
@@ -39,6 +40,7 @@ export class SmearApiService {
     private gameRejoinUrl = this.baseUrl + "game/rejoin/";
     private gameStartStatusUrl = this.baseUrl + "game/startstatus/";
     private gameStartUrl = this.baseUrl + "game/start/";
+    private gameSetTeamsUrl = this.baseUrl + "game/setteams/";
     private handDealUrl = this.baseUrl + "hand/deal/";
     private handGetBidInfoUrl = this.baseUrl + "hand/getbidinfo/";
     private handSubmitBidUrl = this.baseUrl + "hand/submitbid/";
@@ -133,6 +135,17 @@ export class SmearApiService {
         let options = this.generateHTTPOptions();
 
         return this.http.post(this.gameStartUrl, data, options)
+                        .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
+                        .catch(this.handleError);
+    }
+
+    gameSetTeams(data: SetTeamParams): Observable<any> {
+        let options = this.generateHTTPOptions();
+
+        return this.http.post(this.gameSetTeamsUrl, data, options)
                         .map(this.extractData)
                         .retryWhen((error) => {
                             return this.handleErrorRetry(error);
