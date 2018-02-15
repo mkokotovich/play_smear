@@ -365,7 +365,7 @@ def game_start_status():
     data["ready"] = engine.all_players_added() and engine.game_is_started()
     player_names = engine.get_player_names()
 
-    data["num_players"] = len(player_names)
+    data["num_players"] = engine.get_desired_number_of_players()
     data["player_names"] = player_names
 
     if data["ready"]:

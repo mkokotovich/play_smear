@@ -80,6 +80,7 @@ export class CreateGameComponent implements OnInit {
             this.gameService.gameCreateInput.numHumanPlayers = this.numHumanPlayers;
         }
         this.gameService.gameCreateInput.numPlayers = 1 + this.numHumanPlayers + this.numComputerPlayers;
+
         this.gameService.createAndJoinGame();
     }
 }

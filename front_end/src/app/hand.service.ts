@@ -118,14 +118,10 @@ export class HandService {
         this.alertService.clearAlerts();
     }
 
-    setGameInfo(game_id: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number, graphPrefix: string): void {
+    setGameInfo(game_id: string, username: string, numTeams: number, pointsToPlayTo: number, graphPrefix: string): void {
         this.gameAndUser = new GameAndUser(game_id, username);
         this.pointsToPlayTo = pointsToPlayTo;
         this.graphPrefix = graphPrefix;
-        this.teamId = teamId;
-        if (teamId != null && teamId != undefined) {
-            this.teamsEnabled = true;
-        }
         this.numTeams = numTeams;
         this.allowSelection = false;
         this.showBidInput = false;
@@ -134,6 +130,13 @@ export class HandService {
         this.allowTrumpSelection = false;
         this.currentlyBidding = true;
         this.setHandMessage("Waiting for cards...");
+    }
+
+    setTeamId(teamId: number) {
+        this.teamId = teamId;
+        if (teamId != null && teamId != undefined) {
+            this.teamsEnabled = true;
+        }
     }
 
     setPlayers(players: Array<Player>): void {

@@ -2,6 +2,7 @@ import { Cookie } from 'ng2-cookies/ng2-cookies';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { AlertService } from './alert.service';
 import { AuthInfo } from './model/auth-info';
 import { AuthResults } from './model/auth-results';
 import { Player } from './model/player';
@@ -29,9 +30,11 @@ export class GameService {
     public numTeams: number = 0;
     public playersAwaitingTeams: string[] = new Array<string>();
     public teamMembers: string[][] = new Array<Array<string>>();
-    private numPlayers: number;
+    public numPlayers: number;
     private players: Player[];
+    public playersAdded: number = 0;
     public playersSoFar: string[] = new Array<string>();
+    public startStatusIsReady: boolean = false;
     private username: string;
     private gameId: GameId = new GameId("");
     public userEmail: string;
@@ -43,6 +46,7 @@ export class GameService {
 
     constructor(private router: Router,
                 public handService: HandService,
+                public alertService: AlertService,
                 public smearApiService: SmearApiService) { }
 
     resetGame() {
@@ -53,8 +57,10 @@ export class GameService {
         this.teamMembers = new Array<Array<string>>();
         this.playersAwaitingTeams = new Array<string>();
         this.numPlayers = 0;
+        this.playersAdded = 0;
         this.players = new Array<Player>();
         this.playersSoFar = new Array<string>();
+        this.startStatusIsReady = false;
         this.gameAndUser.game_id = "";
         this.gameId.game_id = "";
         this.welcomeMessage = "";
@@ -142,6 +148,13 @@ export class GameService {
     }
 
     createAndJoinGame() {
+        if (this.numTeams != 0 && this.gameCreateInput.numPlayers % this.numTeams != 0) {
+            this.alertService.addAlert('danger', 'Must be able to form even teams, please add or remove some players');
+            return;
+        } else {
+            this.alertService.clearAlerts();
+        }
+
         this.welcomeMessage = "Waiting for game to start...";
         this.errorMessage = "";
         this.disableCreateButton = true;
@@ -198,7 +211,6 @@ export class GameService {
         this.smearApiService.gameJoin(this.gameAndUser)
                             .subscribe( gameJoinResults => this.checkGameStatus(gameJoinResults),
                                         err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
-        this.router.navigate(['/lobby']);
     }
 
     deleteGameCookies() {
@@ -219,10 +231,14 @@ export class GameService {
         if (gameJoinResults) {
             this.setGameInfo(gameJoinResults.game_id,
                              gameJoinResults.username,
-                             gameJoinResults.team_id,
                              gameJoinResults.num_teams,
                              gameJoinResults.points_to_play_to,
                              gameJoinResults.graph_prefix);
+            if (this.numTeams > 0) {
+                this.router.navigate(['/lobby']);
+            } else {
+                this.startGame();
+            }
         }
         this.saveGameInfoInCookie();
         this.smearApiService.getGameStartStatus(this.gameAndUser)
@@ -248,6 +264,7 @@ export class GameService {
             }
             // If not found yet, it must be a new player
             this.playersAwaitingTeams.push(player);
+            this.playersAdded += 1;
         }
     }
 
@@ -256,8 +273,10 @@ export class GameService {
             this.cancellingGame = false;
             return;
         }
+        this.startStatusIsReady = gameStartStatus.ready;
         this.playersSoFar = gameStartStatus.player_names;
         this.updatePlayersWaiting(gameStartStatus.player_names);
+        this.numPlayers = gameStartStatus.num_players;
         if (gameStartStatus.ready == false) {
             // If we aren't ready, check again in two seconds
             setTimeout(function() {
@@ -265,14 +284,43 @@ export class GameService {
             }.bind(this), 2000);
             return;
         }
-        this.setPlayers(gameStartStatus.num_players, gameStartStatus.player_names);
+        this.setPlayers(gameStartStatus.player_names);
+        this.handService.setTeamId(gameStartStatus.team_id);
         this.manageGame();
     }
 
+    readyToStartGame(): boolean {
+        return this.playersAwaitingTeams.length == 0 && this.playersAdded == this.numPlayers
+    }
+
+    waitingForPlayers(): boolean {
+        return this.playersAdded != this.numPlayers
+    }
+
+    areTeamsValid(): boolean {
+        var maxLength = 0;
+        var minLength = 100;
+        for (var i = 0; i < this.teamMembers.length; i++) {
+            if (this.teamMembers[i].length < minLength) {
+                minLength = this.teamMembers[i].length;
+            }
+            if (this.teamMembers[i].length > maxLength) {
+                maxLength = this.teamMembers[i].length;
+            }
+        }
+        return (maxLength - minLength == 0)
+    }
+
     startGame() {
+        if (!this.areTeamsValid()) {
+            this.alertService.addAlert('danger', 'Please balance the teams before starting');
+            return;
+        } else {
+            this.alertService.clearAlerts();
+        }
         this.smearApiService.gameStart(this.gameId)
-                            .subscribe( res => this.checkGameStatus(null),
-                                        err => this.handleStartError(err, "Unable to start game, try creating one or joining another game"));
+            .subscribe(res => console.log(''),
+                err => this.handleStartError(err, "Unable to start game, try creating one or joining another game"));
     }
 
     handleStartError(err: any, message: string) {
@@ -287,9 +335,9 @@ export class GameService {
 
 
     //Also reset all globals
-    setGameInfo(gameId: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number, graphPrefix: string):void {
+    setGameInfo(gameId: string, username: string, numTeams: number, pointsToPlayTo: number, graphPrefix: string):void {
         this.gameId.game_id = gameId;
-        this.handService.setGameInfo(gameId, username, teamId, numTeams, pointsToPlayTo, graphPrefix);
+        this.handService.setGameInfo(gameId, username, numTeams, pointsToPlayTo, graphPrefix);
         this.numTeams = numTeams;
         for (var i = 0; i < this.numTeams; i++) {
             this.teamMembers.push(new Array<string>());
@@ -301,8 +349,7 @@ export class GameService {
         Cookie.set('username', this.gameAndUser.username, 1 /*days from now*/);
     }
 
-    setPlayers(numPlayers: number, playerList: string[]):void {
-        this.numPlayers = numPlayers;
+    setPlayers(playerList: string[]):void {
         this.players = new Array<Player>();
         for (var i = 0; i < this.numPlayers; i++) {
             this.players.push(new Player(playerList[i], 0, new Array<string>(), this.username == playerList[i]));
@@ -325,4 +372,40 @@ export class GameService {
     getNumPlayers(): number {
         return this.numPlayers;
     }
+
+    getTeamColorByIndex(teamId: number): string {
+        let color=""
+        switch (teamId) {
+            case 0:
+                color="Blue";
+                break;
+            case 1:
+                color="Orange";
+                break;
+            case 2:
+                color="Plum";
+                break;
+            case 3:
+                color="Sienna";
+                break;
+            //These shouldn't be used, but just in case someone puts one person per team
+            case 4:
+                color="Khaki";
+                break;
+            case 5:
+                color="Linen";
+                break;
+            case 6:
+                color="Cyan";
+                break;
+            case 7:
+                color="Green";
+                break;
+            default:
+                color=teamId.toString()
+                break;
+        }
+        return color;
+    }
+
 }
