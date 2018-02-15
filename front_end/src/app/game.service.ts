@@ -27,6 +27,8 @@ export class GameService {
     public disableJoinButton = false;
     public pointsToPlayTo: number = 11;
     public numTeams: number = 0;
+    public playersAwaitingTeams: string[] = new Array<string>();
+    public teamMembers: string[][] = new Array<Array<string>>();
     private numPlayers: number;
     private players: Player[];
     public playersSoFar: string[] = new Array<string>();
@@ -48,6 +50,8 @@ export class GameService {
         this.gameIsActive = false;
         this.pointsToPlayTo = 11;
         this.numTeams = 0;
+        this.teamMembers = new Array<Array<string>>();
+        this.playersAwaitingTeams = new Array<string>();
         this.numPlayers = 0;
         this.players = new Array<Player>();
         this.playersSoFar = new Array<string>();
@@ -226,12 +230,34 @@ export class GameService {
                                         err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
     }
 
+    updatePlayersWaiting(playersSoFar: Array<string>) {
+        for (var i = 0; i < playersSoFar.length; i++) {
+            let player = playersSoFar[i];
+            if (this.playersAwaitingTeams.indexOf(player) > -1) {
+                continue;
+            }
+            let found = false;
+            for (var j = 0; j < this.teamMembers.length; j++) {
+                if (this.teamMembers[j].indexOf(player) > -1) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) {
+                continue;
+            }
+            // If not found yet, it must be a new player
+            this.playersAwaitingTeams.push(player);
+        }
+    }
+
     gameIsReady(gameStartStatus: GameStartStatus) {
         if (this.cancellingGame) {
             this.cancellingGame = false;
             return;
         }
         this.playersSoFar = gameStartStatus.player_names;
+        this.updatePlayersWaiting(gameStartStatus.player_names);
         if (gameStartStatus.ready == false) {
             // If we aren't ready, check again in two seconds
             setTimeout(function() {
@@ -264,6 +290,10 @@ export class GameService {
     setGameInfo(gameId: string, username: string, teamId: number, numTeams: number, pointsToPlayTo: number, graphPrefix: string):void {
         this.gameId.game_id = gameId;
         this.handService.setGameInfo(gameId, username, teamId, numTeams, pointsToPlayTo, graphPrefix);
+        this.numTeams = numTeams;
+        for (var i = 0; i < this.numTeams; i++) {
+            this.teamMembers.push(new Array<string>());
+        }
     }
 
     saveGameInfoInCookie() {
