@@ -342,12 +342,73 @@ def get_value_from_params(params, key, abort_if_absent=True):
 # Checks on the status of a game. Returns status 503 if the game is not ready
 # Input (json data from post):
 #  game_id    - String - ID of game to check on
+#  username   - String - username to check for
 # Return (json data):
 #  ready        - String/bool  - If the game is ready to start (all players have joined)
-#  num_players  - int     - if ready == True, this will be the number of players in the game
-#  player_names - list of strings  - if ready == True, this will be a list of all players in the game
+#  num_players  - int     - the number of players in the game
+#  player_names - list of strings  - a list of all players in the game (updated as more join)
+#  team_id      - int    - if ready == True, ID of the team the player is on
 @app.route("/api/game/startstatus/", methods=["POST"])
 def game_start_status():
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    username = get_value_from_params(params, "username")
+
+    # Check input
+    engine = load_engine(game_id)
+    if engine is None:
+        return generate_error(4, "Could not find game {}".format(game_id))
+
+    player_names = []
+    data = {}
+    data["ready"] = engine.all_players_added() and engine.game_is_started()
+    player_names = engine.get_player_names()
+
+    data["num_players"] = len(player_names)
+    data["player_names"] = player_names
+
+    if data["ready"]:
+        team_id = engine.get_team_id_for_player(username)
+        data["team_id"] = team_id
+
+    return generate_return_string(data)
+
+
+# Set the teams
+# Input (json data from post):
+#  game_id    - String - ID of game to check on
+#  player_team_list    - list of player-team objects 
+# Return (json data):
+@app.route("/api/game/setteams/", methods=["POST"])
+def game_set_teams():
+    # Read input
+    params = get_params_or_abort(request)
+    game_id = get_value_from_params(params, "game_id")
+    player_team_list = get_value_from_params(params, "player_team_list")
+
+    # Check input
+    engine = load_engine(game_id)
+    if engine is None:
+        return generate_error(4, "Could not find game {}".format(game_id))
+
+    # Set team for each player
+    for pt in player_team_list:
+        app.logger.debug("Setting player {} to team id {}".format(pt["player"], pt["team_id"]))
+        engine.change_player_team(pt["player"], pt["team_id"])
+
+    # Update persistent engine
+    update_engine(game_id, engine)
+
+    return generate_return_string({})
+
+
+# Starts a game, after everyone has joined and decided teams
+# Input (json data from post):
+#  game_id    - String - ID of game to check on
+# Return (json data):
+@app.route("/api/game/start/", methods=["POST"])
+def game_start():
     # Read input
     params = get_params_or_abort(request)
     game_id = get_value_from_params(params, "game_id")
@@ -357,13 +418,8 @@ def game_start_status():
     if engine is None:
         return generate_error(4, "Could not find game {}".format(game_id))
 
-    # Continue the game play
-    continue_game(engine)
-
-    player_names = []
-    data = {}
-    data["ready"] = engine.all_players_added()
-    player_names = engine.get_player_names()
+    # Start the game
+    engine.start_game()
 
     # Continue the game play
     continue_game(engine)
@@ -371,10 +427,7 @@ def game_start_status():
     # Update persistent engine
     update_engine(game_id, engine)
 
-    data["num_players"] = len(player_names)
-    data["player_names"] = player_names
-
-    return generate_return_string(data)
+    return generate_return_string({})
 
 
 def add_user_to_game(engine, game_id, username):
@@ -386,7 +439,9 @@ def add_user_to_game(engine, game_id, username):
         engine.add_player(username=username, interactive=True, email = current_user.get_id() if current_user.is_authenticated else None)
     except smear_exceptions.SmearUserHasSameName as e:
         return generate_error(20, "Could not add user to game {}, {}".format(game_id, e.strerror))
+    return None
 
+def add_computers_to_game_if_needed(engine, game_id):
     if engine.all_human_players_joined():
         # All humans are in, add the robots and start the game
         num_players = engine.get_desired_number_of_players()
@@ -402,9 +457,6 @@ def add_user_to_game(engine, game_id, username):
                 num_computers_needed -= 1
             except smear_exceptions.SmearUserHasSameName as e:
                 app.logger.debug("Failed adding computer {} to game {}: {}. Trying the next computer name".format(new_player, game_id, e.strerror))
-        engine.start_game()
-
-    return None
 
 
 # join a game
@@ -414,7 +466,6 @@ def add_user_to_game(engine, game_id, username):
 # Return
 #  game_id  - string - ID of game we just joined
 #  username - string - username to use
-#  team_id  - int    - ID of the team the player is on
 #  num_teams - number - number of teams total 
 #  points_to_play_to - int - points the game will go to
 
@@ -433,8 +484,8 @@ def join_game():
     result = add_user_to_game(engine, game_id, username)
     if result is not None:
         return result
+    add_computers_to_game_if_needed(engine, game_id)
 
-    team_id = engine.get_team_id_for_player(username)
     num_teams = engine.get_num_teams()
     points_to_play_to = engine.get_points_to_play_to()
     graph_prefix = engine.get_graph_prefix()
@@ -446,7 +497,6 @@ def join_game():
     data = {}
     data["game_id"] = game_id
     data["username"] = username
-    data["team_id"] = team_id
     data["num_teams"] = num_teams
     data["points_to_play_to"] = points_to_play_to
     data["graph_prefix"] = graph_prefix

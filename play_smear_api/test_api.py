@@ -215,7 +215,7 @@ class PlaySmearGameStartStatusTest(PlaySmearTest):
         PlaySmearTest.setUp(self)
         self.url = "/api/game/startstatus/"
         self.create_default_mock_engine()
-        self.data = { "game_id": self.game_id }
+        self.data = { "game_id": self.game_id, "username": self.username }
 
     def tearDown(self):
         pass
@@ -230,6 +230,7 @@ class PlaySmearGameStartStatusTest(PlaySmearTest):
 
     def test_game_startstatus_returns_player_names(self):
         self.add_return_value_to_engine_function("all_players_added", True)
+        self.add_return_value_to_engine_function("game_is_started", True)
         params = self.post_data_and_return_data(self.url, self.data)
         self.assertIn("ready", params)
         ready = params["ready"]
@@ -633,9 +634,43 @@ class PlaySmearEndToEnd(PlaySmearTest):
             self.assertIn("game_id", params)
             self.assertEqual(params["game_id"], self.game_id)
 
-        # Check if game is ready
+        # Check if game is ready (it shouldn't be)
         self.url = "/api/game/startstatus/"
+        self.data = { "game_id": self.game_id, "username": player }
+        params = self.post_data_and_return_data(self.url, self.data)
+        self.assertIn("ready", params)
+        self.assertFalse(params["ready"])
+
+        # Set the teams to something random
+        if self.num_teams != 0:
+            player_team_list = []
+            team_spots_left = {}
+            initial_team_size = self.numPlayers / self.num_teams
+            for team_id in range(0, self.num_teams):
+                team_spots_left[team_id] = initial_team_size
+            for player in self.players:
+                pt = {}
+                pt["player"] = player
+                team_id = None
+                while team_id == None:
+                    possible_team_id = random.choice(range(0, self.num_teams))
+                    if team_spots_left[possible_team_id] > 0:
+                        team_id = possible_team_id
+                        team_spots_left[team_id] -= 1
+                pt["team_id"] = team_id
+                player_team_list.append(pt)
+            self.url = "/api/game/setteams/"
+            self.data = { "game_id": self.game_id, "player_team_list": player_team_list }
+            params = self.post_data_and_return_data(self.url, self.data)
+
+        # Start game
+        self.url = "/api/game/start/"
         self.data = { "game_id": self.game_id }
+        params = self.post_data_and_return_data(self.url, self.data)
+
+        # Check if game is ready (now it should be)
+        self.url = "/api/game/startstatus/"
+        self.data = { "game_id": self.game_id, "username": player }
         params = self.post_data_and_return_data(self.url, self.data)
         self.assertIn("ready", params)
         self.assertTrue(params["ready"])
@@ -646,7 +681,6 @@ class PlaySmearEndToEnd(PlaySmearTest):
         self.assertIn("num_players", params)
         num_players = params["num_players"]
         self.assertEqual(num_players, self.numPlayers)
-
 
     def play_hand(self):
         # Deal cards
