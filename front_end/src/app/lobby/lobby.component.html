@@ -1,0 +1,25 @@
+<div class="container-fluid fg-color content-blob" style="max-width: 1500px">
+    <br>
+    <div class="container-fluid small-padding">
+        <div class="center">
+            <p> Lobby </p>
+            <p *ngFor="let player of gameService.playersSoFar"> {{player}} has joined</p>
+            <div class="container-fluid">
+                <div class="row"
+                    dnd-sortable-container [sortableData]="gameService.playersSoFar">
+                    <div class="col-2"
+                         *ngFor="let player of gameService.playersSoFar; let i = index">
+                        <div dnd-sortable [sortableIndex]="i" >
+                            <span> {{ player }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-primary btn-lg"
+                                  [disabled]="!gameService.gameStartStatus.ready && False"
+                                  (click)="gameService.startGame()">
+                Start Game!
+            </button>
+        </div>
+    </div>
+</div>

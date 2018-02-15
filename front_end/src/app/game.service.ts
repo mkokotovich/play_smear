@@ -127,6 +127,7 @@ export class GameService {
     }
 
     manageGame() {
+        this.router.navigate(['/play']);
         this.playersSoFar = new Array<string>();
         this.welcomeMessage = "";
         this.errorMessage = "";
@@ -193,6 +194,7 @@ export class GameService {
         this.smearApiService.gameJoin(this.gameAndUser)
                             .subscribe( gameJoinResults => this.checkGameStatus(gameJoinResults),
                                         err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
+        this.router.navigate(['/lobby']);
     }
 
     deleteGameCookies() {
@@ -219,7 +221,7 @@ export class GameService {
                              gameJoinResults.graph_prefix);
         }
         this.saveGameInfoInCookie();
-        this.smearApiService.getGameStartStatus(this.gameId)
+        this.smearApiService.getGameStartStatus(this.gameAndUser)
                             .subscribe( gameStartStatus => this.gameIsReady(gameStartStatus),
                                         err => this.handleStartError(err, "Unable to join game, try creating one or joining another game"));
     }
@@ -238,8 +240,13 @@ export class GameService {
             return;
         }
         this.setPlayers(gameStartStatus.num_players, gameStartStatus.player_names);
-        this.router.navigate(['/play']);
         this.manageGame();
+    }
+
+    startGame() {
+        this.smearApiService.gameStart(this.gameId)
+                            .subscribe( res => this.checkGameStatus(null),
+                                        err => this.handleStartError(err, "Unable to start game, try creating one or joining another game"));
     }
 
     handleStartError(err: any, message: string) {

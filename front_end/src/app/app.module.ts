@@ -23,6 +23,7 @@ import { SmearApiService } from './smear-api.service';
 import { StartGameComponent } from './start-game/start-game.component';
 import { GameStatusComponent } from './game-status/game-status.component';
 import { CreateGameComponent } from './create-game/create-game.component';
+import { LobbyComponent } from './lobby/lobby.component';
 import { JoinGameComponent } from './join-game/join-game.component';
 import { ScoreboardComponent } from './scoreboard/scoreboard.component';
 import { HowToPlayComponent } from './how-to-play/how-to-play.component';
@@ -40,6 +41,7 @@ import { StatsComponent } from './stats/stats.component';
     HandComponent,
     GameStatusComponent,
     CreateGameComponent,
+    LobbyComponent,
     JoinGameComponent,
     ScoreboardComponent,
     HowToPlayComponent,

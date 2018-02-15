@@ -38,6 +38,7 @@ export class SmearApiService {
     private gameJoinUrl = this.baseUrl + "game/join/";
     private gameRejoinUrl = this.baseUrl + "game/rejoin/";
     private gameStartStatusUrl = this.baseUrl + "game/startstatus/";
+    private gameStartUrl = this.baseUrl + "game/start/";
     private handDealUrl = this.baseUrl + "hand/deal/";
     private handGetBidInfoUrl = this.baseUrl + "hand/getbidinfo/";
     private handSubmitBidUrl = this.baseUrl + "hand/submitbid/";
@@ -84,7 +85,7 @@ export class SmearApiService {
                         .catch(this.handleError);
     }
 
-    getGameStartStatus(data: GameId): Observable<GameStartStatus> {
+    getGameStartStatus(data: GameAndUser): Observable<GameStartStatus> {
         let options = this.generateHTTPOptions();
 
         return this.http.post(this.gameStartStatusUrl, data, options)
@@ -121,6 +122,17 @@ export class SmearApiService {
         let options = this.generateHTTPOptions();
 
         return this.http.post(this.gameRejoinUrl, data, options)
+                        .map(this.extractData)
+                        .retryWhen((error) => {
+                            return this.handleErrorRetry(error);
+                        })
+                        .catch(this.handleError);
+    }
+
+    gameStart(data: GameId): Observable<any> {
+        let options = this.generateHTTPOptions();
+
+        return this.http.post(this.gameStartUrl, data, options)
                         .map(this.extractData)
                         .retryWhen((error) => {
                             return this.handleErrorRetry(error);
