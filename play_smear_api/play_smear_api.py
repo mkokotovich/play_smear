@@ -396,6 +396,7 @@ def game_set_teams():
     for pt in player_team_list:
         app.logger.debug("Setting player {} to team id {}".format(pt["player"], pt["team_id"]))
         engine.change_player_team(pt["player"], pt["team_id"])
+    engine.update_player_orders()
 
     # Update persistent engine
     update_engine(game_id, engine)

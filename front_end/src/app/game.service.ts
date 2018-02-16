@@ -28,6 +28,7 @@ export class GameService {
     public errorMessage = "";
     public disableCreateButton = false;
     public disableJoinButton = false;
+    public disableStartButton = false;
     public pointsToPlayTo: number = 11;
     public numTeams: number = 0;
     public playersAwaitingTeams: string[] = new Array<string>();
@@ -45,6 +46,7 @@ export class GameService {
     public disableAuthButton: Boolean = false;
     private cancellingGame: Boolean = false;
     public gameIsActive: Boolean = false;
+    public gameStarted: Boolean = false;
 
     constructor(private router: Router,
                 public handService: HandService,
@@ -54,6 +56,7 @@ export class GameService {
     resetGame() {
         this.cancellingGame = true;
         this.gameIsActive = false;
+        this.gameStarted = false;
         this.pointsToPlayTo = 11;
         this.numTeams = 0;
         this.teamMembers = new Array<Array<string>>();
@@ -69,6 +72,7 @@ export class GameService {
         this.errorMessage = "";
         this.disableCreateButton = false;
         this.disableJoinButton = false;
+        this.disableStartButton = false;
         this.disableAuthButton = false;
         this.handService.resetHand();
     }
@@ -139,12 +143,15 @@ export class GameService {
     }
 
     manageGame() {
+        this.alertService.clearAlerts();
         this.router.navigate(['/play']);
         this.playersSoFar = new Array<string>();
         this.welcomeMessage = "";
         this.errorMessage = "";
+        this.gameStarted = true;
         this.disableCreateButton = false;
         this.disableJoinButton = false;
+        this.disableStartButton = false;
         this.disableAuthButton = false;
         this.handService.startNewHand();
     }
@@ -176,7 +183,7 @@ export class GameService {
         this.gameIsActive = true;
         this.gameAndUser.game_id = gameId.game_id;
         this.welcomeMessage = "Game " + this.gameAndUser.game_id + " created successfully!";
-        if (this.gameCreateInput.numHumanPlayers != 0) {
+        if (this.gameCreateInput.numHumanPlayers > 1) {
             this.welcomeMessage += " Tell the other players to use game id " + this.gameAndUser.game_id + " and join the game!";
         }
         this.joinGame();
@@ -188,7 +195,7 @@ export class GameService {
         if (this.gameAndUser.game_id == undefined || this.gameAndUser.game_id == "") {
             return this.unableToJoin("An existing game could not be found");
         }
-        this.welcomeMessage = "Attempting to rejoin a previous game...";
+        //this.welcomeMessage = "Attempting to rejoin a previous game...";
         this.errorMessage = "";
         this.disableJoinButton = true;
         this.smearApiService.gameRejoin(this.gameAndUser)
@@ -292,7 +299,10 @@ export class GameService {
     }
 
     readyToStartGame(): boolean {
-        return this.playersAwaitingTeams.length == 0 && this.playersAdded == this.numPlayers
+        return (!this.disableStartButton) && 
+            (!this.gameStarted) && 
+            this.playersAwaitingTeams.length == 0 &&
+            this.playersAdded == this.numPlayers
     }
 
     waitingForPlayers(): boolean {
@@ -316,6 +326,20 @@ export class GameService {
         return (maxLength - minLength == 0)
     }
 
+    autoFillTeams() {
+        while (this.playersAwaitingTeams.length > 0) {
+            // Find the team with the fewest members
+            var smallestTeamId = 0;
+            for (var team_id = 0; team_id < this.teamMembers.length; team_id++) {
+                if (this.teamMembers[team_id].length < this.teamMembers[smallestTeamId].length) {
+                    smallestTeamId = team_id;
+                }
+            }
+            // Add a player to that team
+            this.teamMembers[smallestTeamId].push(this.playersAwaitingTeams.shift());
+        }
+    }
+
     setTeamsAndStart() {
         if (!this.areTeamsValid()) {
             this.alertService.addAlert('danger', 'Please balance the teams before starting');
@@ -323,6 +347,9 @@ export class GameService {
         } else {
             this.alertService.clearAlerts();
         }
+
+        this.disableStartButton = true;
+        this.alertService.addAlert('info', 'Starting game...');
 
         var playerTeamList = new Array<PlayerTeam>();
         for (var i = 0; i < this.teamMembers.length; i++) {
@@ -350,7 +377,9 @@ export class GameService {
         this.disableCreateButton = false;
         this.disableJoinButton = false;
         this.disableAuthButton = false;
+        this.disableStartButton = false;
         this.gameIsActive = false;
+        this.gameStarted = false;
     }
 
 
