@@ -51,7 +51,7 @@ import { StatsComponent } from './stats/stats.component';
   ],
   imports: [
     AppRoutingModule,
-    Angulartics2Module.forRoot([ Angulartics2GoogleAnalytics ]),
+    Angulartics2Module.forRoot(),
     BrowserModule,
     FormsModule,
     HttpModule,

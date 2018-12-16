@@ -31,7 +31,9 @@ export class AppComponent {
               angulartics2GoogleAnalytics: Angulartics2GoogleAnalytics,
               public alertService: AlertService,
               public handService: HandService,
-              public gameService: GameService) {}
+              public gameService: GameService) {
+    angulartics2GoogleAnalytics.startTracking();
+  }
 
   resetApp() {
     this.gameService.resetGame();
