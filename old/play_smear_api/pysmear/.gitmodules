@@ -1,0 +1,3 @@
+[submodule "pydealer"]
+	path = pydealer
+	url = https://github.com/mkokotovich/pydealer.git

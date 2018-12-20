@@ -1,21 +1,31 @@
 version: '3'
 services:
-    front_end:
-        build: docker/front_end
-        ports:
-            - "4200:4200"
-        volumes:
-            - .:/play_smear
-    back_end:
-        build: docker/back_end
-        ports:
-            - "5000:5000"
-        volumes:
-            - .:/play_smear
-        environment:
-            - MONGODB_URI=mongodb://mongo/smear
-            - MAILGUN_KEY=${SECRET_MAILGUN_KEY}
-    mongo:
-        image: mongo:latest
-        ports:
-            - "27017:27017"
+  api:
+    build:
+        context: ./
+        dockerfile: docker/api/Dockerfile
+    command: python manage.py runserver 0.0.0.0:8008
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/usr/src/app
+    ports:
+      - "8008:8008"
+    environment:
+      - DATABASE_URL=postgres://postgres@postgres:5432/playsmear
+      - ENVIRON=local
+      - DJANGO_SETTINGS_MODULE=api.settings.local
+#  ui:
+#    build:
+#        context: ./
+#        dockerfile: docker/ui/Dockerfile
+#    command: yarn start
+#    volumes:
+#      - .:/usr/src/app
+#    ports:
+#      - "3000:3000"
+  postgres:
+    image: postgres:9.6.2-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: playsmear

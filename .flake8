@@ -1,0 +1,10 @@
+[flake8]
+max-line-length = 160
+ignore =
+    # H306: imports not in alphabetical order (time, os)
+    H306,
+exclude =
+    .git,
+    __pycache__,
+    migrations,
+    backend/tests/internal/data,

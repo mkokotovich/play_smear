@@ -1,6 +1,0 @@
-[submodule "play_smear_api/pysmear"]
-	path = play_smear_api/pysmear
-	url = https://github.com/mkokotovich/pysmear
-[submodule "play_smear_api/pydealer"]
-	path = play_smear_api/pydealer
-	url = https://github.com/mkokotovich/pydealer

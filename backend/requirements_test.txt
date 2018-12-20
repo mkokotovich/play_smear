@@ -1,0 +1,5 @@
+-r ./requirements.txt
+pytest==3.8.2
+pytest-mock==1.10.0
+pytest-django==3.4.3
+pytest-rerunfailures==4.2
