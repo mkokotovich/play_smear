@@ -31,8 +31,8 @@ class GameViewSet(viewsets.ModelViewSet):
         else:
             return Game.objects.filter(owner=self.request.user).order_by('-created_at')
 
-    # def perform_create(self, serializer):
-        # serializer.save(owner=self.request.user)
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
     def create(self, request):
         response = super().create(request)

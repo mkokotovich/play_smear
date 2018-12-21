@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Link, withRouter } from 'react-router-dom';
 import { Row, Modal, Spin } from 'antd';
 import axios from 'axios';
+import GameList from './GameList';
 import './Home.css';
 
 class Home extends Component {
@@ -53,7 +54,7 @@ class Home extends Component {
         <div align="center">
           { this.state.loading && <Spin size="large" />}
         </div>
-        Welcome to play smear
+        <GameList/>
       </div>
     );
   }

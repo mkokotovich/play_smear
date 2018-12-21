@@ -6,6 +6,7 @@
     "antd": "^3.11.2",
     "axios": "^0.18.0",
     "babel-plugin-import": "^1.11.0",
+    "bad-words": "^3.0.0",
     "jwt-decode": "^2.2.0",
     "query-string": "^6.2.0",
     "react": "^16.7.0",
