@@ -5,7 +5,7 @@ import axios from 'axios';
 import './App.css';
 import SignIn from './SignIn';
 import Home from './Home';
-import GameList from './GameList';
+import GameSelector from './GameSelector';
 import Profile from './Profile';
 import ChangePassword from './ChangePassword';
 import ForgotPassword from './ForgotPassword';
@@ -58,7 +58,7 @@ class App extends Component {
           exact
           path={`/games`}
           render={() => {
-            return <GameList assessmentBySlug={this.state.assessmentBySlug}/>;
+            return <GameSelector signedInUser={this.state.user}/>;
           }}
         />
 

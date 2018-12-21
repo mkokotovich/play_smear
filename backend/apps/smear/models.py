@@ -4,6 +4,7 @@ from django.db import models
 class Game(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     owner = models.ForeignKey('auth.User', related_name='games', on_delete=models.CASCADE)
     name = models.CharField(max_length=256, blank=True, default="")

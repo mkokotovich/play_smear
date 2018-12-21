@@ -41,9 +41,13 @@ class GameList extends Component {
     if (this.props.mode === "mine") {
       query = `${query}${sep}owner=${this.props.signedInUser.id}`;
       sep = "&";
+    } else if (this.props.mode === "public") {
+      query = `${query}${sep}public=true`;
+      sep = "&";
     }
-    if (values.type) {
-      query = `${query}${sep}test_type=${values.type}`;
+
+    if (values.password_required) {
+      query = `${query}${sep}password_required=${values.password_required}`;
       sep = "&";
     }
     if (values.search) {
