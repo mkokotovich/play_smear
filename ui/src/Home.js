@@ -54,7 +54,8 @@ class Home extends Component {
         <div align="center">
           { this.state.loading && <Spin size="large" />}
         </div>
-        <GameList/>
+        <GameList signedInUser={this.props.signedInUser} mode="mine"/>
+        <GameList signedInUser={this.props.signedInUser} mode="public"/>
       </div>
     );
   }

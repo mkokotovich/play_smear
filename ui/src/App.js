@@ -5,6 +5,7 @@ import axios from 'axios';
 import './App.css';
 import SignIn from './SignIn';
 import Home from './Home';
+import GameList from './GameList';
 import Profile from './Profile';
 import ChangePassword from './ChangePassword';
 import ForgotPassword from './ForgotPassword';
@@ -50,6 +51,14 @@ class App extends Component {
           path="/"
           render={() => {
             return <Home signedInUser={this.state.user}/>;
+          }}
+        />
+
+        <Route
+          exact
+          path={`/games`}
+          render={() => {
+            return <GameList assessmentBySlug={this.state.assessmentBySlug}/>;
           }}
         />
 

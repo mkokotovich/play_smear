@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
-import { Modal, Spin, Skeleton, List, Button } from 'antd';
+import { Popover, Icon, Modal, Spin, Skeleton, List, Button } from 'antd';
 import axios from 'axios';
 import queryString from 'query-string';
 import './GameList.css';
@@ -10,11 +10,21 @@ class GameList extends Component {
     initLoading: true,
     loading: false,
     gameList: [],
+    width: window.innerWidth,
   }
 
   componentDidMount() {
     this.loadGames();
+    window.addEventListener('resize', this.handleWindowSizeChange);
   }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.handleWindowSizeChange);
+  }
+
+  handleWindowSizeChange = () => {
+    this.setState({ width: window.innerWidth });
+  };
 
   componentDidUpdate(prevProps) {
     if (this.props.location.search !== prevProps.location.search) {
@@ -28,6 +38,10 @@ class GameList extends Component {
     const values = queryString.parse(this.props.location.search)
     var query = "";
     var sep = "?";
+    if (this.props.mode === "mine") {
+      query = `${query}${sep}owner=${this.props.signedInUser.id}`;
+      sep = "&";
+    }
     if (values.type) {
       query = `${query}${sep}test_type=${values.type}`;
       sep = "&";
@@ -36,17 +50,13 @@ class GameList extends Component {
       query = `${query}${sep}search=${values.search}`;
       sep = "&";
     }
-    if (values.clientid) {
-      query = `${query}${sep}client_number=${values.clientid}`;
-      sep = "&";
-    }
     axios.get(`/api/smear/v1/games/${query}`)
       .then((response) => {
         console.log(response);
         this.setState({
           initLoading: false,
           loading: false,
-          gameList: response.data
+          gameList: response.data.results
         });
       })
       .catch((error) => {
@@ -66,7 +76,7 @@ class GameList extends Component {
       .then((response) => {
         console.log(response);
         const games = [...this.state.gameList];
-        this.setState({ games: games.filter(item => item.id !== gameId) });
+        this.setState({ gameList: games.filter(item => item.id !== gameId) });
       })
       .catch((error) => {
         console.log(error);
@@ -82,7 +92,13 @@ class GameList extends Component {
     this.setState({
       loading: true
     });
-    var game_data = {};
+    var game_data = {
+      name: "my game name!",
+      num_players: 4,
+      num_teams: 4,
+      score_to_play_to: 11,
+      passcode: "hello",
+    };
     axios.post('/api/smear/v1/games/', game_data)
       .then((response) => {
         console.log(response);
@@ -105,25 +121,61 @@ class GameList extends Component {
       });
   }
 
+  handleResume = (gameId) => {
+    console.log("resume " + gameId);
+  }
+
+  handleJoin = (gameId) => {
+    console.log("join " + gameId);
+  }
+
   render() {
     const { initLoading, loading, gameList } = this.state;
+
+    const title = this.props.mode === 'mine' ? "My Games" : "Public Games";
+    const layout = this.state.width > 600 ? "horizontal" : "vertical";
 
     return (
       <>
       <Button onClick={this.handleCreate}>Create New Game</Button>
+      <br/><br/>
+      <h2>{title}</h2>
       <List
         className="GameList"
+        bordered={true}
         loading={initLoading}
-        itemLayout="horizontal"
+        itemLayout={layout}
         dataSource={gameList}
         renderItem={item => (
-          <List.Item key={item.id} actions={!item.loading && [<a>Join</a>, <a>more</a>]}>
+          <List.Item
+            key={item.id}
+            actions = {!item.loading && this.props.mode === 'mine' ?
+              [<Button onClick={() => this.handleResume(item.id)}>Resume</Button>, <Button onClick={() => this.handleDelete(item.id)}>Cancel</Button>] :
+              [<Button onClick={() => this.handleJoin(item.id)}>Join</Button>]}>
             <Skeleton title={false} loading={item.loading} active>
               <List.Item.Meta
-                title={item.name}
-                description="Item Description"
+                description={(<>
+                  <b>{item.name}</b>
+                  <span style={{padding: "15px"}}> </span>
+                  <Popover placement="topLeft" content="The number of players who have joined out of the total number of players this game accepts" title="Players">
+                    {item.num_joined}/{item.num_players} <Icon type="user" />
+                  </Popover>
+                  <span style={{padding: "5px"}}> </span>
+                  <Popover placement="topLeft" content="The number of teams in this game" title="Teams">
+                    {item.num_teams} <Icon type="team" />
+                  </Popover>
+                  <span style={{padding: "5px"}}> </span>
+                  <Popover placement="topLeft" content="The number of points needed to win this game" title="Points">
+                    {item.score_to_play_to} <Icon type="trophy" />
+                  </Popover>
+                  <span style={{padding: "5px"}}> </span>
+                  { item.passcode_required &&
+                  <Popover placement="topLeft" content="A passcode is required to join this game" title="Passcode Required">
+                    <Icon type="lock" />
+                  </Popover>
+                  }
+                </>)}
               />
-              <div>content</div>
             </Skeleton>
           </List.Item>
         )}
