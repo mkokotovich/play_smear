@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Link, withRouter } from 'react-router-dom';
+import { Redirect, withRouter } from 'react-router-dom';
 import { Button, Modal, Spin } from 'antd';
 import axios from 'axios';
 import queryString from 'query-string';
@@ -14,6 +14,8 @@ class GameSelector extends Component {
     loading: false,
     myList: [],
     publicList: [],
+    redirect: false,
+    gameID: 0,
   }
 
   componentDidMount() {
@@ -59,6 +61,7 @@ class GameSelector extends Component {
             myList: response.data.results
           });
         } else {
+          // Separate games that I have joined and games I haven't
           this.setState({
             publicLoading: false,
             loading: this.state.mineLoading,
@@ -77,18 +80,13 @@ class GameSelector extends Component {
       });
   }
 
-  handleDelete = (gameId, mode) => {
+  handleDelete = (gameId) => {
     console.log("delete " + gameId);
     axios.delete(`/api/smear/v1/games/${gameId}/`)
       .then((response) => {
         console.log(response);
-        if (mode === "mine") {
-          const games = [...this.state.myList];
-          this.setState({ myList: games.filter(item => item.id !== gameId) });
-        } else {
-          const games = [...this.state.publicList];
-          this.setState({ publicList: games.filter(item => item.id !== gameId) });
-        }
+        const games = [...this.state.myList];
+        this.setState({ myList: games.filter(item => item.id !== gameId) });
       })
       .catch((error) => {
         console.log(error);
@@ -100,45 +98,20 @@ class GameSelector extends Component {
       });
   }
 
-  handleCreate = () => {
+  handleResume = (gameID) => {
+    console.log("resume " + gameID);
     this.setState({
-      loading: true
+      redirect: true,
+      gameID: gameID,
     });
-    var game_data = {
-      name: "my game name!",
-      num_players: 4,
-      num_teams: 4,
-      score_to_play_to: 11,
-      passcode: "hello",
-    };
-    axios.post('/api/smear/v1/games/', game_data)
-      .then((response) => {
-        console.log(response);
-        const games = [response.data, ...this.state.myList]
-        this.setState({
-          myList: games,
-          loading: false,
-        });
-      })
-      .catch((error) => {
-        console.log(error);
-        this.setState({
-          loading: false,
-        });
-        Modal.error({
-          title: "Unable to create a new game",
-          content: "Unable to create a new game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
-          maskClosable: true,
-        })
-      });
   }
 
-  handleResume = (gameId) => {
-    console.log("resume " + gameId);
-  }
-
-  handleJoin = (gameId) => {
-    console.log("join " + gameId);
+  handleJoin = (gameID) => {
+    console.log("join " + gameID);
+    this.setState({
+      redirect: true,
+      gameID: gameID,
+    });
   }
 
   render() {
@@ -148,13 +121,15 @@ class GameSelector extends Component {
       handleResume: this.handleResume
     };
 
+    if (this.state.redirect) {
+      return <Redirect push to={`/games/${this.state.gameID}`} />
+    }
+
     return (
       <div className="GameSelector">
         <div align="center">
           { this.state.loading && <Spin size="large" />}
         </div>
-        <Button onClick={this.handleCreate}>Create New Game</Button>
-        <br/><br/>
         {this.props.signedInUser && (<GameList signedInUser={this.props.signedInUser} mode="mine" gameList={this.state.myList} initLoading={this.mineLoading} {...commonProps} />)}
         <br/>
         <GameList mode="public" gameList={this.state.publicList} initLoading={this.publicLoading} {...commonProps} />

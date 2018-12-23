@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import { Popover, Icon, Skeleton, List, Button } from 'antd';
-import queryString from 'query-string';
 import './GameList.css';
 
 class GameList extends Component {
@@ -40,7 +39,7 @@ class GameList extends Component {
           <List.Item
             key={item.id}
             actions = {!item.loading && this.props.mode === 'mine' ?
-              [<Button onClick={() => handleResume(item.id)}>Resume</Button>, <Button onClick={() => handleDelete(item.id, this.props.mode)}>Cancel</Button>] :
+              [<Button onClick={() => handleResume(item.id)}>Resume</Button>, <Button onClick={() => handleDelete(item.id)}>Cancel</Button>] :
               [<Button onClick={() => handleJoin(item.id)}>Join</Button>]}>
             <Skeleton title={false} loading={item.loading} active>
               <List.Item.Meta

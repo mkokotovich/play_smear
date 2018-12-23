@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -21,7 +21,7 @@ class GameViewSet(viewsets.ModelViewSet):
         Instantiates and returns the list of permissions that this view requires.
         """
         if self.action == 'create':
-            self.permission_classes = [IsAuthenticated]
+            self.permission_classes = [AllowAny]
         else:
             self.permission_classes = [IsOwnerPermission]
 
@@ -29,14 +29,14 @@ class GameViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.query_params.get("public", "false") == "true":
-            return Game.objects.all().exclude(owner=self.request.user).order_by('-created_at')
+            return Game.objects.all().exclude(owner=self.request.user).exclude(owner=None).order_by('-created_at')
         else:
             return Game.objects.all().order_by('-created_at')
 
     def perform_create(self, serializer):
         passcode = serializer.validated_data.get('passcode', None)
         serializer.save(
-            owner=self.request.user,
+            owner=self.request.user if self.request.user.is_authenticated else None,
             passcode_required=(passcode and passcode != "")
         )
 

@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import { Route, Link } from 'react-router-dom';
-import { Modal, Row, Col } from 'antd';
-import axios from 'axios';
+import { Row, Col } from 'antd';
 import './App.css';
 import SignIn from './SignIn';
 import Home from './Home';
 import GameSelector from './GameSelector';
+import Game from './Game';
 import Profile from './Profile';
 import ChangePassword from './ChangePassword';
 import ForgotPassword from './ForgotPassword';
@@ -59,6 +59,13 @@ class App extends Component {
           path={`/games`}
           render={() => {
             return <GameSelector signedInUser={this.state.user}/>;
+          }}
+        />
+        <Route
+          exact
+          path={`/games/:gameID`}
+          render={() => {
+            return <Game signedInUser={this.state.user}/>;
           }}
         />
 
