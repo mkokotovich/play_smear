@@ -7,5 +7,5 @@ class GameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
         fields = '__all__'
-        read_only_fields = ('owner', 'num_joined', 'passcode_required')
+        read_only_fields = ('owner', 'num_joined', 'passcode_required', 'players')
         write_only_fields = ('passcode',)

@@ -14,6 +14,7 @@ class Game(models.Model):
     score_to_play_to = models.IntegerField()
     passcode_required = models.BooleanField(blank=True, default=False)
     passcode = models.CharField(max_length=256, blank=True, default="")
+    players = models.ManyToManyField('auth.User')
 
     class Meta:
         ordering = ('created_at',)

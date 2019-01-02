@@ -63,6 +63,13 @@ class App extends Component {
         />
         <Route
           exact
+          path={`/manage`}
+          render={() => {
+            return <GameSelector signedInUser={this.state.user} manage={true} />;
+          }}
+        />
+        <Route
+          exact
           path={`/games/:gameID`}
           render={() => {
             return <Game signedInUser={this.state.user}/>;

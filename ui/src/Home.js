@@ -1,14 +1,17 @@
 import React, { Component } from 'react';
-import { Link, withRouter } from 'react-router-dom';
-import { Button,Card, Row, Col, Modal, Spin } from 'antd';
+import { Link, withRouter, Redirect } from 'react-router-dom';
+import { Button, Card, Row, Col, Modal, Spin } from 'antd';
 import axios from 'axios';
 import CreateGame from './CreateGame';
+import ActionButton from './ActionButton';
 import './Home.css';
 
 class Home extends Component {
 
   state = {
     loading: false,
+    redirectToGames: false,
+    redirectToManage: false,
   }
 
   componentDidMount() {
@@ -34,9 +37,15 @@ class Home extends Component {
   }
 
   render() {
+    if (this.state.redirectToGames) {
+      return <Redirect push to="/games" />
+    }
+    if (this.state.redirectToManage) {
+      return <Redirect push to="/manage" />
+    }
+
     const multiplayer = !this.props.signedInUser ? (
       <div className="HomeNoAuth">
-        <h1>Welcome to Play Smear</h1>
         <Link to="/signin">Sign in or create a free account</Link> to play multiplayer games.
         <br/>
         <br/>
@@ -44,29 +53,29 @@ class Home extends Component {
       </div>
     ) : (
       <>
-        <Link to="/games">Find an existing multiplayer game</Link>
-        <p>Or, create a new multiplayer game:</p>
         <CreateGame single={false}/>
-        <Button style={{width:300}} >Join An Existing Multiplayer Game</Button>
-        <Button style={{width:300}} >Manage Multiplayer Games</Button>
+        <ActionButton buttonText="Join A Game" handleClick={() => this.setState({redirectToGames: true})} />
+        <ActionButton buttonText="Manage My Games" handleClick={() => this.setState({redirectToManage: true})} />
       </>
     );
     const multiplayerTitle = "Play against other people";
 
     const singleplayer = (
       <>
-        <p>Create a single player game:</p>
         <CreateGame single={true}/>
-        <Button style={{width:300}} >Manage Single Player Games</Button>
+        <ActionButton buttonText="Manage My Games" handleClick={() => this.setState({redirectToManage: true})} />
       </>
     );
     const singleplayerTitle = "Play against the computer";
 
     return (
-      <Row type="flex" align="middle" className="Home">
+      <Row type="flex" align="top" className="Home">
         <div align="center">
           { this.state.loading && <Spin size="large" />}
         </div>
+        <Col xs={24}>
+          <h1>Welcome to Play Smear</h1>
+        </Col>
         <Col xs={24} md={12} align="center">
           <Card title={singleplayerTitle} style={{ width: 380 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
             {singleplayer}

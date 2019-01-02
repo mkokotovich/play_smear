@@ -82,14 +82,23 @@ class GameSelector extends Component {
 
   handleDelete = (gameId) => {
     console.log("delete " + gameId);
+    this.setState({
+      loading: true
+    });
     axios.delete(`/api/smear/v1/games/${gameId}/`)
       .then((response) => {
         console.log(response);
         const games = [...this.state.myList];
-        this.setState({ myList: games.filter(item => item.id !== gameId) });
+        this.setState({
+          myList: games.filter(item => item.id !== gameId),
+          loading: false,
+        });
       })
       .catch((error) => {
         console.log(error);
+        this.setState({
+          loading: false,
+        });
         Modal.error({
           title: "Unable to delete game",
           content: "Unable to delete game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
@@ -109,9 +118,27 @@ class GameSelector extends Component {
   handleJoin = (gameID) => {
     console.log("join " + gameID);
     this.setState({
-      redirect: true,
-      gameID: gameID,
+      loading: true
     });
+    axios.post(`/api/smear/v1/games/${gameID}/join/`)
+      .then((response) => {
+        this.setState({
+          redirect: true,
+          gameID: gameID,
+          loading: false,
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        this.setState({
+          loading: false,
+        });
+        Modal.error({
+          title: "Unable to join game",
+          content: "Unable to join game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          maskClosable: true,
+        })
+      });
   }
 
   render() {
@@ -130,9 +157,18 @@ class GameSelector extends Component {
         <div align="center">
           { this.state.loading && <Spin size="large" />}
         </div>
-        {this.props.signedInUser && (<GameList signedInUser={this.props.signedInUser} mode="mine" gameList={this.state.myList} initLoading={this.mineLoading} {...commonProps} />)}
-        <br/>
-        <GameList mode="public" gameList={this.state.publicList} initLoading={this.publicLoading} {...commonProps} />
+        {this.props.manage && (
+          <>
+            <GameList signedInUser={this.props.signedInUser} mode="manage" gameList={this.state.myList} initLoading={this.mineLoading} {...commonProps} />
+            <br/>
+          </>
+        )}
+        {!this.props.manage && (
+          <>
+            <GameList mode="public" gameList={this.state.publicList} initLoading={this.publicLoading} {...commonProps} />
+            <br/>
+          </>
+        )}
       </div>
     );
   }

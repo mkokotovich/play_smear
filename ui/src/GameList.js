@@ -23,7 +23,7 @@ class GameList extends Component {
   render() {
     const { initLoading, gameList, handleDelete, handleJoin, handleResume } = this.props;
 
-    const title = this.props.mode === 'mine' ? "My Games" : "Public Games";
+    const title = this.props.mode === 'public' ? "Join a game started by someone else" : "Manage My Games";
     const layout = this.state.width > 600 ? "horizontal" : "vertical";
 
     return (
@@ -38,7 +38,7 @@ class GameList extends Component {
         renderItem={item => (
           <List.Item
             key={item.id}
-            actions = {!item.loading && this.props.mode === 'mine' ?
+            actions = {!item.loading && this.props.mode === 'manage' ?
               [<Button onClick={() => handleResume(item.id)}>Resume</Button>, <Button onClick={() => handleDelete(item.id)}>Cancel</Button>] :
               [<Button onClick={() => handleJoin(item.id)}>Join</Button>]}>
             <Skeleton title={false} loading={item.loading} active>
