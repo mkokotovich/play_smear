@@ -60,12 +60,6 @@ class Profile extends Component {
       });
   }
 
-  onChangeUsername = (e) => {
-    var newUser = this.state.user;
-    newUser.username = e.target.value;
-    this.setState({ user: newUser });
-  }
-
   onChangeFirstName = (e) => {
     var newUser = this.state.user;
     newUser.first_name = e.target.value;
@@ -78,9 +72,10 @@ class Profile extends Component {
     this.setState({ user: newUser });
   }
 
+  // email is stored in username
   onChangeEmail = (e) => {
     var newUser = this.state.user;
-    newUser.email = e.target.value;
+    newUser.username = e.target.value;
     this.setState({ user: newUser });
   }
 
@@ -117,10 +112,9 @@ class Profile extends Component {
   render() {
     const labelAndInputs = (this.state.user) ? (
       <React.Fragment>
-        <ProfileLabelAndInput label="Username" value={this.state.user.username} onChange={this.onChangeUsername} disabled={true} />
+        <ProfileLabelAndInput label="Email" value={this.state.user.username} onChange={this.onChangeEmail} disabled={true} />
         <ProfileLabelAndInput label="First Name" value={this.state.user.first_name} onChange={this.onChangeFirstName} />
         <ProfileLabelAndInput label="Last Name" value={this.state.user.last_name} onChange={this.onChangeLastName} />
-        <ProfileLabelAndInput label="Email" value={this.state.user.email} onChange={this.onChangeEmail} />
         <Button onClick={this.handleChangePassword}>Change Password</Button>
         <br/><br/>
       </React.Fragment>

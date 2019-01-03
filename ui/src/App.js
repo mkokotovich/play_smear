@@ -3,6 +3,7 @@ import { Route, Link } from 'react-router-dom';
 import { Row, Col } from 'antd';
 import './App.css';
 import SignIn from './SignIn';
+import Login from './Login';
 import Home from './Home';
 import GameSelector from './GameSelector';
 import Game from './Game';
@@ -44,7 +45,13 @@ class App extends Component {
           align="middle"
           >
           <Col className="Logo"><Link to="/">Play Smear</Link></Col>
-          <Col><SignIn handleAuthChange={this.handleAuthChange} /></Col>
+          <Col>
+            <SignIn
+              handleAuthChange={this.handleAuthChange}
+              isSignedIn={this.state.user !== null}
+              signedInUser={this.state.user}
+            />
+          </Col>
         </Row>
         <Route
           exact
@@ -54,6 +61,17 @@ class App extends Component {
           }}
         />
 
+        <Route
+          exact
+          path={`/login`}
+          render={() => {
+            return <Login
+              handleAuthChange={this.handleAuthChange}
+              isSignedIn={this.state.user !== null}
+              signedInUser={this.state.user}
+            />;
+          }}
+        />
         <Route
           exact
           path={`/games`}

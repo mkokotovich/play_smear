@@ -1,8 +1,9 @@
 import React from 'react';
-import { Modal, Button, Dropdown, Menu } from 'antd';
-import { withRouter } from 'react-router-dom';
+import { Row, Col, Modal, Button, Dropdown, Menu } from 'antd';
+import { Link, withRouter } from 'react-router-dom';
 import axios from 'axios';
 import decode from 'jwt-decode';
+import { signIn, signOut } from './auth_utils';
 
 import SignInForm from './SignInForm'
 
@@ -27,7 +28,7 @@ function SignOut(props) {
     <React.Fragment>
       <Dropdown overlay={menu} placement="bottomRight">
         <Button type="default" icon="user">
-          {props.username}
+          {props.email}
         </Button>
       </Dropdown>
     </React.Fragment>
@@ -39,10 +40,6 @@ class SignIn extends React.Component {
     super(props);
     this.handleSignIn = this.handleSignIn.bind(this);
     this.handleSignOut = this.handleSignOut.bind(this);
-    this.state = {
-      isSignedIn: false,
-      username: undefined
-    };
   }
 
   componentDidMount() {
@@ -62,7 +59,6 @@ class SignIn extends React.Component {
     if (user) {
       const user_obj = JSON.parse(user)
       this.props.handleAuthChange(user_obj);
-      this.setState({username: user_obj.username});
     }
   }
 
@@ -71,43 +67,11 @@ class SignIn extends React.Component {
     axios.defaults.headers.common['Authorization'] = "Bearer " + token;
     axios.defaults.xsrfCookieName = "csrftoken";
     axios.defaults.xsrfHeaderName = "X-CSRFToken";
-    this.setState({isSignedIn: true});
   }
 
-  handleSignIn(username, password) {
-    console.log("Trying to sign in " + username);
-    axios.post('/api/auth/', {
-      username: username,
-      password: password
-    })
-    .then((response) => {
-      const token = response.data.token;
-      const user = response.data.user;
-      console.log(response.headers);
-      if (token) {
-	console.log("Signed in " + username);
-	this.setState({username: username});
-	this.signInWithToken(token);
-	if (user) {
-	  localStorage.setItem('user', JSON.stringify(user));
-	  this.props.handleAuthChange(user);
-	}
-      } else {
-	console.log("Failed to sign in " + username);
-	Modal.error({
-	  title: "Unable to sign in",
-	  content: "Please check username and password and try again",
-	  maskClosable: true,
-	})
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-      Modal.error({
-	title: "Unable to sign in",
-	content: "Please check username and password and try again",
-	maskClosable: true,
-      })
+  handleSignIn(email, password) {
+    signIn(email, password, this.props.handleAuthChange, ()=>{
+      console.log("Signed in " + email);
     });
   }
 
@@ -116,22 +80,27 @@ class SignIn extends React.Component {
   }
 
   handleSignOut = () => {
-    localStorage.removeItem("id_token");
-    localStorage.removeItem("user");
-    this.setState({username: undefined});
-    this.props.handleAuthChange(null);
-    delete axios.defaults.headers.common["Authorization"];
-
-    console.log("Signed out");
-    this.setState({isSignedIn: false});
-    this.props.history.push('/');
+    signOut(this.props.handleAuthChange, ()=>{
+      console.log("Signed out");
+      this.props.history.push('/');
+    });
   }
 
   render() {
-    const signInOrOut = this.state.isSignedIn ? (
-      <SignOut handleSignOut={this.handleSignOut} handleProfile={this.handleProfile} username={this.state.username} />
+    const signInOrOut = this.props.isSignedIn ? (
+      <SignOut handleSignOut={this.handleSignOut} handleProfile={this.handleProfile} email={this.props.signedInUser.username} />
     ) : (
-      <SignInForm handleSignIn={this.handleSignIn} />
+      <>
+        <SignInForm handleSignIn={this.handleSignIn} />
+        <Row type="flex" justify="space-between">
+          <Col>
+            <Link to="/login">Sign up for a free account! </Link>
+          </Col>
+          <Col>
+            <Link to="/forgot">Forgot your password? </Link>
+          </Col>
+        </Row>
+      </>
     );
 
     return (

@@ -46,10 +46,7 @@ class Home extends Component {
 
     const multiplayer = !this.props.signedInUser ? (
       <div className="HomeNoAuth">
-        <Link to="/signin">Sign in or create a free account</Link> to play multiplayer games.
-        <br/>
-        <br/>
-        <Link to="/forgot">Forgot your password?</Link>
+        <Link to="/login">Sign in or create a free account</Link> to play multiplayer games.
       </div>
     ) : (
       <>
@@ -63,7 +60,7 @@ class Home extends Component {
     const singleplayer = (
       <>
         <CreateGame single={true}/>
-        <ActionButton buttonText="Manage My Games" handleClick={() => this.setState({redirectToManage: true})} />
+        <ActionButton disabled={this.props.signedInUser === null} buttonText="Manage My Games" handleClick={() => this.setState({redirectToManage: true})} />
       </>
     );
     const singleplayerTitle = "Play against the computer";

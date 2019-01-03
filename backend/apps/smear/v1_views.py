@@ -46,7 +46,8 @@ class GameViewSet(viewsets.ModelViewSet):
             owner=self.request.user if self.request.user.is_authenticated else None,
             passcode_required=(passcode and passcode != "")
         )
-        instance.players.add(self.request.user)
+        if self.request.user.is_authenticated:
+            instance.players.add(self.request.user)
         LOG.info(f"Created game {instance} and added {self.request.user} as player and creator")
         instance.save()
 
