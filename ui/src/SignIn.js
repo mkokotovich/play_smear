@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Modal, Button, Dropdown, Menu } from 'antd';
+import { Row, Col, Button, Dropdown, Menu } from 'antd';
 import { Link, withRouter } from 'react-router-dom';
 import axios from 'axios';
 import decode from 'jwt-decode';

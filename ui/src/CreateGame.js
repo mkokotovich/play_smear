@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
-import { Redirect, Link, withRouter } from 'react-router-dom';
+import { Redirect, withRouter } from 'react-router-dom';
 import { Button, Modal, Spin } from 'antd';
 import axios from 'axios';
-import queryString from 'query-string';
 import './CreateGame.css';
 
 class CreateGame extends Component {

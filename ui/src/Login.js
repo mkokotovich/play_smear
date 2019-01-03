@@ -1,16 +1,10 @@
 import React, { Component } from 'react';
 import { Link, withRouter, Redirect } from 'react-router-dom';
 import {
-  Spin, Form, Input, Tooltip, Icon, Cascader, Select, Row, Col, Checkbox, Button, AutoComplete,
+  Spin, Form, Input, Icon, Row, Col, Button,
 } from 'antd';
-import axios from 'axios';
-import CreateGame from './CreateGame';
-import ActionButton from './ActionButton';
 import { signIn, signUp } from './auth_utils';
 import './Login.css';
-
-const { Option } = Select;
-const AutoCompleteOption = AutoComplete.Option;
 
 
 class RegistrationForm extends React.Component {
@@ -57,15 +51,6 @@ class RegistrationForm extends React.Component {
     }
 
     const { getFieldDecorator } = this.props.form;
-
-    const prefixSelector = getFieldDecorator('prefix', {
-      initialValue: '86',
-    })(
-      <Select style={{ width: 70 }}>
-        <Option value="86">+86</Option>
-        <Option value="87">+87</Option>
-      </Select>
-    );
 
     return (
       <Form onSubmit={this.handleSubmit} className="login-form">

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link, withRouter, Redirect } from 'react-router-dom';
-import { Button, Card, Row, Col, Modal, Spin } from 'antd';
+import { Card, Row, Col, Modal, Spin } from 'antd';
 import axios from 'axios';
 import CreateGame from './CreateGame';
 import ActionButton from './ActionButton';

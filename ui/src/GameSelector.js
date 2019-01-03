@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Redirect, withRouter } from 'react-router-dom';
-import { Button, Modal, Spin } from 'antd';
+import { Modal, Spin } from 'antd';
 import axios from 'axios';
 import queryString from 'query-string';
 import GameList from './GameList';
