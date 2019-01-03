@@ -63,14 +63,14 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
         try:
-            user = User.objects.get(email=serializer.data['email'])
+            user = User.objects.get(username=serializer.data['email'])
         except User.DoesNotExist:
             return Response({"email", "Could not find user with specified email"},
                             status=status.HTTP_400_BAD_REQUEST)
 
         reset_token = default_token_generator.make_token(user)
 
-        success = send_password_reset_email(user.email, reset_token)
+        success = send_password_reset_email(user.username, reset_token)
 
         if not success:
             return Response({"error", "Unable to send password reset email"},
@@ -85,7 +85,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
         try:
-            user = User.objects.get(email=serializer.data['email'])
+            user = User.objects.get(username=serializer.data['email'])
         except User.DoesNotExist:
             return Response({"email", "Could not find user with specified email"},
                             status=status.HTTP_400_BAD_REQUEST)
