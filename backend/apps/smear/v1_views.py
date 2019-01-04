@@ -44,7 +44,7 @@ class GameViewSet(viewsets.ModelViewSet):
         passcode = serializer.validated_data.get('passcode', None)
         instance = serializer.save(
             owner=self.request.user if self.request.user.is_authenticated else None,
-            passcode_required=(passcode and passcode != "")
+            passcode_required=bool(passcode)
         )
         if self.request.user.is_authenticated:
             instance.players.add(self.request.user)

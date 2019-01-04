@@ -1,3 +1,13 @@
 .CreateGame {
   padding: 10px 5px 10px 5px;
 }
+
+.create_input {
+  width: 300px;
+}
+
+.create_div {
+  width: 300px;
+  padding-bottom: 5px;
+  align: left;
+}
