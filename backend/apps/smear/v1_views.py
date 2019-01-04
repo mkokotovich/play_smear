@@ -1,15 +1,16 @@
 import logging
 
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import filters
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.smear.models import Game
 from apps.smear.pagination import SmearPagination
-from apps.smear.serializers import GameSerializer
+from apps.smear.serializers import GameSerializer, GameJoinSerializer
 from apps.smear.permissions import IsOwnerPermission
 
 
@@ -51,11 +52,25 @@ class GameViewSet(viewsets.ModelViewSet):
         LOG.info(f"Created game {instance} and added {self.request.user} as player and creator")
         instance.save()
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['post'],
+        permission_classes=[IsAuthenticated],
+    )
     def join(self, request, pk=None):
         game = Game.objects.get(id=pk)
+        serializer = GameJoinSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         if game.num_joined >= game.num_players:
             raise ValidationError(f"Unable to join game, already contains {game.num_players} players")
+        if game.passcode_required and game.passcode != serializer.data.get('passcode', None):
+            raise ValidationError(f"Unable to join game, passcode is required and was incorrect")
+
         game.players.add(self.request.user)
         LOG.info(f"Added {self.request.user} to game {game}")
         game.save()

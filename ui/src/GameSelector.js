@@ -115,12 +115,12 @@ class GameSelector extends Component {
     });
   }
 
-  handleJoin = (gameID) => {
+  handleJoin = (gameID, passcode) => {
     console.log("join " + gameID);
     this.setState({
       loading: true
     });
-    axios.post(`/api/smear/v1/games/${gameID}/join/`)
+    axios.post(`/api/smear/v1/games/${gameID}/join/`, {passcode: passcode})
       .then((response) => {
         this.setState({
           redirect: true,

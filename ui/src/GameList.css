@@ -1,3 +1,16 @@
 .GameList {
   background-color: #f0f5f0;
+  padding: 5px 15px 5px 15px;
+  border-bottom-style: groove;
+  border-width: 1px;
+}
+.GameName {
+  color: rgba(0, 0, 0, 0.55);
+}
+.GameIcons {
+  color: rgba(0, 0, 0, 0.55);
+}
+.passcodeInput {
+  width: 200px;
+  margin-right: 5px;
 }
