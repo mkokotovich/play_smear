@@ -66,6 +66,24 @@ class RegistrationForm extends React.Component {
           )}
         </Form.Item>
         <Form.Item>
+          {getFieldDecorator('firstName', {
+            rules: [{
+              required: true, message: 'Please input your first name',
+            }],
+          })(
+            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="First Name" />
+          )}
+        </Form.Item>
+        <Form.Item>
+          {getFieldDecorator('lastName', {
+            rules: [{
+              required: true, message: 'Please input your last name',
+            }],
+          })(
+            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Last Name" />
+          )}
+        </Form.Item>
+        <Form.Item>
           {getFieldDecorator('signUpPassword', {
             rules: [{
               required: true, message: 'Please input your password!',

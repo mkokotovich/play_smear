@@ -24,7 +24,7 @@ class GameList extends Component {
           </Col>
           <Col className="GameIcons" xs={12} md={6}>
             <Popover placement="topLeft" content="The number of players who have joined out of the total number of players this game accepts" title="Players">
-              {game.num_joined}/{game.num_players} <Icon type="user" />
+              {game.players.length}/{game.num_players} <Icon type="user" />
             </Popover>
             <span style={{padding: "5px"}}> </span>
             <Popover placement="topLeft" content="The number of teams in this game" title="Teams">

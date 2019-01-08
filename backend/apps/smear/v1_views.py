@@ -8,10 +8,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
-from apps.smear.models import Game
+from apps.smear.models import Game, Hand
 from apps.smear.pagination import SmearPagination
 from apps.smear.serializers import GameSerializer, GameJoinSerializer
-from apps.smear.permissions import IsOwnerPermission
+from apps.smear.permissions import IsOwnerPermission, IsPlayerInGame
 
 
 LOG = logging.getLogger(__name__)
@@ -30,8 +30,10 @@ class GameViewSet(viewsets.ModelViewSet):
         """
         if self.action == 'create':
             self.permission_classes = [AllowAny]
-        else:
+        elif self.action == 'destroy':
             self.permission_classes = [IsOwnerPermission]
+        else:
+            self.permission_classes = [IsPlayerInGame]
 
         return super().get_permissions()
 
@@ -66,7 +68,7 @@ class GameViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if game.num_joined >= game.num_players:
+        if game.players.count() >= game.num_players:
             raise ValidationError(f"Unable to join game, already contains {game.num_players} players")
         if game.passcode_required and game.passcode != serializer.data.get('passcode', None):
             raise ValidationError(f"Unable to join game, passcode is required and was incorrect")
@@ -74,4 +76,27 @@ class GameViewSet(viewsets.ModelViewSet):
         game.players.add(self.request.user)
         LOG.info(f"Added {self.request.user} to game {game}")
         game.save()
+        return Response({'status': 'success'})
+
+
+    @action(
+        detail=True,
+        methods=['post'],
+        permission_classes=[IsOwnerPermission],
+    )
+    def start(self, request, pk=None):
+        game = Game.objects.get(id=pk)
+        # serializer = GameJoinSerializer(data=request.data)
+        # if not serializer.is_valid():
+        #     return Response(
+        #         serializer.errors,
+        #         status=status.HTTP_400_BAD_REQUEST
+        #     )
+
+        if game.players.count() != game.num_players:
+            raise ValidationError(f"Unable to start game, game requires {game.num_players} players, but {game.players.count()} have joined")
+
+        hand = Hand(game=game)
+        hand.save()
+        LOG.info(f"Started hand {hand} on game {game}")
         return Response({'status': 'success'})

@@ -8,7 +8,6 @@ class Game(models.Model):
 
     owner = models.ForeignKey('auth.User', related_name='games', on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=256, blank=True, default="")
-    num_joined = models.IntegerField(blank=True, default=0)
     num_players = models.IntegerField()
     num_teams = models.IntegerField()
     score_to_play_to = models.IntegerField()
@@ -18,3 +17,11 @@ class Game(models.Model):
 
     class Meta:
         ordering = ('created_at',)
+
+
+class Hand(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    game = models.ForeignKey(Game, related_name='hands', on_delete=models.CASCADE, null=True)
