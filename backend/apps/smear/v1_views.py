@@ -52,6 +52,12 @@ class GameViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated:
             instance.players.add(self.request.user)
         LOG.info(f"Created game {instance} and added {self.request.user} as player and creator")
+
+        if instance.single_player:
+            while instance.players.count() < instance.num_players:
+                instance.add_computer_player()
+            instance.start()
+
         instance.save()
 
     @action(
@@ -86,17 +92,5 @@ class GameViewSet(viewsets.ModelViewSet):
     )
     def start(self, request, pk=None):
         game = Game.objects.get(id=pk)
-        # serializer = GameJoinSerializer(data=request.data)
-        # if not serializer.is_valid():
-        #     return Response(
-        #         serializer.errors,
-        #         status=status.HTTP_400_BAD_REQUEST
-        #     )
-
-        if game.players.count() != game.num_players:
-            raise ValidationError(f"Unable to start game, game requires {game.num_players} players, but {game.players.count()} have joined")
-
-        hand = Hand(game=game)
-        hand.save()
-        LOG.info(f"Started hand {hand} on game {game}")
+        game.start()
         return Response({'status': 'success'})

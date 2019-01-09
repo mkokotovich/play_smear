@@ -1,4 +1,11 @@
+from random import shuffle
+import logging
+
 from django.db import models
+from django.contrib.auth.models import User
+
+
+LOG = logging.getLogger(__name__)
 
 
 class Game(models.Model):
@@ -26,6 +33,22 @@ class Game(models.Model):
                 'metadata': {},
             }
         return self.hands.last().get_status()
+
+    def start(self):
+        if self.players.count() != self.num_players:
+            raise ValidationError(f"Unable to start game, game requires {self.num_players} players, but {self.players.count()} have joined")
+
+        hand = Hand.objects.create(game=self)
+        LOG.info(f"Started hand {hand} on game {self}")
+
+    def add_computer_player(self):
+        computers = list(User.objects.filter(username__startswith="mkokotovich+computer").all())
+        shuffle(computers)
+        for player in computers:
+            if not self.players.filter(id=player.id).exists():
+                self.players.add(player)
+                LOG.info(f"Added computer {player} to {self}")
+                return
 
 
 class Hand(models.Model):
