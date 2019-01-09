@@ -41,7 +41,10 @@ class Home extends Component {
       return <Redirect push to="/games" />
     }
     if (this.state.redirectToManage) {
-      return <Redirect push to="/manage" />
+      return <Redirect push to={{
+        pathname: "/manage",
+        state: { single: this.state.single },
+      }} />
     }
 
     const multiplayer = !this.props.signedInUser ? (
@@ -52,7 +55,10 @@ class Home extends Component {
       <>
         <CreateGame single={false}/>
         <ActionButton buttonText="Join A Game" handleClick={() => this.setState({redirectToGames: true})} />
-        <ActionButton buttonText="Manage My Games" handleClick={() => this.setState({redirectToManage: true})} />
+        <ActionButton buttonText="Manage My Games" handleClick={() => this.setState({
+          redirectToManage: true,
+          single: false,
+        })} />
       </>
     );
     const multiplayerTitle = "Play against other people";
@@ -60,7 +66,10 @@ class Home extends Component {
     const singleplayer = (
       <>
         <CreateGame single={true}/>
-        <ActionButton disabled={this.props.signedInUser === null} buttonText="Manage My Games" handleClick={() => this.setState({redirectToManage: true})} />
+        <ActionButton disabled={this.props.signedInUser === null} buttonText="Manage My Games" handleClick={() => this.setState({
+          redirectToManage: true,
+          single: true,
+        })} />
       </>
     );
     const singleplayerTitle = "Play against the computer";

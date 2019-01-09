@@ -1,8 +1,11 @@
 import React, { Component } from 'react';
 import { Redirect, withRouter } from 'react-router-dom';
-import { Row, Checkbox, Input, Button, Modal, Spin } from 'antd';
+import { Radio, Row, Checkbox, Input, Button, Modal, Spin } from 'antd';
 import axios from 'axios';
 import './CreateGame.css';
+
+const RadioButton = Radio.Button;
+const RadioGroup = Radio.Group;
 
 class CreateGame extends Component {
 
@@ -32,6 +35,7 @@ class CreateGame extends Component {
       num_players: this.state.numPlayers,
       num_teams: this.state.numTeams ? this.state.numTeams : 0,
       score_to_play_to: this.state.scoreToPlayTo,
+      single_player: this.props.single,
     };
     axios.post('/api/smear/v1/games/', game_data)
       .then((response) => {
@@ -63,6 +67,18 @@ class CreateGame extends Component {
     this.setState({[e.target.name]: e.target.checked});
   }
 
+  onCancel = () => {
+    this.setState({
+      visible: false,
+      gameName: "",
+      passcode: "",
+      requirePasscode: false,
+      numPlayers: null,
+      numTeams: null,
+      scoreToPlayTo: null,
+    });
+  }
+
 
   readyToStart = () => {
     return (
@@ -89,7 +105,7 @@ class CreateGame extends Component {
           onOk={this.handleCreate}
           okText="Create Game"
           okButtonProps={{ disabled: !this.readyToStart()}}
-          onCancel={() => this.setState({visible: false})}
+          onCancel={this.onCancel}
         >
           <Row className="create_div">
             <Input
@@ -102,35 +118,35 @@ class CreateGame extends Component {
             />
           </Row>
           <Row className="create_div">
-            <Input
-              className="create_input"
-              placeholder="Number of players"
-              name="numPlayers"
-              value={this.state.numPlayers}
-              onChange={this.onChangeInput}
-              onPressEnter={() => this.handleCreate()}
-            />
+            <p className="inputLabel">Number of players:</p>
+            <RadioGroup name="numPlayers" onChange={this.onChangeInput}>
+              <RadioButton value="2">2</RadioButton>
+              <RadioButton value="3">3</RadioButton>
+              <RadioButton value="4">4</RadioButton>
+              <RadioButton value="5">5</RadioButton>
+              <RadioButton value="6">6</RadioButton>
+              <RadioButton value="7">7</RadioButton>
+              <RadioButton value="8">8</RadioButton>
+            </RadioGroup>
           </Row>
           <Row className="create_div">
-            <Input
-              className="create_input"
-              placeholder="Number of teams"
-              name="numTeams"
-              value={this.state.numTeams}
-              onChange={this.onChangeInput}
-              onPressEnter={() => this.handleCreate()}
-            />
+            <p className="inputLabel">Number of teams:</p>
+            <RadioGroup name="numTeams" onChange={this.onChangeInput}>
+              <RadioButton value="0">No teams</RadioButton>
+              <RadioButton value="2">2</RadioButton>
+              <RadioButton value="3">3</RadioButton>
+              <RadioButton value="4">4</RadioButton>
+            </RadioGroup>
           </Row>
           <Row className="create_div">
-            <Input
-              className="create_input"
-              placeholder="Score to play to"
-              name="scoreToPlayTo"
-              value={this.state.scoreToPlayTo}
-              onChange={this.onChangeInput}
-              onPressEnter={() => this.handleCreate()}
-            />
+            <p className="inputLabel">Score to play to:</p>
+            <RadioGroup name="scoreToPlayTo" onChange={this.onChangeInput}>
+              <RadioButton value="11">11</RadioButton>
+              <RadioButton value="15">15</RadioButton>
+              <RadioButton value="21">21</RadioButton>
+            </RadioGroup>
           </Row>
+          { !this.props.single &&
           <Row type="flex" className="create_div">
             <Checkbox
               value={this.state.requirePasscode}
@@ -149,6 +165,7 @@ class CreateGame extends Component {
               onPressEnter={() => this.handleCreate()}
             />
           </Row>
+          }
         </Modal>
         <Row>
           <Button style={{width:300}} onClick={() => this.setState({visible: true})}>Create New Game</Button>

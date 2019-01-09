@@ -21,7 +21,7 @@ class GameViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter, DjangoFilterBackend,)
     pagination_class = SmearPagination
     search_fields = ('name',)
-    filter_fields = ('owner', 'passcode_required')
+    filter_fields = ('owner', 'passcode_required', 'single_player')
     serializer_class = GameSerializer
 
     def get_permissions(self):
@@ -39,7 +39,7 @@ class GameViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.query_params.get("public", "false") == "true":
-            return Game.objects.all().exclude(owner=self.request.user).exclude(owner=None).order_by('-created_at')
+            return Game.objects.filter(single_player=False).exclude(owner=self.request.user).order_by('-created_at')
         else:
             return Game.objects.all().order_by('-created_at')
 

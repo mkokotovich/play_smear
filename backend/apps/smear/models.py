@@ -13,10 +13,19 @@ class Game(models.Model):
     score_to_play_to = models.IntegerField()
     passcode_required = models.BooleanField(blank=True, default=False)
     passcode = models.CharField(max_length=256, blank=True, default="")
+    single_player = models.BooleanField(blank=False, default=True)
     players = models.ManyToManyField('auth.User')
 
     class Meta:
         ordering = ('created_at',)
+
+    def get_status(self):
+        if self.hands.count() == 0:
+            return {
+                'state': 'waiting_for_start',
+                'metadata': {},
+            }
+        return self.hands.last().get_status()
 
 
 class Hand(models.Model):
@@ -25,3 +34,11 @@ class Hand(models.Model):
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     game = models.ForeignKey(Game, related_name='hands', on_delete=models.CASCADE, null=True)
+
+    def get_status(self):
+        return {
+            'state': 'bidding',
+            'metadata': {
+                'hand': self.id,
+            },
+        }

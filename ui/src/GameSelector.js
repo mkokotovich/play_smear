@@ -37,10 +37,11 @@ class GameSelector extends Component {
 
   loadGames = (mode) => {
     this.setState({loading: true});
-    const values = queryString.parse(this.props.location.search)
+    const values = queryString.parse(this.props.location.search);
+    const single = this.props.location.state ? this.props.location.state.single : false;
     var query = "";
     if (mode === "mine") {
-      query = `?owner=${this.props.signedInUser.id}`;
+      query = `?owner=${this.props.signedInUser.id}&single_player=${single}`;
     } else {
       query = "?public=true";
 
