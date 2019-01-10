@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
-from apps.smear.models import Game, Hand
+from apps.smear.models import Game, Hand, Player
 from apps.smear.pagination import SmearPagination
 from apps.smear.serializers import GameSerializer, GameJoinSerializer
 from apps.smear.permissions import IsOwnerPermission, IsPlayerInGame
@@ -50,7 +50,11 @@ class GameViewSet(viewsets.ModelViewSet):
             passcode_required=bool(passcode)
         )
         if self.request.user.is_authenticated:
-            instance.players.add(self.request.user)
+            Player.objects.create(
+                game=instance,
+                user=self.request.user,
+                is_computer=False
+            )
         LOG.info(f"Created game {instance} and added {self.request.user} as player and creator")
 
         if instance.single_player:

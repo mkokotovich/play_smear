@@ -21,7 +21,7 @@ class Game(models.Model):
     passcode_required = models.BooleanField(blank=True, default=False)
     passcode = models.CharField(max_length=256, blank=True, default="")
     single_player = models.BooleanField(blank=False, default=True)
-    players = models.ManyToManyField('auth.User')
+    players = models.ManyToManyField('auth.User', through='Player')
 
     class Meta:
         ordering = ('created_at',)
@@ -46,9 +46,37 @@ class Game(models.Model):
         shuffle(computers)
         for player in computers:
             if not self.players.filter(id=player.id).exists():
-                self.players.add(player)
+                Player.objects.create(
+                    game=self,
+                    user=player,
+                    is_computer=True
+                )
                 LOG.info(f"Added computer {player} to {self}")
                 return
+
+
+class Player(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+
+    is_computer = models.BooleanField(blank=True, default=False)
+    name = models.CharField(max_length=1024)
+    team = models.CharField(max_length=1024)
+
+    def __init__(self, *args, **kwargs):
+        name = kwargs.pop('name', self._get_name_from_user(kwargs.get('user', None)))
+        super().__init__(name=name, *args, **kwargs)
+
+    def _get_name_from_user(self, user):
+        if not user:
+            return 'Unknown'
+        name = user.first_name + f"{' ' + user.last_name[:1] if user.last_name else ''}"
+        if not name:
+            name = user.username.split('@')[0]
+        return name
 
 
 class Hand(models.Model):
