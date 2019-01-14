@@ -1,3 +1,9 @@
+import logging
+
+
+LOG = logging.getLogger(__name__)
+
+
 class Card():
     def _representation_to_value_and_suit(self, representation):
         value = {
@@ -39,10 +45,10 @@ class Card():
             '8': 7,
             '9': 8,
             '0': 9,
-            'J': 10,
-            'Q': 11,
-            'K': 12,
-            'A': 13,
+            'jack': 10,
+            'queen': 11,
+            'king': 12,
+            'ace': 13,
         }.get(self.value, None)
 
         if not rank:
@@ -50,8 +56,10 @@ class Card():
 
         return rank
 
-    def __init__(self, representation=None, def_value=None, def_suit=None):
-        value, suit = self._representation_to_value_and_suit(representation) if representation else (def_value, def_suit)
+    def __init__(self, representation=None, value=None, suit=None):
+        value, suit = self._representation_to_value_and_suit(representation) if representation else (value, suit)
+        if not value or not suit:
+            raise ValueError("value and suit must be provided, either by representation or through parameters")
         self.value = value
         self.suit = suit
 
@@ -88,14 +96,16 @@ class Card():
         if self.suit == 'hearts' or self.suit == 'diamonds':
             return suit == 'hearts' or suit == 'diamonds'
         if self.suit == 'clubs' or self.suit == 'spades':
-            return suit == 'clubs' or suite == 'spades'
+            return suit == 'clubs' or suit == 'spades'
 
     def is_trump(self, trump):
         if self.suit == trump:
             return True
 
-        if self.value == 'j':
+        if self.value == 'jack':
             return self._same_color(trump)
+
+        return False
 
     def is_less_than(self, other, trump):
         less_than = False
@@ -122,7 +132,7 @@ class Card():
                     less_than = self.rank() < other.rank()
         else:
             # Neither are trump, just compare values (although this isn't how tricks are taken)
-            log.warning("Warning, comparing cards with different suits")
+            LOG.warning("Warning, comparing cards with different suits")
             less_than = self.rank() < other.rank()
 
         return less_than
