@@ -1,4 +1,6 @@
 import logging
+import copy
+import random
 
 
 LOG = logging.getLogger(__name__)
@@ -62,6 +64,15 @@ class Card():
             raise ValueError("value and suit must be provided, either by representation or through parameters")
         self.value = value
         self.suit = suit
+
+    def __str__(self):
+        return self.to_representation()
+
+    def __repr__(self):
+        return self.to_representation()
+
+    def __eq__(self, other):
+        return other and self.value == other.value and self.suit == other.suit
 
     def to_representation(self):
         value = {
@@ -136,3 +147,46 @@ class Card():
             less_than = self.rank() < other.rank()
 
         return less_than
+
+
+class Deck():
+    ALL_CARDS = [
+        Card(value=value, suit=suit)
+        for value in
+        [
+            '2',
+            '3',
+            '4',
+            '5',
+            '6',
+            '7',
+            '8',
+            '9',
+            '10',
+            'jack',
+            'queen',
+            'king',
+            'ace',
+        ]
+        for suit in
+        [
+            'spades',
+            'diamonds',
+            'hearts',
+            'clubs',
+        ]
+    ]
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.cards = copy.deepcopy(self.ALL_CARDS)
+        self.shuffle()
+
+    def shuffle(self):
+        random.shuffle(self.cards)
+
+    def deal(self, num=3):
+        # Deals num cards, returning a list of cards
+        return [self.cards.pop(0) for x in range(0, num)]
