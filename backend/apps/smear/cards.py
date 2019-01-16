@@ -37,7 +37,7 @@ class Card():
         return value, suit
 
     def rank(self):
-        rank =  {
+        rank = {
             '2': 1,
             '3': 2,
             '4': 3,
@@ -66,10 +66,10 @@ class Card():
         self.suit = suit
 
     def __str__(self):
-        return self.to_representation()
+        return f"Card({self.to_representation()})"
 
     def __repr__(self):
-        return self.to_representation()
+        return self.__str__()
 
     def __eq__(self, other):
         return other and self.value == other.value and self.suit == other.suit
@@ -120,7 +120,7 @@ class Card():
 
     def is_less_than(self, other, trump):
         less_than = False
-        if other == None:
+        if other is None:
             less_than = False
         elif self.is_trump(trump) and not other.is_trump(trump):
             # self is trump and other isn't, return false

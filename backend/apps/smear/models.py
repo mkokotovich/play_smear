@@ -3,6 +3,10 @@ import logging
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
+from rest_framework.exceptions import ValidationError
+
+from apps.smear.cards import Card, Deck
 
 
 LOG = logging.getLogger(__name__)
@@ -66,6 +70,11 @@ class Player(models.Model):
     name = models.CharField(max_length=1024)
     team = models.CharField(max_length=1024)
 
+    cards_in_hand = ArrayField(
+        models.CharField(max_length=2),
+        default=list
+    )
+
     def __init__(self, *args, **kwargs):
         name = kwargs.pop('name', self._get_name_from_user(kwargs.get('user', None)))
         super().__init__(name=name, *args, **kwargs)
@@ -77,6 +86,14 @@ class Player(models.Model):
         if not name:
             name = user.username.split('@')[0]
         return name
+
+    def accept_dealt_cards(self, cards):
+        representations = [card.to_representation() for card in cards]
+        self.cards_in_hand.extend(representations)
+        self.save()
+
+    def get_cards(self):
+        return [Card(representation=rep) for rep in self.cards_in_hand]
 
 
 class Hand(models.Model):
@@ -93,3 +110,11 @@ class Hand(models.Model):
                 'hand': self.id,
             },
         }
+
+    def start(self):
+        # Deal out six cards
+        deck = Deck()
+        for player in self.game.players.all():
+            player.accept_dealt_cards(deck.deal(3))
+        for player in self.game.players.all():
+            player.accept_dealt_cards(deck.deal(3))

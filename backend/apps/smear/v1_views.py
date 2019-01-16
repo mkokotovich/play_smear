@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
-from apps.smear.models import Game, Hand, Player
+from apps.smear.models import Game, Player
 from apps.smear.pagination import SmearPagination
 from apps.smear.serializers import GameSerializer, GameJoinSerializer
 from apps.smear.permissions import IsOwnerPermission, IsPlayerInGame
@@ -87,7 +87,6 @@ class GameViewSet(viewsets.ModelViewSet):
         LOG.info(f"Added {self.request.user} to game {game}")
         game.save()
         return Response({'status': 'success'})
-
 
     @action(
         detail=True,

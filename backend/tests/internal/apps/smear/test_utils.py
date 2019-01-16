@@ -5,7 +5,8 @@ import pytest
 from apps.smear.cards import Card, Deck
 
 
-@pytest.mark.parametrize('rep,exp_value,exp_suit',
+@pytest.mark.parametrize(
+    'rep,exp_value,exp_suit',
     [
         ('2S', '2', 'spades'),
         ('AH', 'ace', 'hearts'),
