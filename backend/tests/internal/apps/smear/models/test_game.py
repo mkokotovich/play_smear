@@ -54,8 +54,8 @@ def test_Game_set_teams_and_seats_with_teams(mocker, num_teams, num_players):
         'teams': [
             {
                 'name': f'team{team_num}',
-                'player_ids': [player.id for player_num, player in enumerate(players) if player_num % team_num == 0],
-            } for team_num in range(1, num_teams + 1)  # we actually want 1-4 for four teams
+                'player_ids': [player.id for player_num, player in enumerate(players) if player_num % num_teams == team_num],
+            } for team_num in range(0, num_teams)
         ]
     } if num_teams != 0 else {}
 
@@ -65,11 +65,13 @@ def test_Game_set_teams_and_seats_with_teams(mocker, num_teams, num_players):
         for player_num, player_id in enumerate(team['player_ids']):
             player = Player.objects.get(id=player_id)
             assert player in players
+            assert player.game == game
             assert player.team == team['name']
             assert player.seat == team_num + player_num * num_teams
 
     if num_teams == 0:
-        game_players = Player.objects.filter(game=game)
-        for player_num, player in game_players:
+        game_players = Player.objects.filter(game=game).order_by('seat')
+        for player_num, player in enumerate(game_players):
             assert player in players
+            assert player.game == game
             assert player.seat == player_num

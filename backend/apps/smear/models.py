@@ -59,7 +59,7 @@ class Game(models.Model):
             for player_num, player_id in enumerate(team['player_ids']):
                 try:
                     player = self.player_set.get(id=player_id)
-                except User.DoesNotExist:
+                except Player.DoesNotExist:
                     raise ValidationError(
                         f"Unable to start game, player id {player_id} was "
                         f"listed as a member of team {team['name']} but could "
