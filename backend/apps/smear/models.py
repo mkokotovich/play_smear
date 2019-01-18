@@ -38,24 +38,55 @@ class Game(models.Model):
             }
         return self.hands.last().get_status()
 
-    def start(self):
+    def start(self, start_data):
         if self.players.count() != self.num_players:
             raise ValidationError(f"Unable to start game, game requires {self.num_players} players, but {self.players.count()} have joined")
 
+        self.set_teams_and_seats(start_data)
+
         hand = Hand.objects.create(game=self)
+        hand.start()
+        # hand.advance_bidding()
         LOG.info(f"Started hand {hand} on game {self}")
+
+    def set_teams_and_seats(self, start_data):
+        teams = start_data.get('teams', [])
+        if len(teams) != self.num_teams:
+            raise ValidationError(f"Unable to start game, {len(teams)} were supplied but {self.num_teams} were expected")
+
+        # Assign players to their teams (if necessary)
+        for team_num, team in enumerate(teams):
+            for player_num, player_id in enumerate(team['player_ids']):
+                try:
+                    player = self.player_set.get(id=player_id)
+                except User.DoesNotExist:
+                    raise ValidationError(
+                        f"Unable to start game, player id {player_id} was "
+                        f"listed as a member of team {team['name']} but could "
+                        "not be found in this game"
+                    )
+                player.team = team['name']
+                player.seat = team_num + (self.num_teams * player_num)
+                LOG.info(f"Added {player.name} to game {self.name}, team {team['name']}, at seat {player.seat}")
+                player.save()
+
+        if not teams:
+            for player_num, player in enumerate(self.player_set.all()):
+                player.seat = player_num
+                LOG.info(f"Added {player.name} to game {self.name} at seat {player.seat}")
+                player.save()
 
     def add_computer_player(self):
         computers = list(User.objects.filter(username__startswith="mkokotovich+computer").all())
         shuffle(computers)
-        for player in computers:
-            if not self.players.filter(id=player.id).exists():
+        for computer in computers:
+            if not self.players.filter(id=computer.id).exists():
                 Player.objects.create(
                     game=self,
-                    user=player,
+                    user=computer,
                     is_computer=True
                 )
-                LOG.info(f"Added computer {player} to {self}")
+                LOG.info(f"Added computer {computer} to {self}")
                 return
 
 
@@ -68,7 +99,8 @@ class Player(models.Model):
 
     is_computer = models.BooleanField(blank=True, default=False)
     name = models.CharField(max_length=1024)
-    team = models.CharField(max_length=1024)
+    team = models.CharField(max_length=1024, blank=True, default="")
+    seat = models.IntegerField(blank=True, null=True)
 
     cards_in_hand = ArrayField(
         models.CharField(max_length=2),
@@ -114,7 +146,10 @@ class Hand(models.Model):
     def start(self):
         # Deal out six cards
         deck = Deck()
-        for player in self.game.players.all():
+        for player in self.game.player_set.all():
             player.accept_dealt_cards(deck.deal(3))
-        for player in self.game.players.all():
+        for player in self.game.player_set.all():
             player.accept_dealt_cards(deck.deal(3))
+
+    def advance_bidding(self):
+        pass

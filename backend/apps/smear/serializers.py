@@ -9,6 +9,10 @@ class PlayerSummarySerializer(serializers.ModelSerializer):
         fields = ('name', 'user', 'team')
 
 
+class PlayerIDSerializer(serializers.Serializer):
+    player_id = serializers.CharField(max_length=64)
+
+
 class GameSerializer(serializers.ModelSerializer):
     passcode = serializers.CharField(write_only=True, required=False, allow_blank=True)
     status = serializers.SerializerMethodField()
@@ -25,3 +29,16 @@ class GameSerializer(serializers.ModelSerializer):
 
 class GameJoinSerializer(serializers.Serializer):
     passcode = serializers.CharField(max_length=512, required=False)
+
+
+class TeamSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=1024, required=True)
+    player_ids = serializers.ListField(
+        child=PlayerIDSerializer()
+    )
+
+
+class GameStartSerializer(serializers.Serializer):
+    teams = serializers.ListField(
+        child=TeamSerializer()
+    )

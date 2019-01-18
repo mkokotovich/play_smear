@@ -1,7 +1,7 @@
 import factory
 
 
-class GameFactoryBase(factory.DjangoModelFactory):
+class GameFactory(factory.DjangoModelFactory):
     class Meta:
         model = 'smear.Game'
     owner = factory.SubFactory('tests.internal.apps.user.factories.UserFactory')
@@ -27,5 +27,5 @@ class PlayerFactory(factory.DjangoModelFactory):
     game = factory.SubFactory('tests.internal.apps.smear.factories.GameFactory')
 
 
-class GameFactory(GameFactoryBase):
+class GameFactoryWithPlayer(GameFactory):
     membership = factory.RelatedFactory(PlayerFactory, 'game')

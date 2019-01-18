@@ -10,7 +10,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.smear.models import Game, Player
 from apps.smear.pagination import SmearPagination
-from apps.smear.serializers import GameSerializer, GameJoinSerializer
+from apps.smear.serializers import GameSerializer, GameJoinSerializer, GameStartSerializer
 from apps.smear.permissions import IsOwnerPermission, IsPlayerInGame
 
 
@@ -94,6 +94,13 @@ class GameViewSet(viewsets.ModelViewSet):
         permission_classes=[IsOwnerPermission],
     )
     def start(self, request, pk=None):
+        serializer = GameStartSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         game = Game.objects.get(id=pk)
-        game.start()
+        game.start(serializer.validated_data)
         return Response({'status': 'success'})
