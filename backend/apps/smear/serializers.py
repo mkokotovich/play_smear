@@ -6,7 +6,7 @@ from apps.smear.models import Game, Player
 class PlayerSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ('name', 'user', 'team')
+        fields = ('id', 'name', 'user', 'team')
 
 
 class PlayerIDSerializer(serializers.Serializer):

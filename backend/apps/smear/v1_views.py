@@ -60,7 +60,6 @@ class GameViewSet(viewsets.ModelViewSet):
         if instance.single_player:
             while instance.players.count() < instance.num_players:
                 instance.add_computer_player()
-            instance.start()
 
         instance.save()
 
@@ -83,9 +82,8 @@ class GameViewSet(viewsets.ModelViewSet):
         if game.passcode_required and game.passcode != serializer.data.get('passcode', None):
             raise ValidationError(f"Unable to join game, passcode is required and was incorrect")
 
-        game.players.add(self.request.user)
+        Player.objects.create(game=game, user=self.request.user)
         LOG.info(f"Added {self.request.user} to game {game}")
-        game.save()
         return Response({'status': 'success'})
 
     @action(
