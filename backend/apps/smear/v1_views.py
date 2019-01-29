@@ -10,7 +10,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.smear.models import Game, Player
 from apps.smear.pagination import SmearPagination
-from apps.smear.serializers import GameSerializer, GameJoinSerializer, GameStartSerializer
+from apps.smear.serializers import (
+    GameSerializer,
+    GameJoinSerializer,
+    GameStartSerializer,
+    PlayerSummarySerializer,
+    PlayerIDSerializer
+)
 from apps.smear.permissions import IsOwnerPermission, IsPlayerInGame
 
 
@@ -102,3 +108,36 @@ class GameViewSet(viewsets.ModelViewSet):
         game = Game.objects.get(id=pk)
         game.start(serializer.validated_data)
         return Response({'status': 'success'})
+
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsOwnerPermission],
+    )
+    def player(self, request, pk=None):
+        if request.method == 'POST':
+            game = Game.objects.get(id=pk)
+            computer_player = game.add_computer_player()
+            return Response({
+                'status': 'success',
+                'meta': {
+                    'computer_player': PlayerSummarySerializer(computer_player).data,
+                },
+            })
+        else:
+            serializer = PlayerIDSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(
+                    serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            player_id = serializer.validated_data['player_id']
+            try:
+                player = Player.objects.get(id=player_id)
+            except Player.DoesNotExist:
+                pass
+            else:
+                player.delete()
+            return Response({
+                'status': 'success',
+            })

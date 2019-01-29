@@ -77,17 +77,20 @@ class Game(models.Model):
                 player.save()
 
     def add_computer_player(self):
+        if self.players.count() >= self.num_players:
+            raise ValidationError(f"Unable to add computer, already containers {self.num_players} players")
+
         computers = list(User.objects.filter(username__startswith="mkokotovich+computer").all())
         shuffle(computers)
         for computer in computers:
             if not self.players.filter(id=computer.id).exists():
-                Player.objects.create(
+                computer_player = Player.objects.create(
                     game=self,
                     user=computer,
                     is_computer=True
                 )
                 LOG.info(f"Added computer {computer} to {self}")
-                return
+                return computer_player
 
 
 class Player(models.Model):
