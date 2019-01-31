@@ -5,6 +5,7 @@ import axios from 'axios';
 import queryString from 'query-string';
 import GameList from './GameList';
 import './GameSelector.css';
+import getErrorString from './utils';
 
 class GameSelector extends Component {
 
@@ -29,6 +30,10 @@ class GameSelector extends Component {
     if (this.props.location.search !== prevProps.location.search) {
       this.setState({publicList: []});
       this.loadGames("public");
+      if (this.props.signedInUser) {
+        this.setState({myList: []});
+        this.loadGames("mine");
+      }
     }
     if (this.props.signedInUser !== prevProps.signedInUser) {
       this.loadGames("mine");
@@ -38,7 +43,7 @@ class GameSelector extends Component {
   loadGames = (mode) => {
     this.setState({loading: true});
     const values = queryString.parse(this.props.location.search);
-    const single = this.props.location.state ? this.props.location.state.single : false;
+    const single = values.single ? values.single : false;
     var query = "";
     if (mode === "mine") {
       query = `?owner=${this.props.signedInUser.id}&single_player=${single}`;
@@ -75,7 +80,7 @@ class GameSelector extends Component {
         this.setState({loading: false});
         Modal.error({
           title: "Unable to load games",
-          content: "Unable to load games. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          content: getErrorString(error.response.data),
           maskClosable: true,
         })
       });
@@ -102,7 +107,7 @@ class GameSelector extends Component {
         });
         Modal.error({
           title: "Unable to delete game",
-          content: "Unable to delete game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          content: getErrorString(error.response.data),
           maskClosable: true,
         })
       });
@@ -136,7 +141,7 @@ class GameSelector extends Component {
         });
         Modal.error({
           title: "Unable to join game",
-          content: "Unable to join game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          content: getErrorString(error.response.data),
           maskClosable: true,
         })
       });

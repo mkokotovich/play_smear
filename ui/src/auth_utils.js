@@ -1,4 +1,5 @@
 import axios from 'axios';
+import getErrorString from './utils';
 import { Modal } from 'antd';
 
 
@@ -61,7 +62,7 @@ export function signUp(email, password, handleAuthChange, successCallback) {
     console.log(error);
     Modal.error({
       title: "Unable to sign up",
-      content: "Please try again\n\n" + JSON.stringify(error.response.data),
+      content: getErrorString(error.response.data),
       maskClosable: true,
     })
   });

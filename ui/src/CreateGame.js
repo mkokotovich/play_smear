@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Redirect, withRouter } from 'react-router-dom';
 import { Radio, Row, Checkbox, Input, Button, Modal, Spin } from 'antd';
 import axios from 'axios';
+import getErrorString from './utils';
 import './CreateGame.css';
 
 const RadioButton = Radio.Button;
@@ -53,7 +54,7 @@ class CreateGame extends Component {
         });
         Modal.error({
           title: "Unable to create a new game",
-          content: "Unable to create a new game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          content: getErrorString(error.response.data),
           maskClosable: true,
         })
       });

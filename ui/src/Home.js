@@ -4,6 +4,7 @@ import { Card, Row, Col, Modal, Spin } from 'antd';
 import axios from 'axios';
 import CreateGame from './CreateGame';
 import ActionButton from './ActionButton';
+import getErrorString from './utils';
 import './Home.css';
 
 class Home extends Component {
@@ -30,7 +31,7 @@ class Home extends Component {
         console.log(error);
         Modal.error({
           title: "Unable to reach server",
-          content: "Unable to reach server. Please refresh page and try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          content: "Please refresh page and try again. " + getErrorString(error.response.data),
           maskClosable: true,
         })
       });
@@ -41,10 +42,7 @@ class Home extends Component {
       return <Redirect push to="/games" />
     }
     if (this.state.redirectToManage) {
-      return <Redirect push to={{
-        pathname: "/manage",
-        state: { single: this.state.single },
-      }} />
+      return <Redirect push to={`/manage?single=${this.state.single}`} />
     }
 
     const multiplayer = !this.props.signedInUser ? (

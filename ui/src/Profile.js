@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import { Row, Col, Input, Modal, Spin, Button} from 'antd';
 import axios from 'axios';
+import getErrorString from './utils';
 import './Profile.css';
 
 function ProfileLabelAndInput(props) {
@@ -54,7 +55,7 @@ class Profile extends Component {
         this.setState({loading: false});
         Modal.error({
           title: "Unable to load user profile data",
-          content: "Unable to load user profile data. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          content: getErrorString(error.response.data),
           maskClosable: true,
         })
       });
@@ -103,7 +104,7 @@ class Profile extends Component {
         this.setState({loading: false});
         Modal.error({
           title: "Unable to update user profile data",
-          content: "Unable to update user profile data. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          content: getErrorString(error.response.data),
           maskClosable: true,
         })
       });

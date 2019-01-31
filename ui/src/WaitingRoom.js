@@ -3,6 +3,7 @@ import { withRouter } from 'react-router-dom';
 import { Row, Col, Button, Modal, Icon } from 'antd';
 import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import getErrorString from './utils';
 
 import './WaitingRoom.css';
 
@@ -19,7 +20,7 @@ function removePlayerFromGame(player, gameID, setLoading, removePlayerFromList) 
         setLoading(false);
         Modal.error({
           title: "Unable to remove player from game",
-          content: "Unable to remove player from game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          content: getErrorString(error.response.data),
           maskClosable: true,
         })
       });
@@ -111,7 +112,7 @@ function addComputerToGame(gameID, setLoading, addPlayer) {
         setLoading(false);
         Modal.error({
           title: "Unable to add computer to game",
-          content: "Unable to add computer to game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          content: getErrorString(error.response.data),
           maskClosable: true,
         })
       });
@@ -175,7 +176,7 @@ function startGame(teams, gameID, setLoading) {
       setLoading(false);
       Modal.error({
         title: "Unable to start game",
-        content: "Unable to start game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+        content: getErrorString(error.response.data),
         maskClosable: true,
       })
     });
@@ -353,8 +354,12 @@ function WaitingRoom(props) {
       {dnd}
       <div className="flex">
         <Button onClick={() => startGame(teams, props.game.id, props.loading)}>Start Game</Button>
-        <Button onClick={() => autoAssign()}>Auto Assign</Button>
-        <Button onClick={() => resetPlayers()}>Reset</Button>
+        { props.game.teams.length > 0 &&
+          <>
+            <Button onClick={() => autoAssign()}>Auto Assign</Button>
+            <Button onClick={() => resetPlayers()}>Reset</Button>
+          </>
+        }
       </div>
     </div>
   );

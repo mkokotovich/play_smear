@@ -20,7 +20,7 @@ class GameList extends Component {
       <div className="GameList" key={game.id}>
         <Row type="flex" align="middle">
           <Col className="GameName" xs={12} md={6}>
-            <b>{game.name}</b>
+            <b style={{cursor: "pointer"}} onClick={() => handleResume(game.id)}>{game.name}</b>
           </Col>
           <Col className="GameIcons" xs={12} md={6}>
             <Popover placement="topLeft" content="The number of players who have joined out of the total number of players this game accepts" title="Players">

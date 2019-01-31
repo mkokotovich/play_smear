@@ -4,6 +4,7 @@ import { Button, Modal, Spin } from 'antd';
 import axios from 'axios';
 import queryString from 'query-string';
 import WaitingRoom from './WaitingRoom';
+import getErrorString from './utils';
 
 import './Game.css';
 
@@ -37,7 +38,7 @@ class Game extends Component {
         this.loading(false);
         Modal.error({
           title: "Unable to load game",
-          content: "Unable to load game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          content: getErrorString(error.response.data),
           maskClosable: true,
         })
       });

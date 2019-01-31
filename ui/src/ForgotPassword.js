@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import { Row, Col, Input, Modal, Spin, Button} from 'antd';
 import axios from 'axios';
+import getErrorString from './utils';
 import './ForgotPassword.css';
 
 function ProfileLabelAndInput(props) {
@@ -56,7 +57,7 @@ class ForgotPassword extends Component {
         this.setState({loading: false});
         Modal.error({
           title: "Unable to reset user's password",
-          content: "Unable to reset user's password. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          content: getErrorString(error.response.data),
           maskClosable: true,
         })
       });
