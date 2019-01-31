@@ -44,10 +44,13 @@ class GameViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
-        if self.request.query_params.get("public", "false") == "true":
-            return Game.objects.filter(single_player=False).exclude(owner=self.request.user).order_by('-created_at')
-        else:
-            return Game.objects.all().order_by('-created_at')
+        base_queryset = (
+            Game.objects.filter(single_player=False).exclude(owner=self.request.user) if
+            self.request.query_params.get("public", "false") == "true" else
+            Game.objects.all()
+        )
+
+        return base_queryset.order_by('-created_at')
 
     def perform_create(self, serializer):
         passcode = serializer.validated_data.get('passcode', None)
@@ -62,6 +65,8 @@ class GameViewSet(viewsets.ModelViewSet):
                 is_computer=False
             )
         LOG.info(f"Created game {instance} and added {self.request.user} as player and creator")
+
+        instance.create_initial_teams()
 
         if instance.single_player:
             while instance.players.count() < instance.num_players:
@@ -131,7 +136,7 @@ class GameViewSet(viewsets.ModelViewSet):
                     serializer.errors,
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            player_id = serializer.validated_data['player_id']
+            player_id = serializer.validated_data['id']
             try:
                 player = Player.objects.get(id=player_id)
             except Player.DoesNotExist:

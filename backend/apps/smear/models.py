@@ -49,25 +49,37 @@ class Game(models.Model):
         # hand.advance_bidding()
         LOG.info(f"Started hand {hand} on game {self}")
 
+    def create_initial_teams(self):
+        for i in range(0, self.num_teams):
+            Team.objects.create(game=self, name=f"Team {i+1}")
+
     def set_teams_and_seats(self, start_data):
         teams = start_data.get('teams', [])
         if len(teams) != self.num_teams:
             raise ValidationError(f"Unable to start game, {len(teams)} were supplied but {self.num_teams} were expected")
 
         # Assign players to their teams (if necessary)
-        for team_num, team in enumerate(teams):
-            for player_num, player_id in enumerate(team['player_ids']):
+        for team_num, teamMeta in enumerate(teams):
+            try:
+                team = self.teams.get(id=teamMeta['id'])
+            except Team.DoesNotExist:
+                raise ValidationError(
+                    f"Unable to start game, team with id {teamMeta['id']} was "
+                    "given but could not be found"
+                )
+
+            for player_num, player_obj in enumerate(teamMeta['players']):
                 try:
-                    player = self.player_set.get(id=player_id)
+                    player = self.player_set.get(id=player_obj['id'])
                 except Player.DoesNotExist:
                     raise ValidationError(
-                        f"Unable to start game, player id {player_id} was "
-                        f"listed as a member of team {team['name']} but could "
+                        f"Unable to start game, player id {player_obj['id']} was "
+                        f"listed as a member of team {team} but could "
                         "not be found in this game"
                     )
-                player.team = team['name']
+                player.team = team
                 player.seat = team_num + (self.num_teams * player_num)
-                LOG.info(f"Added {player.name} to game {self.name}, team {team['name']}, at seat {player.seat}")
+                LOG.info(f"Added {player.name} to game {self.name}, team {team}, at seat {player.seat}")
                 player.save()
 
         if not teams:
@@ -93,6 +105,14 @@ class Game(models.Model):
                 return computer_player
 
 
+class Team(models.Model):
+    game = models.ForeignKey(Game, related_name='teams', on_delete=models.CASCADE)
+    name = models.CharField(max_length=1024)
+
+    def __str__(self):
+        return f"{self.name} ({self.id})"
+
+
 class Player(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -102,7 +122,7 @@ class Player(models.Model):
 
     is_computer = models.BooleanField(blank=True, default=False)
     name = models.CharField(max_length=1024)
-    team = models.CharField(max_length=1024, blank=True, default="")
+    team = models.ForeignKey(Team, related_name='players', on_delete=models.CASCADE, null=True, blank=True)
     seat = models.IntegerField(blank=True, null=True)
 
     cards_in_hand = ArrayField(

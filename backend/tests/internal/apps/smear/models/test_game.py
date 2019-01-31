@@ -48,25 +48,27 @@ def test_Game_set_teams_and_seats_with_teams(mocker, num_teams, num_players):
         pytest.skip(f"Uneven number of player ({num_players}) for teams ({num_teams})")
 
     game = GameFactory(num_players=num_players, num_teams=num_teams)
+    game.create_initial_teams()
     players = [Player.objects.create(game=game, user=UserFactory()) for i in range(0, num_players)]
 
     start_data = {
         'teams': [
             {
-                'name': f'team{team_num}',
-                'player_ids': [player.id for player_num, player in enumerate(players) if player_num % num_teams == team_num],
-            } for team_num in range(0, num_teams)
+                'name': team.name,
+                'id': team.id,
+                'players': [player.id for player_num, player in enumerate(players) if player_num % num_teams == team_num],
+            } for team_num, team in enumerate(list(game.teams.all()))
         ]
     } if num_teams != 0 else {}
 
     game.set_teams_and_seats(start_data)
 
     for team_num, team in enumerate(start_data.get('teams', [])):
-        for player_num, player_id in enumerate(team['player_ids']):
+        for player_num, player_id in enumerate(team['players']):
             player = Player.objects.get(id=player_id)
             assert player in players
             assert player.game == game
-            assert player.team == team['name']
+            assert player.team.name == team['name']
             assert player.seat == team_num + player_num * num_teams
 
     if num_teams == 0:

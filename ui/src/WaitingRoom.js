@@ -1,5 +1,5 @@
-import React, { Component, useState, useEffect } from 'react';
-import { Link, withRouter } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { withRouter } from 'react-router-dom';
 import { Row, Col, Button, Modal, Icon } from 'antd';
 import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
@@ -9,7 +9,7 @@ import './WaitingRoom.css';
 function removePlayerFromGame(player, gameID, setLoading, removePlayerFromList) {
   setLoading(true);
   axios.delete(`/api/smear/v1/games/${gameID}/player/`,
-    { data: { player_id: player.id } })
+    { data: { id: player.id } })
     .then((response) => {
       setLoading(false);
       removePlayerFromList(player);
@@ -28,8 +28,9 @@ function removePlayerFromGame(player, gameID, setLoading, removePlayerFromList) 
 
 function Player(props) {
   const [loading, setLoading] = useState(false);
+  const {player, gameID, removePlayerFromList, removeIsVisible} = props;
 
-  const iconType = loading ? "loading" : "delete";
+  const iconType = loading ? "loading" : "close-circle";
 
   return (
     <div style={{
@@ -41,22 +42,17 @@ function Player(props) {
     }}>
       <Row type="flex" justify="space-between">
       <Col>
-        {props.player.name}
+        {player.name}
       </Col>
+      {removeIsVisible && (
       <Col>
-        <Icon style={{cursor: "pointer"}} disabled={loading} type={iconType} onClick={() => removePlayerFromGame(props.player, props.gameID, setLoading, props.removePlayerFromList)}/>
+        <Icon theme="twoTone" twoToneColor="#eb2f96" style={{cursor: "pointer", fontSize: '18px'}} disabled={loading} type={iconType} onClick={() => removePlayerFromGame(player, gameID, setLoading, removePlayerFromList)}/>
       </Col>
+      )}
       </Row>
     </div>
   );
 }
-
-// fake data generator
-const getItems = (count, offset = 0) =>
-    Array.from({ length: count }, (v, k) => k).map(k => ({
-        id: `item-${k + offset}`,
-        content: `item ${k + offset}`
-    }));
 
 // a little function to help us with reordering the result
 const reorder = (list, startIndex, endIndex) => {
@@ -114,8 +110,8 @@ function addComputerToGame(gameID, setLoading, addPlayer) {
         console.log(error);
         setLoading(false);
         Modal.error({
-          title: "Unable to start game",
-          content: "Unable to start game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
+          title: "Unable to add computer to game",
+          content: "Unable to add computer to game. Please try again\n\n" + error + "\n\n" + JSON.stringify(error.response.data),
           maskClosable: true,
         })
       });
@@ -127,7 +123,6 @@ function AddComputer(props) {
   const [loading, setLoading] = useState(false);
 
   const icon = loading ? "loading" : "plus";
-  const disable = loading;
 
   return (
     <Button style={{width: "100%"}} disabled={loading} onClick={() => addComputerToGame(gameID, setLoading, addPlayer)}><Icon type={icon} /> Computer Player</Button>
@@ -135,7 +130,8 @@ function AddComputer(props) {
 }
 
 function TeamHolder(props) {
-  return props.players.map((item, index) => (
+  const {players, gameID, removePlayerFromList, removeIsVisible} = props;
+  return players.map((item, index) => (
     <Draggable
       key={item.id}
       draggableId={item.id}
@@ -149,7 +145,7 @@ function TeamHolder(props) {
               snapshot.isDragging,
               provided.draggableProps.style
             )}>
-            <Player player={item} gameID={props.gameID} removePlayerFromList={props.removePlayerFromList}/>
+            <Player player={item} gameID={gameID} removePlayerFromList={removePlayerFromList} removeIsVisible={removeIsVisible}/>
           </div>
         )}
     </Draggable>
@@ -157,9 +153,19 @@ function TeamHolder(props) {
 }
 
 function startGame(teams, gameID, setLoading) {
+  const teamList = Object.entries(teams).reduce((accum, item) => {
+    const [teamID, teamData] = item;
+    const teamInfo = {
+      id: teamID,
+      players: teamData.list
+    }
+    accum = [...accum, teamInfo];
+    return accum;
+  }, []);
+
   setLoading(true);
   axios.post(`/api/smear/v1/games/${gameID}/start/`, {
-    teams: teams,
+    teams: teamList,
   })
     .then((response) => {
       setLoading(false);
@@ -175,35 +181,57 @@ function startGame(teams, gameID, setLoading) {
     });
 }
 
-
 function WaitingRoom(props) {
   const [allPlayers, setAllPlayers] = useState([]);
   const [bench, setBench] = useState([]);
-  // TODO: figure out how to do teams, should it be a many-to-many through?
-  //var teamLists = [...Array(props.game.numTeams).keys()].map((num) => (
-  //));
-  const [selected, setSelected] = useState([]);
+  // Build a dict that looks like
+  // {
+  //   team_id: {
+  //     list: <state list>,
+  //     setList: <state set list>
+  //   }
+  // }
+  const teams = props.game.teams.reduce((accum, team) => {
+    const [list, setList] = useState([]);
+    accum[team.id] = {
+      list: list,
+      setList: setList
+    };
+    return accum;
+  }, {});
+
+  const teamSetters = props.game.teams.reduce((accum, team) => {
+    accum[team.id] = teams[team.id].setList;
+    return accum;
+  }, {});
+
+  const teamLists = props.game.teams.reduce((accum, team) => {
+    accum[team.id] = teams[team.id].list;
+    return accum;
+  }, {});
+
   const playerListSetters = {
     bench: setBench,
-    selected: setSelected
+    ...teamSetters
   };
+
   const playerList = {
     bench: bench,
-    selected: selected
+    ...teamLists
   }
 
   function removePlayer(list, setList, player) {
     const index = list.indexOf(player)
-    if (index != -1) {
+    if (index !== -1) {
       var listCopy = list.slice();
       listCopy.splice(index, 1);
       setList(listCopy);
     }
     const allIndex = allPlayers.indexOf(player)
-    if (allIndex != -1) {
-      var listCopy = allPlayers.slice();
-      listCopy.splice(allIndex, 1);
-      setAllPlayers(listCopy);
+    if (allIndex !== -1) {
+      var allPlayersCopy = allPlayers.slice();
+      allPlayersCopy.splice(allIndex, 1);
+      setAllPlayers(allPlayersCopy);
     }
   }
 
@@ -212,15 +240,43 @@ function WaitingRoom(props) {
     setAllPlayers([...allPlayers, player]);
   }
 
+  function resetPlayers() {
+    setBench(props.game.players);
+    setAllPlayers(props.game.players);
+    for (var teamID in teamSetters) {
+      teamSetters[teamID]([]);
+    }
+  }
+
+  function autoAssign() {
+    const numTeams = props.game.teams.length;
+    const teamIDs = props.game.teams.map((item) => item.id);
+    function findSameTeam(teamNum) {
+      return props.game.players.filter((item, index) => index % numTeams === teamNum);
+    }
+    for (var i = 0; i < numTeams; i++) {
+      const teamID = teamIDs[i];
+      teamSetters[teamID](findSameTeam(i));
+    }
+    setBench([]);
+  }
+
   useEffect(() => {
     const playersToRemove = allPlayers.filter((player) => {
-      return props.game.players.indexOf(player) == -1;
+      return props.game.players.indexOf(player) === -1;
     });
     const playersToAddToBench = props.game.players.filter((player) => {
-      return allPlayers.indexOf(player) == -1;
+      return allPlayers.indexOf(player) === -1;
     });
     setAllPlayers(props.game.players);
-    setBench([...bench, ...playersToAddToBench]);
+    var benchWithPlayersRemoved = bench.slice();
+    for (var i = 0; i < playersToRemove.length; i++) {
+      const playerIndex = benchWithPlayersRemoved.indexOf(playersToRemove[i])
+      if (playerIndex !== -1) {
+        benchWithPlayersRemoved.splice(playerIndex, 1);
+      }
+    }
+    setBench([...benchWithPlayersRemoved, ...playersToAddToBench]);
   }, props.game.players);
   
   function onDragEnd(result) {
@@ -253,6 +309,22 @@ function WaitingRoom(props) {
     }
   };
 
+  const teamDroppables = props.game.teams.map((team, index) => (
+    <Col key={index}>
+      <Droppable droppableId={""+team.id}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            style={getListStyle(snapshot.isDraggingOver)}>
+              <h4>{team.name}</h4>
+              <TeamHolder players={teams[team.id].list} gameID={props.game.id} removePlayerFromList={(player) => removePlayer(teams[team.id].list, teams[team.id].setList, player)} />
+              {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    </Col>
+  ));
+
   const dnd = (
     <DragDropContext onDragEnd={onDragEnd}>
       <Row type="flex">
@@ -263,26 +335,14 @@ function WaitingRoom(props) {
           ref={provided.innerRef}
           style={getListStyle(snapshot.isDraggingOver)}>
             <h4>Players</h4>
-            <TeamHolder players={bench} gameID={props.game.id} removePlayerFromList={(player) => removePlayer(bench, setBench, player)}/>
+            <TeamHolder players={bench} gameID={props.game.id} removePlayerFromList={(player) => removePlayer(bench, setBench, player)} removeIsVisible={true}/>
             <AddComputer gameID={props.game.id} addPlayer={addPlayer}/>
             {provided.placeholder}
           </div>
       )}
       </Droppable>
       </Col>
-      <Col>
-          <Droppable droppableId="selected">
-            {(provided, snapshot) => (
-              <div
-                ref={provided.innerRef}
-                style={getListStyle(snapshot.isDraggingOver)}>
-                  <h4>Team Name</h4>
-                  <TeamHolder players={selected} gameID={props.game.id} removePlayerFromList={(player) => removePlayer(selected, setSelected, player)} />
-                  {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-      </Col>
+        {teamDroppables}
       </Row>
     </DragDropContext>
   );
@@ -291,7 +351,11 @@ function WaitingRoom(props) {
     <div className="WaitingRoom">
       Now playing game {props.game.name}
       {dnd}
-      <Button onClick={() => startGame([], props.game.id, props.loading)}>Start Game</Button>
+      <div className="flex">
+        <Button onClick={() => startGame(teams, props.game.id, props.loading)}>Start Game</Button>
+        <Button onClick={() => autoAssign()}>Auto Assign</Button>
+        <Button onClick={() => resetPlayers()}>Reset</Button>
+      </div>
     </div>
   );
 }

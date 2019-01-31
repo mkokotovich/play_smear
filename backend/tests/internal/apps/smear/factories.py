@@ -14,6 +14,13 @@ class GameFactory(factory.DjangoModelFactory):
     single_player = factory.Faker("boolean")
 
 
+class TeamFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = 'smear.Game'
+    game = factory.SubFactory('tests.internal.apps.user.factories.GameFactory')
+    name = factory.Faker("name")
+
+
 class HandFactory(factory.DjangoModelFactory):
     class Meta:
         model = 'smear.Hand'
