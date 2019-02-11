@@ -21,7 +21,6 @@ class TeamSummarySerializer(serializers.ModelSerializer):
 
 class GameSerializer(serializers.ModelSerializer):
     passcode = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    status = serializers.SerializerMethodField()
     players = PlayerSummarySerializer(source='player_set', read_only=True, many=True)
     teams = TeamSummarySerializer(read_only=True, many=True)
 
@@ -29,9 +28,6 @@ class GameSerializer(serializers.ModelSerializer):
         model = Game
         fields = '__all__'
         read_only_fields = ('owner', 'passcode_required')
-
-    def get_status(self, obj):
-        return obj.get_status()
 
 
 class GameJoinSerializer(serializers.Serializer):
@@ -49,3 +45,12 @@ class GameStartSerializer(serializers.Serializer):
     teams = serializers.ListField(
         child=SetTeamSerializer()
     )
+
+
+class StatusStartingSerializer(serializers.ModelSerializer):
+    teams = TeamSummarySerializer()
+    players = PlayerSummarySerializer()
+
+    class Meta:
+        model = Game
+        fields = '__none__'

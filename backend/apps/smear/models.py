@@ -26,17 +26,14 @@ class Game(models.Model):
     passcode = models.CharField(max_length=256, blank=True, default="")
     single_player = models.BooleanField(blank=False, default=True)
     players = models.ManyToManyField('auth.User', through='Player')
+    state = models.CharField(max_length=1024, blank=True, default="")
+
+    # Available states
+    STARTING = "starting"
+    BIDDING = "bidding"
 
     class Meta:
         ordering = ('created_at',)
-
-    def get_status(self):
-        if self.hands.count() == 0:
-            return {
-                'state': 'waiting_for_start',
-                'metadata': {},
-            }
-        return self.hands.last().get_status()
 
     def start(self, start_data):
         if self.players.count() != self.num_players:
@@ -47,6 +44,8 @@ class Game(models.Model):
         hand = Hand.objects.create(game=self)
         hand.start()
         # hand.advance_bidding()
+        self.state = Game.BIDDING
+        self.save()
         LOG.info(f"Started hand {hand} on game {self}")
 
     def create_initial_teams(self):
@@ -59,6 +58,7 @@ class Game(models.Model):
             raise ValidationError(f"Unable to start game, {len(teams)} were supplied but {self.num_teams} were expected")
 
         # Assign players to their teams (if necessary)
+        total_players = 0
         for team_num, teamMeta in enumerate(teams):
             try:
                 team = self.teams.get(id=teamMeta['id'])
@@ -81,16 +81,21 @@ class Game(models.Model):
                 player.seat = team_num + (self.num_teams * player_num)
                 LOG.info(f"Added {player.name} to game {self.name}, team {team}, at seat {player.seat}")
                 player.save()
+                total_players += 1
 
         if not teams:
             for player_num, player in enumerate(self.player_set.all()):
                 player.seat = player_num
                 LOG.info(f"Added {player.name} to game {self.name} at seat {player.seat}")
                 player.save()
+                total_players += 1
+
+        if total_players != self.num_players:
+            raise ValidationError(f"Unable to start game, only {total_players} were assigned to teams, but {self.num_players} are playing")
 
     def add_computer_player(self):
         if self.players.count() >= self.num_players:
-            raise ValidationError(f"Unable to add computer, already containers {self.num_players} players")
+            raise ValidationError(f"Unable to add computer, game already contains {self.num_players} players")
 
         computers = list(User.objects.filter(username__startswith="mkokotovich+computer").all())
         shuffle(computers)
@@ -157,14 +162,6 @@ class Hand(models.Model):
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     game = models.ForeignKey(Game, related_name='hands', on_delete=models.CASCADE, null=True)
-
-    def get_status(self):
-        return {
-            'state': 'bidding',
-            'metadata': {
-                'hand': self.id,
-            },
-        }
 
     def start(self):
         # Deal out six cards

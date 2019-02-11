@@ -54,9 +54,11 @@ def test_Game_set_teams_and_seats_with_teams(mocker, num_teams, num_players):
     start_data = {
         'teams': [
             {
-                'name': team.name,
                 'id': team.id,
-                'players': [player.id for player_num, player in enumerate(players) if player_num % num_teams == team_num],
+                'players': [
+                    {'id': player.id}
+                    for player_num, player in enumerate(players) if player_num % num_teams == team_num
+                ]
             } for team_num, team in enumerate(list(game.teams.all()))
         ]
     } if num_teams != 0 else {}
@@ -64,16 +66,15 @@ def test_Game_set_teams_and_seats_with_teams(mocker, num_teams, num_players):
     game.set_teams_and_seats(start_data)
 
     for team_num, team in enumerate(start_data.get('teams', [])):
-        for player_num, player_id in enumerate(team['players']):
-            player = Player.objects.get(id=player_id)
-            assert player in players
-            assert player.game == game
-            assert player.team.name == team['name']
-            assert player.seat == team_num + player_num * num_teams
+        for player_num, player in enumerate(team['players']):
+            db_player = Player.objects.get(id=player['id'])
+            assert db_player in players
+            assert db_player.game == game
+            assert db_player.seat == team_num + player_num * num_teams
 
     if num_teams == 0:
         game_players = Player.objects.filter(game=game).order_by('seat')
-        for player_num, player in enumerate(game_players):
-            assert player in players
-            assert player.game == game
-            assert player.seat == player_num
+        for player_num, db_player in enumerate(game_players):
+            assert db_player in players
+            assert db_player.game == game
+            assert db_player.seat == player_num

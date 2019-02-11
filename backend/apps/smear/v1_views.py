@@ -4,9 +4,10 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import filters
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, APIException
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import get_object_or_404
 
 from apps.smear.models import Game, Player
 from apps.smear.pagination import SmearPagination
@@ -15,7 +16,8 @@ from apps.smear.serializers import (
     GameJoinSerializer,
     GameStartSerializer,
     PlayerSummarySerializer,
-    PlayerIDSerializer
+    PlayerIDSerializer,
+    StatusStartingSerializer,
 )
 from apps.smear.permissions import IsOwnerPermission, IsPlayerInGame
 
@@ -58,6 +60,7 @@ class GameViewSet(viewsets.ModelViewSet):
             owner=self.request.user if self.request.user.is_authenticated else None,
             passcode_required=bool(passcode)
         )
+        # TODO: allow unauthed single player games
         if self.request.user.is_authenticated:
             Player.objects.create(
                 game=instance,
@@ -72,6 +75,8 @@ class GameViewSet(viewsets.ModelViewSet):
             while instance.players.count() < instance.num_players:
                 instance.add_computer_player()
 
+        instance.state = Game.WAITING_TO_START
+
         instance.save()
 
     @action(
@@ -80,7 +85,7 @@ class GameViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def join(self, request, pk=None):
-        game = Game.objects.get(id=pk)
+        game = get_object_or_404(Game, pk=pk)
         serializer = GameJoinSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
@@ -110,7 +115,7 @@ class GameViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        game = Game.objects.get(id=pk)
+        game = get_object_or_404(Game, pk=pk)
         game.start(serializer.validated_data)
         return Response({'status': 'success'})
 
@@ -121,7 +126,7 @@ class GameViewSet(viewsets.ModelViewSet):
     )
     def player(self, request, pk=None):
         if request.method == 'POST':
-            game = Game.objects.get(id=pk)
+            game = get_object_or_404(Game, pk=pk)
             computer_player = game.add_computer_player()
             return Response({
                 'status': 'success',
@@ -146,3 +151,20 @@ class GameViewSet(viewsets.ModelViewSet):
             return Response({
                 'status': 'success',
             })
+
+    @action(
+        detail=True,
+        methods=['get'],
+        permission_classes=[IsPlayerInGame],
+    )
+    def status(self, request, pk=None):
+        game = get_object_or_404(Game, pk=pk)
+        serializer_class = {
+            'starting': StatusStartingSerializer,
+            'bidding': StatusStartingSerializer,
+        }.get(game.state, None)
+        if not serializer_class:
+            raise APIException(f"Unable to find status of game {game}, state ({game.state}) is not supported")
+        serializer = serializer_class(game)
+
+        return Response(serializer.data)
