@@ -13,6 +13,7 @@ from apps.user.serializers import (
     GenerateResetSerializer,
     ResetPasswordSerializer
 )
+from apps.smear.pagination import SmearPagination
 from apps.user.permissions import IsOwnerPermission
 from apps.user.email import send_password_reset_email
 
@@ -23,6 +24,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     serializer_class = UserSerializer
     ordering = "-date_joined"
+    pagination_class = SmearPagination
 
     def get_queryset(self):
         if self.request.user.is_staff:

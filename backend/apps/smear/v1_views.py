@@ -75,7 +75,7 @@ class GameViewSet(viewsets.ModelViewSet):
             while instance.players.count() < instance.num_players:
                 instance.add_computer_player()
 
-        instance.state = Game.WAITING_TO_START
+        instance.state = Game.STARTING
 
         instance.save()
 
@@ -128,12 +128,7 @@ class GameViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             game = get_object_or_404(Game, pk=pk)
             computer_player = game.add_computer_player()
-            return Response({
-                'status': 'success',
-                'meta': {
-                    'computer_player': PlayerSummarySerializer(computer_player).data,
-                },
-            })
+            return Response(PlayerSummarySerializer(computer_player).data)
         else:
             serializer = PlayerIDSerializer(data=request.data)
             if not serializer.is_valid():
