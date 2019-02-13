@@ -13,6 +13,12 @@ class PlayerIDSerializer(serializers.Serializer):
     id = serializers.CharField(max_length=64)
 
 
+class TeamSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = ('id', 'name', 'members')
+
+
 class TeamSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
@@ -32,19 +38,6 @@ class GameSerializer(serializers.ModelSerializer):
 
 class GameJoinSerializer(serializers.Serializer):
     passcode = serializers.CharField(max_length=512, required=False)
-
-
-class SetTeamSerializer(serializers.Serializer):
-    id = serializers.CharField(max_length=64)
-    players = serializers.ListField(
-        child=PlayerIDSerializer()
-    )
-
-
-class GameStartSerializer(serializers.Serializer):
-    teams = serializers.ListField(
-        child=SetTeamSerializer()
-    )
 
 
 class StatusStartingSerializer(serializers.ModelSerializer):

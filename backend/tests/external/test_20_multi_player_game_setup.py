@@ -25,6 +25,22 @@ def test_mp_game_create(smear_host, state):
     }
 
 
+def get_game(smear_host, game_id, user):
+    url = f"{smear_host}/api/smear/v1/games/{game_id}/"
+
+    response = requests.get(url, headers=create_headers(user['token']))
+
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_mp_game_get(smear_host, state):
+    game = get_game(smear_host, state['mp_game']['id'], state['user2'])
+
+    assert game['id'] == state['mp_game']['id']
+    assert game['name'] == state['mp_game']['name']
+
+
 def test_mp_game_join(smear_host, state):
     url = f"{smear_host}/api/smear/v1/games/{state['mp_game']['id']}/join/"
     join_data = {

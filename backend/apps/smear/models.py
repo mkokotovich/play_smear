@@ -35,11 +35,14 @@ class Game(models.Model):
     class Meta:
         ordering = ('created_at',)
 
-    def start(self, start_data):
+    def __str__(self):
+        return f"{self.name} ({self.id})"
+
+    def start(self):
         if self.players.count() != self.num_players:
             raise ValidationError(f"Unable to start game, game requires {self.num_players} players, but {self.players.count()} have joined")
 
-        self.set_teams_and_seats(start_data)
+        self.set_seats()
 
         hand = Hand.objects.create(game=self)
         hand.start()
@@ -52,41 +55,20 @@ class Game(models.Model):
         for i in range(0, self.num_teams):
             Team.objects.create(game=self, name=f"Team {i+1}")
 
-    def set_teams_and_seats(self, start_data):
-        teams = start_data.get('teams', [])
-        if len(teams) != self.num_teams:
-            raise ValidationError(f"Unable to start game, {len(teams)} were supplied but {self.num_teams} were expected")
-
-        # Assign players to their teams (if necessary)
+    def set_seats(self):
+        # Assign players to their seats
         total_players = 0
-        for team_num, teamMeta in enumerate(teams):
-            try:
-                team = self.teams.get(id=teamMeta['id'])
-            except Team.DoesNotExist:
-                raise ValidationError(
-                    f"Unable to start game, team with id {teamMeta['id']} was "
-                    "given but could not be found"
-                )
-
-            for player_num, player_obj in enumerate(teamMeta['players']):
-                try:
-                    player = self.player_set.get(id=player_obj['id'])
-                except Player.DoesNotExist:
-                    raise ValidationError(
-                        f"Unable to start game, player id {player_obj['id']} was "
-                        f"listed as a member of team {team} but could "
-                        "not be found in this game"
-                    )
-                player.team = team
+        for team_num, team in enumerate(self.teams.all()):
+            for player_num, player in enumerate(team.members.all()):
                 player.seat = team_num + (self.num_teams * player_num)
-                LOG.info(f"Added {player.name} to game {self.name}, team {team}, at seat {player.seat}")
+                LOG.info(f"Added {player.name} from game {self.name} and team {team.name} to seat {player.seat}")
                 player.save()
                 total_players += 1
 
-        if not teams:
+        if not self.teams.exists():
             for player_num, player in enumerate(self.player_set.all()):
                 player.seat = player_num
-                LOG.info(f"Added {player.name} to game {self.name} at seat {player.seat}")
+                LOG.info(f"Added {player.name} from game {self.name} to seat {player.seat}")
                 player.save()
                 total_players += 1
 
@@ -127,13 +109,16 @@ class Player(models.Model):
 
     is_computer = models.BooleanField(blank=True, default=False)
     name = models.CharField(max_length=1024)
-    team = models.ForeignKey(Team, related_name='players', on_delete=models.CASCADE, null=True, blank=True)
+    team = models.ForeignKey(Team, related_name='members', on_delete=models.CASCADE, null=True, blank=True)
     seat = models.IntegerField(blank=True, null=True)
 
     cards_in_hand = ArrayField(
         models.CharField(max_length=2),
         default=list
     )
+
+    def __str__(self):
+        return f"{self.name} ({self.id})"
 
     def __init__(self, *args, **kwargs):
         name = kwargs.pop('name', self._get_name_from_user(kwargs.get('user', None)))

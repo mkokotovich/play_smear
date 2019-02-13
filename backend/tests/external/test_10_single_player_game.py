@@ -11,7 +11,7 @@ def test_sp_game_create(smear_host, state):
         'name': f'test_game_{str(uuid.uuid4())[:8]}',
         'passcode': '',
         'num_players': 4,
-        'num_teams': 2,
+        'num_teams': 0,
         'score_to_play_to': 11,
         'single_player': True,
     }
@@ -20,3 +20,11 @@ def test_sp_game_create(smear_host, state):
 
     assert response.status_code == 201, response.text
     state['sp_game'] = response.json()
+
+
+def test_sp_game_start(smear_host, state):
+    url = f"{smear_host}/api/smear/v1/games/{state['sp_game']['id']}/start/"
+
+    response = requests.post(url, headers=create_headers(state['user']['token']))
+
+    assert response.status_code == 200, response.text

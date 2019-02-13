@@ -9,17 +9,18 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 
-from apps.smear.models import Game, Player
+from apps.smear.models import Game, Player, Team
 from apps.smear.pagination import SmearPagination
 from apps.smear.serializers import (
     GameSerializer,
     GameJoinSerializer,
-    GameStartSerializer,
     PlayerSummarySerializer,
     PlayerIDSerializer,
     StatusStartingSerializer,
+    TeamSummarySerializer,
+    TeamSerializer,
 )
-from apps.smear.permissions import IsOwnerPermission, IsPlayerInGame
+from apps.smear.permissions import IsOwnerPermission, IsPlayerInGame, IsGameOwnerPermission, IsPlayerOnTeam
 
 
 LOG = logging.getLogger(__name__)
@@ -33,15 +34,10 @@ class GameViewSet(viewsets.ModelViewSet):
     serializer_class = GameSerializer
 
     def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
-        if self.action == 'create':
+        if self.action in ['create', 'list', 'retrieve']:
             self.permission_classes = [AllowAny]
-        elif self.action == 'destroy':
+        elif self.action in ['update', 'partial_update', 'destroy']:
             self.permission_classes = [IsOwnerPermission]
-        else:
-            self.permission_classes = [IsPlayerInGame]
 
         return super().get_permissions()
 
@@ -85,7 +81,7 @@ class GameViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def join(self, request, pk=None):
-        game = get_object_or_404(Game, pk=pk)
+        game = self.get_object()
         serializer = GameJoinSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
@@ -108,15 +104,9 @@ class GameViewSet(viewsets.ModelViewSet):
         permission_classes=[IsOwnerPermission],
     )
     def start(self, request, pk=None):
-        serializer = GameStartSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        game = get_object_or_404(Game, pk=pk)
-        game.start(serializer.validated_data)
+        game = self.get_object()
+        game.start()
+        LOG.info(f"Started game {game}")
         return Response({'status': 'success'})
 
     @action(
@@ -125,9 +115,10 @@ class GameViewSet(viewsets.ModelViewSet):
         permission_classes=[IsOwnerPermission],
     )
     def player(self, request, pk=None):
+        game = self.get_object()
         if request.method == 'POST':
-            game = get_object_or_404(Game, pk=pk)
             computer_player = game.add_computer_player()
+            LOG.info(f"Added computer {computer_player} to game {game}")
             return Response(PlayerSummarySerializer(computer_player).data)
         else:
             serializer = PlayerIDSerializer(data=request.data)
@@ -140,9 +131,11 @@ class GameViewSet(viewsets.ModelViewSet):
             try:
                 player = Player.objects.get(id=player_id)
             except Player.DoesNotExist:
+                LOG.info(f"Player with ID {player_id} did not exist")
                 pass
             else:
                 player.delete()
+                LOG.info(f"Removed {player} from game {pk}")
             return Response({
                 'status': 'success',
             })
@@ -153,7 +146,7 @@ class GameViewSet(viewsets.ModelViewSet):
         permission_classes=[IsPlayerInGame],
     )
     def status(self, request, pk=None):
-        game = get_object_or_404(Game, pk=pk)
+        game = self.get_object()
         serializer_class = {
             'starting': StatusStartingSerializer,
             'bidding': StatusStartingSerializer,
@@ -163,3 +156,45 @@ class GameViewSet(viewsets.ModelViewSet):
         serializer = serializer_class(game)
 
         return Response(serializer.data)
+
+
+class TeamViewSet(viewsets.ModelViewSet):
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend,)
+    pagination_class = SmearPagination
+    serializer_class = TeamSummarySerializer
+
+    def get_permissions(self):
+        if self.action in ['create', 'destroy', 'update']:
+            self.permission_classes = [IsGameOwnerPermission]
+        elif self.action in ['list', 'retrieve', 'partial_update']:
+            self.permission_classes = [IsPlayerOnTeam]
+
+        return super().get_permissions()
+
+    def get_queryset(self):
+        game_id = self.kwargs.get('game_id')
+        return Team.objects.filter(game_id=game_id)
+
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsGameOwnerPermission],
+    )
+    def member(self, request, pk=None, game_id=None):
+        team = self.get_object()
+        serializer = PlayerIDSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        player_id = serializer.validated_data['id']
+        player = get_object_or_404(Player, pk=player_id)
+
+        adding = request.method == 'POST'
+
+        player.team = team if adding else None
+        player.save()
+        LOG.info(f"{'Added' if adding else 'Removed'} player {player} {'to' if adding else 'from'} team {team}")
+
+        return Response(TeamSerializer(team).data)
