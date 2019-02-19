@@ -198,3 +198,23 @@ class TeamViewSet(viewsets.ModelViewSet):
         LOG.info(f"{'Added' if adding else 'Removed'} player {player} {'to' if adding else 'from'} team {team}")
 
         return Response(TeamSerializer(team).data)
+
+    @action(
+        detail=False,
+        methods=['post', 'delete'],
+        permission_classes=[IsGameOwnerPermission],
+    )
+    def all(self, request, game_id=None):
+        game = get_object_or_404(Game, pk=game_id)
+
+        if request.method == 'POST':
+            LOG.info(f"Autofilling teams for game {game}")
+            game.autofill_teams()
+
+        elif request.method == 'DELETE':
+            LOG.info(f"Resetting teams for game {game}")
+            game.reset_teams()
+
+        game.save()
+
+        return Response(GameSerializer(game).data)

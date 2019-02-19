@@ -61,3 +61,25 @@ def test_mp_game_team_rename(smear_host, state):
         'id': team['id'],
         'name': 'coolname',
     }
+
+
+def reset_team(smear_host, user, game):
+    url = f"{smear_host}/api/smear/v1/games/{game['id']}/teams/all/"
+
+    response = requests.delete(url, headers=create_headers(user['token']))
+    return response
+
+
+def autofill_team(smear_host, user, game):
+    url = f"{smear_host}/api/smear/v1/games/{game['id']}/teams/all/"
+
+    response = requests.post(url, headers=create_headers(user['token']))
+    return response
+
+
+def test_mp_game_team_reset_and_autofill(smear_host, state):
+    response = reset_team(smear_host, state['user'], state['mp_game'])
+    assert response.status_code == 200, response.text
+
+    response = autofill_team(smear_host, state['user'], state['mp_game'])
+    assert response.status_code == 200, response.text

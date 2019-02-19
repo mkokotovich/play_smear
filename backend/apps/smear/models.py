@@ -91,6 +91,23 @@ class Game(models.Model):
                 LOG.info(f"Added computer {computer} to {self}")
                 return computer_player
 
+    def autofill_teams(self):
+        if self.num_teams == 0:
+            return
+        teams = self.teams.all()
+        players = list(self.player_set.all())
+        shuffle(players)
+
+        for player_num, player in enumerate(players):
+            team_num = player_num % self.num_teams
+            player.team = teams[team_num]
+            player.save()
+            LOG.info(f"Autofilling teams for game {self}. Added {player} to team {teams[team_num]}")
+
+    def reset_teams(self):
+        for team in self.teams.all():
+            team.members.clear()
+
 
 class Team(models.Model):
     game = models.ForeignKey(Game, related_name='teams', on_delete=models.CASCADE)
