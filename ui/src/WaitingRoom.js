@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { withRouter } from 'react-router-dom';
-import { Row, Col, Button, Modal, Icon } from 'antd';
+import { Card, Row, Col, Button, Modal, Icon } from 'antd';
 import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import getErrorString from './utils';
@@ -27,11 +27,51 @@ function removePlayerFromGame(player, gameID, setLoading, removePlayerFromList) 
 
 }
 
+function addPlayerToNewTeam(player, gameID, sourceTeamID, destinationTeamID, setLoading) {
+  if (destinationTeamID == "bench") {
+    // Moving to bench is removing from previous team
+    setLoading(true);
+    axios.delete(`/api/smear/v1/games/${gameID}/teams/${sourceTeamID}/member/`,
+      { data: { id: player.id } })
+      .then((response) => {
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.log(error);
+        setLoading(false);
+        // TODO: force a refresh of team data
+        Modal.error({
+          title: "Unable to remove player from team",
+          content: getErrorString(error.response.data),
+          maskClosable: true,
+        })
+      });
+  } else {
+    setLoading(true);
+    axios.post(`/api/smear/v1/games/${gameID}/teams/${destinationTeamID}/member/`,
+      { id: player.id })
+      .then((response) => {
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.log(error);
+        setLoading(false);
+        // TODO: force a refresh of team data
+        Modal.error({
+          title: "Unable to add player to team",
+          content: getErrorString(error.response.data),
+          maskClosable: true,
+        })
+      });
+  }
+}
+
 function Player(props) {
   const [loading, setLoading] = useState(false);
   const {player, gameID, removePlayerFromList, removeIsVisible} = props;
 
-  const iconType = loading ? "loading" : "close-circle";
+  const closeIcon = loading ? "loading" : "close-circle";
+  const playerIcon = loading ? "loading" : player.is_computer ? "desktop" : "user";
 
   return (
     <div style={{
@@ -43,11 +83,14 @@ function Player(props) {
     }}>
       <Row type="flex" justify="space-between">
       <Col>
+        <Icon style={{fontSize: '18px'}} type={playerIcon}/>
+      </Col>
+      <Col>
         {player.name}
       </Col>
       {removeIsVisible && (
       <Col>
-        <Icon theme="twoTone" twoToneColor="#eb2f96" style={{cursor: "pointer", fontSize: '18px'}} disabled={loading} type={iconType} onClick={() => removePlayerFromGame(player, gameID, setLoading, removePlayerFromList)}/>
+        <Icon theme="twoTone" twoToneColor="#eb2f96" style={{cursor: "pointer", fontSize: '18px'}} disabled={loading} type={closeIcon} onClick={() => removePlayerFromGame(player, gameID, setLoading, removePlayerFromList)}/>
       </Col>
       )}
       </Row>
@@ -67,19 +110,16 @@ const reorder = (list, startIndex, endIndex) => {
 /**
  * Moves an item from one list to another list.
  */
-const move = (source, destination, droppableSource, droppableDestination) => {
+function move(source, setSource, destination, setDestination, droppableSource, droppableDestination) {
     const sourceClone = Array.from(source);
     const destClone = Array.from(destination);
     const [removed] = sourceClone.splice(droppableSource.index, 1);
 
     destClone.splice(droppableDestination.index, 0, removed);
 
-    const result = {};
-    result[droppableSource.droppableId] = sourceClone;
-    result[droppableDestination.droppableId] = destClone;
-
-    return result;
-};
+    setSource(sourceClone);
+    setDestination(destClone);
+}
 
 const getItemStyle = (isDragging, draggableStyle) => ({
     // some basic styles to make the items look a bit nicer
@@ -93,11 +133,10 @@ const getItemStyle = (isDragging, draggableStyle) => ({
 });
 
 const getListStyle = isDraggingOver => ({
-    background: isDraggingOver ? 'lightblue' : 'lightgrey',
+    background: isDraggingOver ? 'lightblue' : '#fff',
+    minWidth: 248,
+    minHeight: 200,
     margin: 5,
-    padding: 5,
-    minWidth: 210,
-    minHeight: 200
 });
 
 function addComputerToGame(gameID, setLoading, addPlayer) {
@@ -105,7 +144,7 @@ function addComputerToGame(gameID, setLoading, addPlayer) {
     axios.post(`/api/smear/v1/games/${gameID}/player/`)
       .then((response) => {
         setLoading(false);
-        addPlayer(response.data.meta.computer_player);
+        addPlayer(response.data);
       })
       .catch((error) => {
         console.log(error);
@@ -165,9 +204,7 @@ function startGame(teams, gameID, setLoading) {
   }, []);
 
   setLoading(true);
-  axios.post(`/api/smear/v1/games/${gameID}/start/`, {
-    teams: teamList,
-  })
+  axios.post(`/api/smear/v1/games/${gameID}/start/`)
     .then((response) => {
       setLoading(false);
     })
@@ -262,6 +299,8 @@ function WaitingRoom(props) {
     setBench([]);
   }
 
+  // Adds new players who have joined the game to the bench,
+  // and removes players who have left the game
   useEffect(() => {
     const playersToRemove = allPlayers.filter((player) => {
       return props.game.players.indexOf(player) === -1;
@@ -298,15 +337,24 @@ function WaitingRoom(props) {
       playerListSetters[source.droppableId](items);
 
     } else {
-      const result = move(
+      const player = playerList[source.droppableId][source.index];
+      const sourceTeamID = source.droppableId;
+      const destinationTeamID = destination.droppableId;
+      addPlayerToNewTeam(
+        player,
+        props.game.id,
+        sourceTeamID,
+        destinationTeamID,
+        props.loading,
+      );
+      move(
         playerList[source.droppableId],
+        playerListSetters[source.droppableId],
         playerList[destination.droppableId],
+        playerListSetters[destination.droppableId],
         source,
         destination
       );
-
-      playerListSetters[source.droppableId](result[source.droppableId]);
-      playerListSetters[destination.droppableId](result[destination.droppableId]);
     }
   };
 
@@ -314,13 +362,21 @@ function WaitingRoom(props) {
     <Col key={index}>
       <Droppable droppableId={""+team.id}>
         {(provided, snapshot) => (
-          <div
-            ref={provided.innerRef}
-            style={getListStyle(snapshot.isDraggingOver)}>
-              <h4>{team.name}</h4>
-              <TeamHolder players={teams[team.id].list} gameID={props.game.id} removePlayerFromList={(player) => removePlayer(teams[team.id].list, teams[team.id].setList, player)} />
+          <Card
+            title={team.name}
+            headStyle={{backgroundColor: "#f0f5f0" }}
+            className="teamCard"
+            style={getListStyle(snapshot.isDraggingOver)}
+          >
+            <div ref={provided.innerRef} style={{minHeight: 200}}>
+              <TeamHolder
+                players={teams[team.id].list}
+                gameID={props.game.id}
+                removePlayerFromList={(player) => removePlayer(teams[team.id].list, teams[team.id].setList, player)}
+              />
               {provided.placeholder}
-          </div>
+            </div>
+          </Card>
         )}
       </Droppable>
     </Col>
@@ -329,20 +385,29 @@ function WaitingRoom(props) {
   const dnd = (
     <DragDropContext onDragEnd={onDragEnd}>
       <Row type="flex">
-      <Col>
-      <Droppable droppableId="bench">
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          style={getListStyle(snapshot.isDraggingOver)}>
-            <h4>Players</h4>
-            <TeamHolder players={bench} gameID={props.game.id} removePlayerFromList={(player) => removePlayer(bench, setBench, player)} removeIsVisible={true}/>
-            <AddComputer gameID={props.game.id} addPlayer={addPlayer}/>
-            {provided.placeholder}
-          </div>
-      )}
-      </Droppable>
-      </Col>
+        <Col>
+          <Droppable droppableId="bench">
+            {(provided, snapshot) => (
+              <Card
+                title="Players"
+                headStyle={{backgroundColor: "#f0f5f0" }}
+                className="teamCard"
+                style={getListStyle(snapshot.isDraggingOver)}
+              >
+                <div ref={provided.innerRef} style={{minHeight: 200}}>
+                  <TeamHolder
+                    players={bench}
+                    gameID={props.game.id}
+                    removePlayerFromList={(player) => removePlayer(bench, setBench, player)}
+                    removeIsVisible={true}
+                  />
+                  <AddComputer gameID={props.game.id} addPlayer={addPlayer}/>
+                  {provided.placeholder}
+                </div>
+              </Card>
+            )}
+          </Droppable>
+        </Col>
         {teamDroppables}
       </Row>
     </DragDropContext>

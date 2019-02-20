@@ -74,7 +74,7 @@ class Home extends Component {
 
     return (
       <Row type="flex" align="top" className="Home">
-        <div align="center">
+        <div className="Loading" align="center">
           { this.state.loading && <Spin size="large" />}
         </div>
         <Col xs={24}>

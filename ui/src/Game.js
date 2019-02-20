@@ -47,8 +47,8 @@ class Game extends Component {
   render() {
     var gameDisplay = null;
     if (this.state.game) {
-      const gameState = this.state.game.status.state;
-      if (gameState === 'waiting_for_start') {
+      const gameState = this.state.game.state;
+      if (gameState === "starting") {
         gameDisplay = (<WaitingRoom game={this.state.game} loading={this.loading} />);
       } else if (gameState === '') {
         gameDisplay = (<></>);
@@ -58,7 +58,7 @@ class Game extends Component {
     }
     return (
       <div className="Game">
-        <div align="center">
+        <div className="Loading" align="center">
           { this.state.loading && <Spin size="large" />}
         </div>
         { gameDisplay }
