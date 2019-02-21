@@ -147,13 +147,13 @@ class GameViewSet(viewsets.ModelViewSet):
     )
     def status(self, request, pk=None):
         game = self.get_object()
-        serializer_class = {
+        status_serializer = {
             'starting': StatusStartingSerializer,
             'bidding': StatusStartingSerializer,
         }.get(game.state, None)
-        if not serializer_class:
+        if not status_serializer:
             raise APIException(f"Unable to find status of game {game}, state ({game.state}) is not supported")
-        serializer = serializer_class(game)
+        serializer = status_serializer(game)
 
         return Response(serializer.data)
 

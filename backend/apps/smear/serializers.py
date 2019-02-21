@@ -41,9 +41,9 @@ class GameJoinSerializer(serializers.Serializer):
 
 
 class StatusStartingSerializer(serializers.ModelSerializer):
-    teams = TeamSummarySerializer()
-    players = PlayerSummarySerializer()
+    teams = TeamSummarySerializer(read_only=True, many=True)
+    players = PlayerSummarySerializer(source='player_set', read_only=True, many=True)
 
     class Meta:
         model = Game
-        fields = '__none__'
+        fields = ('teams', 'players', 'state')

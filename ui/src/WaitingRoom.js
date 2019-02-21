@@ -192,20 +192,11 @@ function TeamHolder(props) {
   ))
 }
 
-function startGame(teams, gameID, setLoading) {
-  const teamList = Object.entries(teams).reduce((accum, item) => {
-    const [teamID, teamData] = item;
-    const teamInfo = {
-      id: teamID,
-      players: teamData.list
-    }
-    accum = [...accum, teamInfo];
-    return accum;
-  }, []);
-
+function startGame(teams, gameID, setLoading, setReload) {
   setLoading(true);
   axios.post(`/api/smear/v1/games/${gameID}/start/`)
     .then((response) => {
+      setReload(true);
       setLoading(false);
     })
     .catch((error) => {
@@ -362,6 +353,12 @@ function WaitingRoom(props) {
     initialPlayerAssignment(newBench, setBench, teams, props.game.players);
   }, props.game.players);
   
+  // If in a multiplayer game, always refresh the game to check for changes
+  // Otherwise we don't need to
+  useEffect(() => {
+    props.setReload(!props.game.single_player);
+  }, [props.game.single_player]);
+
   function onDragEnd(result) {
     const { source, destination } = result;
 
@@ -466,7 +463,7 @@ function WaitingRoom(props) {
       </span>
       {dnd}
       <div className="flex">
-        <Button onClick={() => startGame(teams, props.game.id, props.loading)}>Start Game</Button>
+        <Button onClick={() => startGame(teams, props.game.id, props.loading, props.setReload)}>Start Game</Button>
         { props.game.teams.length > 0 &&
           <>
             <Button onClick={() => autoAssign(props.game.id, props.loading)}>Auto Assign</Button>
