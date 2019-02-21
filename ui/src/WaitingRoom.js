@@ -220,25 +220,27 @@ function startGame(teams, gameID, setLoading) {
 }
 
 function initialPlayerAssignment(bench, setBench, teams, players) {
-  console.log("Starting");
-  console.log(bench);
-  console.log(teams);
-  console.log(players);
-  const teamsAndPlayers = players.reduce((accum, player) => {
-    if (player.team) {
-      if (player.team in accum) {
-        accum[player.team] = [...accum[player.team], player];
-      } else {
-        accum[player.team] = [player];
-      }
-      // Side effect:
-      bench.splice(bench.indexOf(player), 1);
+  const initialTeams = Object.entries(teams).reduce((accum, [teamID, items]) => {
+    if (!(teamID in accum)) {
+      accum[teamID] = []
     }
     return accum;
   }, {});
+
+  const teamsAndPlayers = players.reduce((accum, player) => {
+    if (player.team) {
+      accum[player.team] = [...accum[player.team], player];
+
+      // Side effect: remove the player from our copy of the bench
+      bench.splice(bench.indexOf(player), 1);
+    }
+    return accum;
+  }, initialTeams);
+
   Object.entries(teamsAndPlayers).forEach(([teamID, teamList]) => {
     teams[teamID].setList(teamList);
   });
+
   setBench(bench);
 }
 
@@ -301,25 +303,40 @@ function WaitingRoom(props) {
     setAllPlayers([...allPlayers, player]);
   }
 
-  function resetPlayers() {
-    setBench(props.game.players);
-    setAllPlayers(props.game.players);
-    for (var teamID in teamSetters) {
-      teamSetters[teamID]([]);
-    }
+  function resetPlayers(gameID, setLoading) {
+    setLoading(true);
+    axios.delete(`/api/smear/v1/games/${gameID}/teams/all/`)
+      .then((response) => {
+        setLoading(false);
+        initialPlayerAssignment(allPlayers, setBench, teams, response.data.players);
+      })
+      .catch((error) => {
+        console.log(error);
+        setLoading(false);
+        Modal.error({
+          title: "Unable to reset teams",
+          content: getErrorString(error.response.data),
+          maskClosable: true,
+        })
+      });
   }
 
-  function autoAssign() {
-    const numTeams = props.game.teams.length;
-    const teamIDs = props.game.teams.map((item) => item.id);
-    function findSameTeam(teamNum) {
-      return props.game.players.filter((item, index) => index % numTeams === teamNum);
-    }
-    for (var i = 0; i < numTeams; i++) {
-      const teamID = teamIDs[i];
-      teamSetters[teamID](findSameTeam(i));
-    }
-    setBench([]);
+  function autoAssign(gameID, setLoading) {
+    setLoading(true);
+    axios.post(`/api/smear/v1/games/${gameID}/teams/all/`)
+      .then((response) => {
+        setLoading(false);
+        initialPlayerAssignment(bench, setBench, teams, response.data.players);
+      })
+      .catch((error) => {
+        console.log(error);
+        setLoading(false);
+        Modal.error({
+          title: "Unable to auto assign players to teams",
+          content: getErrorString(error.response.data),
+          maskClosable: true,
+        })
+      });
   }
 
   // Adds new players who have joined the game to the bench,
@@ -452,8 +469,8 @@ function WaitingRoom(props) {
         <Button onClick={() => startGame(teams, props.game.id, props.loading)}>Start Game</Button>
         { props.game.teams.length > 0 &&
           <>
-            <Button onClick={() => autoAssign()}>Auto Assign</Button>
-            <Button onClick={() => resetPlayers()}>Reset</Button>
+            <Button onClick={() => autoAssign(props.game.id, props.loading)}>Auto Assign</Button>
+            <Button onClick={() => resetPlayers(props.game.id, props.loading)}>Reset</Button>
           </>
         }
       </div>
