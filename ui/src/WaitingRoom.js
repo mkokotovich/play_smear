@@ -81,15 +81,15 @@ function Player(props) {
       marginBottom: "4px",
       padding: "15px",
     }}>
-      <Row type="flex" justify="space-between">
-      <Col>
+      <Row type="flex">
+      <Col span={3}>
         <Icon style={{fontSize: '18px'}} type={playerIcon}/>
       </Col>
-      <Col>
+      <Col span={18} align="center">
         {player.name}
       </Col>
       {removeIsVisible && (
-      <Col>
+      <Col span={3}>
         <Icon theme="twoTone" twoToneColor="#eb2f96" style={{cursor: "pointer", fontSize: '18px'}} disabled={loading} type={closeIcon} onClick={() => removePlayerFromGame(player, gameID, setLoading, removePlayerFromList)}/>
       </Col>
       )}
@@ -219,6 +219,29 @@ function startGame(teams, gameID, setLoading) {
     });
 }
 
+function initialPlayerAssignment(bench, setBench, teams, players) {
+  console.log("Starting");
+  console.log(bench);
+  console.log(teams);
+  console.log(players);
+  const teamsAndPlayers = players.reduce((accum, player) => {
+    if (player.team) {
+      if (player.team in accum) {
+        accum[player.team] = [...accum[player.team], player];
+      } else {
+        accum[player.team] = [player];
+      }
+      // Side effect:
+      bench.splice(bench.indexOf(player), 1);
+    }
+    return accum;
+  }, {});
+  Object.entries(teamsAndPlayers).forEach(([teamID, teamList]) => {
+    teams[teamID].setList(teamList);
+  });
+  setBench(bench);
+}
+
 function WaitingRoom(props) {
   const [allPlayers, setAllPlayers] = useState([]);
   const [bench, setBench] = useState([]);
@@ -316,7 +339,10 @@ function WaitingRoom(props) {
         benchWithPlayersRemoved.splice(playerIndex, 1);
       }
     }
-    setBench([...benchWithPlayersRemoved, ...playersToAddToBench]);
+    const newBench = [...benchWithPlayersRemoved, ...playersToAddToBench];
+    setBench(newBench);
+
+    initialPlayerAssignment(newBench, setBench, teams, props.game.players);
   }, props.game.players);
   
   function onDragEnd(result) {
@@ -415,7 +441,12 @@ function WaitingRoom(props) {
 
   return (
     <div className="WaitingRoom">
-      Now playing game {props.game.name}
+      <span style={{fontSize: '18px'}}>
+      <b>Welcome to game <i>{props.game.name}. </i></b> 
+      </span>
+      <span>
+      Currently assigning teams.
+      </span>
       {dnd}
       <div className="flex">
         <Button onClick={() => startGame(teams, props.game.id, props.loading)}>Start Game</Button>
