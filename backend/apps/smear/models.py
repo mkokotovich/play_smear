@@ -38,42 +38,13 @@ class Game(models.Model):
     def __str__(self):
         return f"{self.name} ({self.id})"
 
-    def start(self):
-        if self.players.count() != self.num_players:
-            raise ValidationError(f"Unable to start game, game requires {self.num_players} players, but {self.players.count()} have joined")
-
-        self.set_seats()
-
-        hand = Hand.objects.create(game=self)
-        hand.start()
-        # hand.advance_bidding()
-        self.state = Game.BIDDING
-        self.save()
-        LOG.info(f"Started hand {hand} on game {self}")
+    @property
+    def current_hand(self):
+        return self.hands.last()
 
     def create_initial_teams(self):
         for i in range(0, self.num_teams):
             Team.objects.create(game=self, name=f"Team {i+1}")
-
-    def set_seats(self):
-        # Assign players to their seats
-        total_players = 0
-        for team_num, team in enumerate(self.teams.all()):
-            for player_num, player in enumerate(team.members.all()):
-                player.seat = team_num + (self.num_teams * player_num)
-                LOG.info(f"Added {player.name} from game {self.name} and team {team.name} to seat {player.seat}")
-                player.save()
-                total_players += 1
-
-        if not self.teams.exists():
-            for player_num, player in enumerate(self.player_set.all()):
-                player.seat = player_num
-                LOG.info(f"Added {player.name} from game {self.name} to seat {player.seat}")
-                player.save()
-                total_players += 1
-
-        if total_players != self.num_players:
-            raise ValidationError(f"Unable to start game, only {total_players} were assigned to teams, but {self.num_players} are playing")
 
     def add_computer_player(self):
         if self.players.count() >= self.num_players:
@@ -107,6 +78,44 @@ class Game(models.Model):
     def reset_teams(self):
         for team in self.teams.all():
             team.members.clear()
+
+    def start(self):
+        if self.players.count() != self.num_players:
+            raise ValidationError(f"Unable to start game, game requires {self.num_players} players, but {self.players.count()} have joined")
+
+        self.set_seats()
+
+        hand = Hand.objects.create(game=self)
+        hand.start()
+        hand.save()
+        self.state = Game.BIDDING
+        self.advance_game()
+        self.save()
+        LOG.info(f"Started hand {hand} on game {self}")
+
+    def set_seats(self):
+        # Assign players to their seats
+        total_players = 0
+        for team_num, team in enumerate(self.teams.all()):
+            for player_num, player in enumerate(team.members.all()):
+                player.seat = team_num + (self.num_teams * player_num)
+                LOG.info(f"Added {player.name} from game {self.name} and team {team.name} to seat {player.seat}")
+                player.save()
+                total_players += 1
+
+        if not self.teams.exists():
+            for player_num, player in enumerate(self.player_set.all()):
+                player.seat = player_num
+                LOG.info(f"Added {player.name} from game {self.name} to seat {player.seat}")
+                player.save()
+                total_players += 1
+
+        if total_players != self.num_players:
+            raise ValidationError(f"Unable to start game, only {total_players} were assigned to teams, but {self.num_players} are playing")
+
+    def advance_game(self):
+        if self.state == Game.BIDDING:
+            self.current_hand.advance_bidding()
 
 
 class Team(models.Model):

@@ -192,11 +192,11 @@ function TeamHolder(props) {
   ))
 }
 
-function startGame(teams, gameID, setLoading, setReload) {
+function startGame(teams, gameID, setLoading, reloadGame) {
   setLoading(true);
   axios.post(`/api/smear/v1/games/${gameID}/start/`)
     .then((response) => {
-      setReload(true);
+      reloadGame(true);
       setLoading(false);
     })
     .catch((error) => {
@@ -356,7 +356,7 @@ function WaitingRoom(props) {
   // If in a multiplayer game, always refresh the game to check for changes
   // Otherwise we don't need to
   useEffect(() => {
-    props.setReload(!props.game.single_player);
+    props.reloadGame(false, !props.game.single_player);
   }, [props.game.single_player]);
 
   function onDragEnd(result) {
@@ -463,7 +463,7 @@ function WaitingRoom(props) {
       </span>
       {dnd}
       <div className="flex">
-        <Button onClick={() => startGame(teams, props.game.id, props.loading, props.setReload)}>Start Game</Button>
+        <Button onClick={() => startGame(teams, props.game.id, props.loading, props.reloadGame)}>Start Game</Button>
         { props.game.teams.length > 0 &&
           <>
             <Button onClick={() => autoAssign(props.game.id, props.loading)}>Auto Assign</Button>

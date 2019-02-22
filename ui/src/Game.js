@@ -56,11 +56,16 @@ function Game(props) {
   const [loading, setLoading] = useState(false);
   const [game, setGame] = useState(null);
   const [needInput, setNeedInput] = useState(true);
-  const [immediateReload, setImmediateReload] = useState(false);
 
-  function setReload(reload) {
-    setNeedInput(reload);
-    setImmediateReload(reload);
+  function reloadGame(fullReload, setPolling = undefined) {
+    if (setPolling !== undefined) {
+      setNeedInput(setPolling);
+    }
+    if (fullReload) {
+      loadGame(props.match.params.gameID, () => {}, setGame);
+    } else {
+      reloadGameStatus(props.match.params.gameID, updateGame);
+    }
   }
 
   function updateGame(newStatus) {
@@ -75,14 +80,6 @@ function Game(props) {
     loadGame(props.match.params.gameID, setLoading, setGame);
   }, [props.match.params.gameID])
 
-  // Reload game immediately when asked
-  useEffect(() => {
-    if (immediateReload) {
-      reloadGameStatus(props.match.params.gameID, updateGame);
-    }
-    setImmediateReload(false);
-  }, [immediateReload])
-
   // Set a timer to reload game every 2 seconds
   useInterval(() => {
     if (needInput) {
@@ -93,7 +90,7 @@ function Game(props) {
   var gameDisplay = null;
   if (game) {
     if (game.state  === "starting") {
-      gameDisplay = (<WaitingRoom game={game} loading={setLoading} setReload={setReload}/>);
+      gameDisplay = (<WaitingRoom game={game} loading={setLoading} reloadGame={reloadGame}/>);
     } else if (game.state  === '') {
       gameDisplay = (<></>);
     } else {

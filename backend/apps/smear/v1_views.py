@@ -13,10 +13,12 @@ from apps.smear.models import Game, Player, Team
 from apps.smear.pagination import SmearPagination
 from apps.smear.serializers import (
     GameSerializer,
+    GameDetailSerializer,
     GameJoinSerializer,
     PlayerSummarySerializer,
     PlayerIDSerializer,
     StatusStartingSerializer,
+    StatusBiddingSerializer,
     TeamSummarySerializer,
     TeamSerializer,
 )
@@ -31,7 +33,12 @@ class GameViewSet(viewsets.ModelViewSet):
     pagination_class = SmearPagination
     search_fields = ('name',)
     filter_fields = ('owner', 'passcode_required', 'single_player')
-    serializer_class = GameSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return GameDetailSerializer
+        else:
+            return GameSerializer
 
     def get_permissions(self):
         if self.action in ['create', 'list', 'retrieve']:
@@ -149,11 +156,11 @@ class GameViewSet(viewsets.ModelViewSet):
         game = self.get_object()
         status_serializer = {
             'starting': StatusStartingSerializer,
-            'bidding': StatusStartingSerializer,
+            'bidding': StatusBiddingSerializer,
         }.get(game.state, None)
         if not status_serializer:
             raise APIException(f"Unable to find status of game {game}, state ({game.state}) is not supported")
-        serializer = status_serializer(game)
+        serializer = status_serializer(game, context={'request': request})
 
         return Response(serializer.data)
 
