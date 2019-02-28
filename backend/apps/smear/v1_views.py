@@ -180,7 +180,7 @@ class TeamViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         game_id = self.kwargs.get('game_id')
-        return Team.objects.filter(game_id=game_id)
+        return Team.objects.filter(game_id=game_id).order_by('id')
 
     @action(
         detail=True,

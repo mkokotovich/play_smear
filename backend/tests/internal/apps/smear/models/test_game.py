@@ -2,7 +2,7 @@ import pytest
 
 from rest_framework.exceptions import ValidationError
 
-from apps.smear.models import Player
+from apps.smear.models import Player, Game
 from tests.internal.apps.smear.factories import GameFactory
 from tests.internal.apps.user.factories import UserFactory
 
@@ -21,22 +21,27 @@ def test_Game_start_fails_if_not_enough_players():
 def test_Game_start(mocker):
     num_players = 6
     game = GameFactory(num_players=num_players)
-    [Player.objects.create(game=game, user=UserFactory()) for i in range(0, num_players)]
+    players = [Player.objects.create(game=game, user=UserFactory(), seat=i) for i in range(0, num_players)]
     mock_set_seats = mocker.patch.object(game, 'set_seats')
+    mock_advance_game = mocker.patch.object(game, 'advance_game')
     mock_hand_class = mocker.patch('apps.smear.models.Hand')
     mock_hand = mocker.Mock()
     mock_hand_class.objects.create.return_value = mock_hand
 
     game.start()
 
+    assert game.state == Game.BIDDING
     assert mock_set_seats.mock_calls == [
+        mocker.call(),
+    ]
+    assert mock_advance_game.mock_calls == [
         mocker.call(),
     ]
 
     assert mocker.call(game=game) in mock_hand_class.objects.create.mock_calls
 
     assert mock_hand.start.mock_calls == [
-        mocker.call()
+        mocker.call(dealer=players[0])
     ]
 
 

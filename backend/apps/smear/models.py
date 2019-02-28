@@ -31,6 +31,7 @@ class Game(models.Model):
     # Available states
     STARTING = "starting"
     BIDDING = "bidding"
+    DECLARING_TRUMP = "declaring_trump"
 
     class Meta:
         ordering = ('created_at',)
@@ -41,6 +42,12 @@ class Game(models.Model):
     @property
     def current_hand(self):
         return self.hands.last()
+
+    def next_player(self, player):
+        # TODO determine if this is really more performant
+        # next_seat = (player.seat + 1) % self.num_players
+        # return self.player_set.get(seat=next_seat)
+        return player.plays_before
 
     def create_initial_teams(self):
         for i in range(0, self.num_teams):
@@ -84,10 +91,10 @@ class Game(models.Model):
             raise ValidationError(f"Unable to start game, game requires {self.num_players} players, but {self.players.count()} have joined")
 
         self.set_seats()
+        first_dealer = self.set_plays_after()
 
         hand = Hand.objects.create(game=self)
-        hand.start()
-        hand.save()
+        hand.start(dealer=first_dealer)
         self.state = Game.BIDDING
         self.advance_game()
         self.save()
@@ -113,6 +120,15 @@ class Game(models.Model):
         if total_players != self.num_players:
             raise ValidationError(f"Unable to start game, only {total_players} were assigned to teams, but {self.num_players} are playing")
 
+    def set_plays_after(self):
+        players = list(self.player_set.all().order_by('seat'))
+        prev_player = players[-1]
+        for player in players:
+            player.plays_after = prev_player
+            player.save()
+            prev_player = player
+        return players[0]
+
     def advance_game(self):
         if self.state == Game.BIDDING:
             self.current_hand.advance_bidding()
@@ -137,6 +153,7 @@ class Player(models.Model):
     name = models.CharField(max_length=1024)
     team = models.ForeignKey(Team, related_name='members', on_delete=models.CASCADE, null=True, blank=True)
     seat = models.IntegerField(blank=True, null=True)
+    plays_after = models.OneToOneField('smear.Player', related_name='plays_before', on_delete=models.SET_NULL, null=True, blank=True)
 
     cards_in_hand = ArrayField(
         models.CharField(max_length=2),
@@ -166,15 +183,31 @@ class Player(models.Model):
     def get_cards(self):
         return [Card(representation=rep) for rep in self.cards_in_hand]
 
+    def create_bid(self):
+        # TODO: bidding logic
+        bid_value = 2
+        return Bid.create_bid_for_player(bid_value, self, self.game.current_hand)
+
+    def declare_trump(self):
+        # TODO: where do we store this when we bid?
+        return "S"
+
 
 class Hand(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
 
     game = models.ForeignKey(Game, related_name='hands', on_delete=models.CASCADE, null=True)
+    dealer = models.ForeignKey(Player, on_delete=models.CASCADE, null=True, blank=True)
+    bidder = models.ForeignKey(Player, related_name='hands_was_bidder', on_delete=models.CASCADE, null=True, blank=True)
+    high_bid = models.OneToOneField('smear.Bid', related_name='hand_with_high_bid', on_delete=models.SET_NULL, null=True, blank=True)
+    trump = models.CharField(max_length=16, blank=True, default="")
 
-    def start(self):
+    def start(self, dealer):
+        # Set the dealer
+        self.dealer = dealer
+        self.bidder = self.game.next_player(dealer)
+
         # Deal out six cards
         deck = Deck()
         for player in self.game.player_set.all():
@@ -182,5 +215,61 @@ class Hand(models.Model):
         for player in self.game.player_set.all():
             player.accept_dealt_cards(deck.deal(3))
 
+        self.save()
+
+    def submit_bid(self, new_bid):
+        self.high_bid = self.high_bid if (self.high_bid and self.high_bid.bid > new_bid.bid) else new_bid
+        finished_bidding = self.bidder == self.dealer
+        self.bidder = self.game.next_player(self.bidder)
+        return finished_bidding
+
     def advance_bidding(self):
+        finished_bidding = False
+        while not finished_bidding:
+            bid_filter = self.bidder.bids.filter(hand=self)
+            if bid_filter.exists():
+                # A human's bid exists, submit it
+                finished_bidding = self.submit_bid(bid_filter[0])
+            elif self.bidder.is_computer:
+                # Generate computer bid and submit it
+                bid = self.bidder.create_bid()
+                finished_bidding = self.submit_bid(bid)
+            else:
+                # Waiting for a human to bid, just return
+                return
+
+        self._finalize_bidding()
+
+    def _finalize_bidding(self):
+        self.high_bid = self.bids.objects.order_by('bid').desc().first()
+        self.bidder = self.high_bid.player
+        self.game.state = Game.DECLARING_TRUMP
+
+        LOG.info(f"{self.bidder} has the high bid of {self.high_bid}")
+
+        if self.bidder.is_computer:
+            trump = self.bidder.declare_trump()
+            self.finalize_trump_declaration(trump)
+
+    def finalize_trump_declaration(self, trump):
+        self.trump = trump
+        self.advance_trick()
+
+    def advance_trick(self):
         pass
+
+
+class Bid(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.bid} ({self.id})"
+
+    hand = models.ForeignKey(Hand, related_name='bids', on_delete=models.CASCADE, null=True)
+    player = models.ForeignKey(Player, related_name='bids', on_delete=models.CASCADE, null=True)
+    bid = models.IntegerField(blank=True, default=0)
+
+    @staticmethod
+    def create_bid_for_player(bid, player, hand):
+        return Bid.objects.create(bid=bid, player=player, hand=hand)

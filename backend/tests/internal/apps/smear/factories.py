@@ -16,8 +16,8 @@ class GameFactory(factory.DjangoModelFactory):
 
 class TeamFactory(factory.DjangoModelFactory):
     class Meta:
-        model = 'smear.Game'
-    game = factory.SubFactory('tests.internal.apps.user.factories.GameFactory')
+        model = 'smear.Team'
+    game = factory.SubFactory('tests.internal.apps.smear.factories.GameFactory')
     name = factory.Faker("name")
 
 
