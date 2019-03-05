@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 
-from apps.smear.models import Game, Player, Team
+from apps.smear.models import Game, Player, Team, Bid
 from apps.smear.pagination import SmearPagination
 from apps.smear.serializers import (
     GameSerializer,
@@ -21,8 +21,9 @@ from apps.smear.serializers import (
     StatusBiddingSerializer,
     TeamSummarySerializer,
     TeamSerializer,
+    BidSerializer,
 )
-from apps.smear.permissions import IsOwnerPermission, IsPlayerInGame, IsGameOwnerPermission, IsPlayerOnTeam
+from apps.smear.permissions import IsPlayerInGame, IsGameOwnerPermission, IsPlayerOnTeam, IsBidOwnerPermission
 
 
 LOG = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ class GameViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter, DjangoFilterBackend,)
     pagination_class = SmearPagination
     search_fields = ('name',)
-    filter_fields = ('owner', 'passcode_required', 'single_player')
+    filterset_fields = ('owner', 'passcode_required', 'single_player')
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -44,7 +45,7 @@ class GameViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'list', 'retrieve']:
             self.permission_classes = [AllowAny]
         elif self.action in ['update', 'partial_update', 'destroy']:
-            self.permission_classes = [IsOwnerPermission]
+            self.permission_classes = [IsGameOwnerPermission]
 
         return super().get_permissions()
 
@@ -55,7 +56,7 @@ class GameViewSet(viewsets.ModelViewSet):
             Game.objects.all()
         )
 
-        return base_queryset.order_by('-created_at')
+        return base_queryset.order_by('-id')
 
     def perform_create(self, serializer):
         passcode = serializer.validated_data.get('passcode', None)
@@ -108,7 +109,7 @@ class GameViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=['post'],
-        permission_classes=[IsOwnerPermission],
+        permission_classes=[IsGameOwnerPermission],
     )
     def start(self, request, pk=None):
         game = self.get_object()
@@ -119,7 +120,7 @@ class GameViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        permission_classes=[IsOwnerPermission],
+        permission_classes=[IsGameOwnerPermission],
     )
     def player(self, request, pk=None):
         game = self.get_object()
@@ -180,7 +181,7 @@ class TeamViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         game_id = self.kwargs.get('game_id')
-        return Team.objects.filter(game_id=game_id).order_by('id')
+        return Team.objects.filter(game_id=game_id).select_related('game').order_by('-id')
 
     @action(
         detail=True,
@@ -225,3 +226,22 @@ class TeamViewSet(viewsets.ModelViewSet):
         game.save()
 
         return Response(GameSerializer(game).data)
+
+
+class BidViewSet(viewsets.ModelViewSet):
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend,)
+    pagination_class = SmearPagination
+    serializer_class = BidSerializer
+
+    def get_permissions(self):
+        if self.action in ['create', 'list', 'retrieve']:
+            self.permission_classes = [IsPlayerInGame]
+        if self.action in ['update', 'partial_update']:
+            self.permission_classes = [IsBidOwnerPermission]
+
+        return super().get_permissions()
+
+    def get_queryset(self):
+        game_id = self.kwargs.get('game_id')
+        hand_id = self.kwargs.get('hand_id')
+        return Bid.objects.filter(hand__game_id=game_id, hand_id=hand_id).select_related('hand__game').order_by('-id')

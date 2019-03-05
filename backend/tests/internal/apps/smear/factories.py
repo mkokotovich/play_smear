@@ -36,3 +36,11 @@ class PlayerFactory(factory.DjangoModelFactory):
 
 class GameFactoryWithPlayer(GameFactory):
     membership = factory.RelatedFactory(PlayerFactory, 'game')
+
+
+class BidFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = 'smear.Bid'
+    hand = factory.SubFactory('tests.internal.apps.smear.factories.HandFactory')
+    player = factory.SubFactory('tests.internal.apps.smear.factories.PlayerFactory')
+    bid = 2

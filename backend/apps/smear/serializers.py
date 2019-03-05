@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.smear.models import Game, Team, Player, Hand
+from apps.smear.models import Game, Team, Player, Hand, Bid
 
 
 class PlayerSummarySerializer(serializers.ModelSerializer):
@@ -76,3 +76,9 @@ class GameDetailSerializer(GameSerializer):
 
 class GameJoinSerializer(serializers.Serializer):
     passcode = serializers.CharField(max_length=512, required=False)
+
+
+class BidSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bid
+        fields = ('id', 'bid', 'player')

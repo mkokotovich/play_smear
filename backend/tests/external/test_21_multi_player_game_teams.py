@@ -43,22 +43,50 @@ def rename_team(smear_host, user, game, team, new_name):
 
 
 def test_mp_game_team_rename(smear_host, state):
-    # First try renaming a team the user isn't on. This should fail
-    team = state['mp_game']['teams'][0]
-    response = rename_team(smear_host, state['user2'], state['mp_game'], team, 'coolname')
+    # First, refresh our view of the game
+    state['mp_game'] = get_game(smear_host, state['mp_game']['id'], state['user'])
+
+    # Then try renaming a team the user isn't on. This should fail
+    user2_team_id = next(
+        player['team']
+        for player in state['mp_game']['players']
+        if player['user'] == state['user2']['id']
+    )
+    not_user2_team = next(
+        team
+        for team in state['mp_game']['teams']
+        if team['id'] != user2_team_id
+    )
+    response = rename_team(
+        smear_host,
+        state['user2'],
+        state['mp_game'],
+        not_user2_team,
+        'coolname'
+    )
     assert response.status_code == 403
 
     # Then rename the team the user belongs to
-    team = state['mp_game']['teams'][1]
-    response = rename_team(smear_host, state['user2'], state['mp_game'], team, 'coolname')
+    user2_team = next(
+        team
+        for team in state['mp_game']['teams']
+        if team['id'] == user2_team_id
+    )
+    response = rename_team(
+        smear_host,
+        state['user2'],
+        state['mp_game'],
+        user2_team,
+        'coolname'
+    )
     assert response.status_code == 200
 
     # And verify the team has a new name
-    url = f"{smear_host}/api/smear/v1/games/{state['mp_game']['id']}/teams/{team['id']}/"
+    url = f"{smear_host}/api/smear/v1/games/{state['mp_game']['id']}/teams/{user2_team['id']}/"
     response = requests.get(url, headers=create_headers(state['user']['token']))
     assert response.status_code == 200
     assert response.json() == {
-        'id': team['id'],
+        'id': user2_team['id'],
         'name': 'coolname',
     }
 

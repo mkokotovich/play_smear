@@ -263,12 +263,12 @@ class Bid(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"{self.bid} ({self.id})"
-
     hand = models.ForeignKey(Hand, related_name='bids', on_delete=models.CASCADE, null=True)
     player = models.ForeignKey(Player, related_name='bids', on_delete=models.CASCADE, null=True)
     bid = models.IntegerField(blank=True, default=0)
+
+    def __str__(self):
+        return f"{self.bid} ({self.id})"
 
     @staticmethod
     def create_bid_for_player(bid, player, hand):
