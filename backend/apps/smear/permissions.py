@@ -4,6 +4,15 @@ from apps.smear.models import Player, Game, Team, Bid
 
 
 class IsPlayerInGame(permissions.IsAuthenticated):
+    def has_permission(self, request, view):
+        if view.detail is True:
+            # Allow this case to go to has_object_permissions
+            return True
+        game_id = view.kwargs.get('game_id', None)
+        if not game_id:
+            return False
+        return Player.objects.filter(game_id=game_id, user_id=request.user.id).exists()
+
     def has_object_permission(self, request, view, obj):
         if isinstance(obj, Game):
             game = obj
@@ -11,10 +20,20 @@ class IsPlayerInGame(permissions.IsAuthenticated):
             game = obj.game
         elif isinstance(obj, Bid):
             game = obj.hand.game
-        return Player.objects.filter(game_id=game.id, user_id=request.user.id).exists() or game.owner == request.user
+        return Player.objects.filter(game_id=game.id, user_id=request.user.id).exists()
 
 
 class IsGameOwnerPermission(permissions.IsAuthenticated):
+    def has_permission(self, request, view):
+        if view.detail is True:
+            # Allow this case to go to has_object_permissions
+            return True
+        game_id = view.kwargs.get('game_id', None)
+        if not game_id:
+            return False
+        game = Game.objects.get(pk=game_id)
+        return game.owner == request.user or request.user.is_staff
+
     def has_object_permission(self, request, view, obj):
         if isinstance(obj, Game):
             game = obj

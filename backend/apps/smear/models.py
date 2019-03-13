@@ -218,9 +218,12 @@ class Hand(models.Model):
         self.save()
 
     def submit_bid(self, new_bid):
+        if new_bid.player.id != self.bidder.id:
+            raise ValidationError(f"It is not {new_bid.player}'s turn to bid")
         self.high_bid = self.high_bid if (self.high_bid and self.high_bid.bid > new_bid.bid) else new_bid
         finished_bidding = self.bidder == self.dealer
         self.bidder = self.game.next_player(self.bidder)
+        self.save()
         return finished_bidding
 
     def advance_bidding(self):
@@ -241,7 +244,7 @@ class Hand(models.Model):
         self._finalize_bidding()
 
     def _finalize_bidding(self):
-        self.high_bid = self.bids.objects.order_by('bid').desc().first()
+        self.high_bid = self.bids.order_by('-bid').first()
         self.bidder = self.high_bid.player
         self.game.state = Game.DECLARING_TRUMP
 
@@ -265,7 +268,7 @@ class Bid(models.Model):
 
     hand = models.ForeignKey(Hand, related_name='bids', on_delete=models.CASCADE, null=True)
     player = models.ForeignKey(Player, related_name='bids', on_delete=models.CASCADE, null=True)
-    bid = models.IntegerField(blank=True, default=0)
+    bid = models.IntegerField()
 
     def __str__(self):
         return f"{self.bid} ({self.id})"

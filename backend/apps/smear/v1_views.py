@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 
-from apps.smear.models import Game, Player, Team, Bid
+from apps.smear.models import Game, Player, Team, Bid, Hand
 from apps.smear.pagination import SmearPagination
 from apps.smear.serializers import (
     GameSerializer,
@@ -241,7 +241,23 @@ class BidViewSet(viewsets.ModelViewSet):
 
         return super().get_permissions()
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        player = Player.objects.get(game=self.kwargs['game_id'], user=self.request.user)
+        hand = Hand.objects.get(pk=self.kwargs['hand_id'])
+        context['extra_kwargs'] = {
+            'hand': hand,
+            'player': player,
+        }
+        return context
+
     def get_queryset(self):
         game_id = self.kwargs.get('game_id')
         hand_id = self.kwargs.get('hand_id')
         return Bid.objects.filter(hand__game_id=game_id, hand_id=hand_id).select_related('hand__game').order_by('-id')
+
+    def perform_create(self, serializer):
+        bid = serializer.save(**serializer.context['extra_kwargs'])
+        bid.hand.submit_bid(bid)
+        bid.hand.advance_bidding()
+        return bid
