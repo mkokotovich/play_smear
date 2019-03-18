@@ -5,6 +5,12 @@ import random
 
 LOG = logging.getLogger(__name__)
 
+SPADES = 'spades'
+HEARTS = 'hearts'
+CLUBS = 'clubs'
+DIAMONDS = 'diamonds'
+SUITS = [SPADES, HEARTS, CLUBS, DIAMONDS]
+
 
 class Card():
     def _representation_to_value_and_suit(self, representation):
@@ -25,10 +31,10 @@ class Card():
         }.get(representation[0:1], None)
 
         suit = {
-            'S': 'spades',
-            'H': 'hearts',
-            'C': 'clubs',
-            'D': 'diamonds',
+            'S': SPADES,
+            'H': HEARTS,
+            'C': CLUBS,
+            'D': DIAMONDS,
         }.get(representation[1:2], None)
 
         if not value or not suit:
@@ -92,10 +98,10 @@ class Card():
         }.get(self.value, None)
 
         suit = {
-            'spades': 'S',
-            'hearts': 'H',
-            'clubs': 'C',
-            'diamonds': 'D',
+            SPADES: 'S',
+            HEARTS: 'H',
+            CLUBS: 'C',
+            DIAMONDS: 'D',
         }.get(self.suit, None)
 
         if not value or not suit:
@@ -104,10 +110,10 @@ class Card():
         return value + suit
 
     def _same_color(self, suit):
-        if self.suit == 'hearts' or self.suit == 'diamonds':
-            return suit == 'hearts' or suit == 'diamonds'
-        if self.suit == 'clubs' or self.suit == 'spades':
-            return suit == 'clubs' or suit == 'spades'
+        if self.suit == HEARTS or self.suit == DIAMONDS:
+            return suit == HEARTS or suit == DIAMONDS
+        if self.suit == CLUBS or self.suit == SPADES:
+            return suit == CLUBS or suit == SPADES
 
     def is_trump(self, trump):
         if self.suit == trump:
@@ -168,13 +174,7 @@ class Deck():
             'king',
             'ace',
         ]
-        for suit in
-        [
-            'spades',
-            'diamonds',
-            'hearts',
-            'clubs',
-        ]
+        for suit in SUITS
     ]
 
     def __init__(self):

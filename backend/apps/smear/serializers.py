@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from apps.smear.models import Game, Team, Player, Hand, Bid
+from apps.smear.cards import SUITS
 
 
 class PlayerSummarySerializer(serializers.ModelSerializer):
@@ -90,16 +91,27 @@ class GameJoinSerializer(serializers.Serializer):
 class BidSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bid
-        fields = ('id', 'bid')
+        fields = ('id', 'bid', 'trump')
         read_only_fields = ('player',)
+        write_only_fields = ('trump',)
+        extra_kwargs = {'trump': {'write_only': True}}
 
     def validate_bid(self, value):
-        hand = self.context['extra_kwargs'].get('hand')
+        try:
+            hand = self.context['extra_kwargs']['hand']
+        except KeyError:
+            raise ValidationError("context not set up correctly, extra_kwargs needs to be present with the hand passed in")
 
         if value < 0 or value == 1 or value > 5:
             raise ValidationError(f"A bid of {value} is not a legal bid. Bids must be 0 (pass) or between 2 and 5")
 
         if value != 0 and hand.high_bid and hand.high_bid.bid >= value:
             raise ValidationError(f"Unable to bid {value}, there is already a bid of {hand.high_bid.bid}")
+
+        return value
+
+    def validate_trump(self, value):
+        if value.lower() not in SUITS:
+            raise ValidationError(f"{value} is not a valid suit")
 
         return value

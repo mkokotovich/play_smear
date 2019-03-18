@@ -26,6 +26,17 @@ class HandFactory(factory.DjangoModelFactory):
         model = 'smear.Hand'
     game = factory.SubFactory('tests.internal.apps.smear.factories.GameFactory')
 
+    @factory.post_generation
+    def high_bid(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing.
+            return
+
+        if extracted:
+            self.high_bid = extracted
+        else:
+            self.high_bid = BidFactory(hand=self)
+
 
 class PlayerFactory(factory.DjangoModelFactory):
     class Meta:

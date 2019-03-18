@@ -1,5 +1,7 @@
 import pytest
 
+from tests.internal.apps.smear.factories import HandFactory
+
 
 @pytest.fixture
 def authed_client():
@@ -13,3 +15,14 @@ def authed_client():
         return client
 
     return client_generator
+
+
+@pytest.fixture
+def bid_context():
+    def context_generator(high_bid):
+        hand = HandFactory()
+        hand.high_bid.bid = high_bid
+        return {
+            'extra_kwargs': {'hand': hand}
+        }
+    return context_generator

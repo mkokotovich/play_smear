@@ -269,6 +269,7 @@ class Bid(models.Model):
     hand = models.ForeignKey(Hand, related_name='bids', on_delete=models.CASCADE, null=True)
     player = models.ForeignKey(Player, related_name='bids', on_delete=models.CASCADE, null=True)
     bid = models.IntegerField()
+    trump = models.CharField(max_length=16, blank=True, default="")
 
     def __str__(self):
         return f"{self.bid} ({self.id})"

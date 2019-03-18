@@ -156,8 +156,8 @@ class GameViewSet(viewsets.ModelViewSet):
     def status(self, request, pk=None):
         game = self.get_object()
         status_serializer = {
-            'starting': StatusStartingSerializer,
-            'bidding': StatusBiddingSerializer,
+            Game.STARTING: StatusStartingSerializer,
+            Game.BIDDING: StatusBiddingSerializer,
         }.get(game.state, None)
         if not status_serializer:
             raise APIException(f"Unable to find status of game {game}, state ({game.state}) is not supported")
@@ -261,3 +261,8 @@ class BidViewSet(viewsets.ModelViewSet):
         bid.hand.submit_bid(bid)
         bid.hand.advance_bidding()
         return bid
+
+    def perform_update(self, serializer):
+        hand = serializer.context['extra_kwargs'].get('hand')
+        if hand.game.status != Game.DECLARING_TRUMP:
+            pass
