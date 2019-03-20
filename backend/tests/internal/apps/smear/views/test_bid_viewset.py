@@ -13,7 +13,7 @@ from tests.utils import NotNull
 def test_bid_viewset_list(authed_client):
     hand = HandFactory()
     PlayerFactory(user=hand.game.owner, game=hand.game, team=None)
-    bids = [BidFactory(hand=hand) for i in range(3)]
+    bids = [hand.high_bid, *[BidFactory(hand=hand) for i in range(3)]]
     url = reverse('bids-list', kwargs={'game_id': hand.game.id, 'hand_id': hand.id})
     client = authed_client(hand.game.owner)
 
@@ -24,7 +24,7 @@ def test_bid_viewset_list(authed_client):
     results = sorted(response_json.pop('results'), key=lambda bid: bid['id'])
     expected_results = sorted([BidSerializer(bid).data for bid in bids], key=lambda bid: bid['id'])
     assert response_json == {
-        'count': 3,
+        'count': len(bids),
         'next': None,
         'previous': None,
     }

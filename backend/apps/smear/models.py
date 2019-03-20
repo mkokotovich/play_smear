@@ -261,6 +261,16 @@ class Hand(models.Model):
     def advance_trick(self):
         pass
 
+    def player_can_change_bid(self, player):
+        next_bidder = self.bidder
+        if player == next_bidder:
+            return True
+        while next_bidder != self.dealer:
+            next_bidder = next_bidder.plays_before
+            if player == next_bidder:
+                return True
+        return False
+
 
 class Bid(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)

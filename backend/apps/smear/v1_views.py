@@ -264,5 +264,16 @@ class BidViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         hand = serializer.context['extra_kwargs'].get('hand')
-        if hand.game.status != Game.DECLARING_TRUMP:
-            pass
+        player = serializer.context['extra_kwargs'].get('player')
+
+        if hand.game.status == Game.BIDDING:
+            if not hand.player_can_change_bid(player):
+                raise ValidationError("No longer able to change bid")
+        elif hand.game.status == Game.DECLARING_TRUMP:
+            if player != hand.bidder:
+                raise ValidationError("Not able to change bid after bidder is chosen")
+            bid = serializer.validated_data.get('bid', None)
+            if bid and bid != self.get_object().bid:
+                raise ValidationError("Changing the bid is not allowed while declaring trump")
+
+        serializer.save()
