@@ -1,5 +1,6 @@
 from random import shuffle
 import logging
+from functools import reduce
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -32,6 +33,12 @@ class Game(models.Model):
     STARTING = "starting"
     BIDDING = "bidding"
     DECLARING_TRUMP = "declaring_trump"
+    PLAYING_TRICK = "playing_trick"
+
+    def set_state(self, new_state):
+        # For now just set state. At some point we might invalidate cache
+        self.state = new_state
+        self.save()
 
     class Meta:
         ordering = ('created_at',)
@@ -42,6 +49,10 @@ class Game(models.Model):
     @property
     def current_hand(self):
         return self.hands.last()
+
+    @property
+    def current_trick(self):
+        return self.hands.last().tricks.last()
 
     def next_player(self, player):
         # TODO determine if this is really more performant
@@ -95,7 +106,7 @@ class Game(models.Model):
 
         hand = Hand.objects.create(game=self)
         hand.start(dealer=first_dealer)
-        self.state = Game.BIDDING
+        self.set_state(Game.BIDDING)
         self.advance_game()
         self.save()
         LOG.info(f"Started hand {hand} on game {self}")
@@ -186,11 +197,8 @@ class Player(models.Model):
     def create_bid(self):
         # TODO: bidding logic
         bid_value = 2
-        return Bid.create_bid_for_player(bid_value, self, self.game.current_hand)
-
-    def declare_trump(self):
-        # TODO: where do we store this when we bid?
-        return "S"
+        trump_value = "S"
+        return Bid.create_bid_for_player(bid_value, trump_value, self, self.game.current_hand)
 
 
 class Hand(models.Model):
@@ -202,6 +210,19 @@ class Hand(models.Model):
     bidder = models.ForeignKey(Player, related_name='hands_was_bidder', on_delete=models.CASCADE, null=True, blank=True)
     high_bid = models.OneToOneField('smear.Bid', related_name='hand_with_high_bid', on_delete=models.SET_NULL, null=True, blank=True)
     trump = models.CharField(max_length=16, blank=True, default="")
+
+    # We calculate the high and low at the beginning
+    # This is so we don't need to keep all the cards players have 'won',
+    # we can just keep a running tally of who won which points
+    high_card = models.CharField(max_length=2, blank=True, default="")
+    low_card = models.CharField(max_length=2, blank=True, default="")
+    # These values are updated as players win the cards, but game is
+    # awarded at the end of the game
+    winner_high = models.ForeignKey(Player, related_name="games_winner_high", on_delete=models.CASCADE, null=True, blank=True)
+    winner_low = models.ForeignKey(Player, related_name="games_winner_low", on_delete=models.CASCADE, null=True, blank=True)
+    winner_jack = models.ForeignKey(Player, related_name="games_winner_jack", on_delete=models.CASCADE, null=True, blank=True)
+    winner_jick = models.ForeignKey(Player, related_name="games_winner_jick", on_delete=models.CASCADE, null=True, blank=True)
+    winner_game = models.ForeignKey(Player, related_name="games_winner_game", on_delete=models.CASCADE, null=True, blank=True)
 
     def start(self, dealer):
         # Set the dealer
@@ -246,20 +267,54 @@ class Hand(models.Model):
     def _finalize_bidding(self):
         self.high_bid = self.bids.order_by('-bid').first()
         self.bidder = self.high_bid.player
-        self.game.state = Game.DECLARING_TRUMP
+        self.game.set_state(Game.DECLARING_TRUMP)
 
         LOG.info(f"{self.bidder} has the high bid of {self.high_bid}")
 
-        if self.bidder.is_computer:
-            trump = self.bidder.declare_trump()
-            self.finalize_trump_declaration(trump)
+        if self.high_bid.trump:
+            self.finalize_trump_declaration(self.high_bid.trump)
+
+    @staticmethod
+    def _reduce_find_low_trump(accum, player):
+        trump, current_low = accum
+        trump_cards = [card for card in player.get_cards() if card.suit == trump]
+        lowest_trump = min(trump_cards, key=lambda x: x.rank())
+        current_low = current_low if current_low and current_low.rank() < lowest_trump.rank() else lowest_trump
+        return trump, current_low
+
+    @staticmethod
+    def _reduce_find_high_trump(accum, player):
+        trump, current_high = accum
+        trump_cards = [card for card in player.get_cards() if card.suit == trump]
+        highest_trump = max(trump_cards, key=lambda x: x.rank())
+        current_high = current_high if current_high and current_high.rank() > highest_trump.rank() else highest_trump
+        return trump, current_high
 
     def finalize_trump_declaration(self, trump):
+        """Now that we know trump, we will figure out what the high
+        and low are, so we can watch and award those when won
+        """
         self.trump = trump
-        self.advance_trick()
+        self.low_card = reduce(
+            Hand._reduce_find_low_trump,
+            list(self.game.player_set.all()),
+            (self.trump, None)
+        )
+        self.high_card = reduce(
+            Hand._reduce_find_high_trump,
+            list(self.game.player_set.all()),
+            (self.trump, None)
+        )
+        self.advance_hand()
 
-    def advance_trick(self):
-        pass
+    def advance_hand(self):
+        if self.game.state == Game.BIDDING:
+            self.advance_bidding()
+        elif self.game.state == Game.DECLARING_TRUMP:
+            trick = Trick.objects.create(hand=self)
+            trick.start(self.bidder)
+            self.game.set_state(Game.PLAYING_TRICK)
+            trick.advance_trick()
 
     def player_can_change_bid(self, player):
         next_bidder = self.bidder
@@ -285,5 +340,65 @@ class Bid(models.Model):
         return f"{self.bid} ({self.id})"
 
     @staticmethod
-    def create_bid_for_player(bid, player, hand):
-        return Bid.objects.create(bid=bid, player=player, hand=hand)
+    def create_bid_for_player(bid, trump, player, hand):
+        return Bid.objects.create(bid=bid, trump=trump, player=player, hand=hand)
+
+
+class Trick(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    hand = models.ForeignKey(Hand, related_name='tricks', on_delete=models.CASCADE, null=True)
+    cards_played = ArrayField(
+        models.CharField(max_length=2),
+        default=list
+    )
+    active_player = models.ForeignKey(Player, related_name='tricks_playing', on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return f"{', '.join(self.cards_played)} ({self.id})"
+
+    def submit_card_to_play(self, card):
+        """Handles validation of the card's legality
+
+        Returns:
+            trick_finished (bool): whether or not the trick is finished
+        """
+        # TODO Validate card is legal
+
+        self.cards_played.append(card.to_representation())
+        self.active_player = self.hand.game.next_player(self.active_player)
+        self.save()
+        return len(self.cards_played) == self.hand.game.num_players
+
+    def play_card(self, card):
+        trick_finished = self.submit_card_to_play(card)
+        if trick_finished:
+            self._finalize_trick()
+        else:
+            self.advance_trick()
+
+    def get_cards(self):
+        return [Card(representation=rep) for rep in self.cards_played]
+
+    def start(self, player_who_leads):
+        self.active_player = player_who_leads
+
+    def advance_trick(self):
+        """Advances any computers playing
+        """
+        trick_finished = False
+        while not trick_finished:
+            if self.active_player.is_computer:
+                # Have computer choose a card to play, then play it
+                card_to_play = self.active_player.play_card()
+                trick_finished = self.submit_card_to_play(card_to_play)
+            else:
+                # Waiting for a human to play, just return
+                return
+
+        self._finalize_trick()
+
+    def _finalize_trick():
+        # TODO
+        pass

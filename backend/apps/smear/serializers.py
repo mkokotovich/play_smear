@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from apps.smear.models import Game, Team, Player, Hand, Bid
+from apps.smear.models import Game, Team, Player, Hand, Bid, Trick
 from apps.smear.cards import SUITS
 
 
@@ -39,7 +39,7 @@ class StatusStartingSerializer(serializers.ModelSerializer):
 class HandSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Hand
-        fields = ('id', 'dealer', 'bidder', 'high_bid')
+        fields = ('id', 'dealer', 'bidder', 'high_bid', 'trump')
 
 
 class HandSummaryWithCardsSerializer(serializers.ModelSerializer):
@@ -67,6 +67,20 @@ class StatusBiddingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
         fields = ('state', 'current_hand')
+
+
+class TrickSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Trick
+        fields = ('id', 'active_player', 'cards_played')
+
+
+class StatusPlayingTrickSerializer(serializers.ModelSerializer):
+    current_trick = TrickSummarySerializer(read_only=True)
+
+    class Meta:
+        model = Game
+        fields = ('state', 'current_trick')
 
 
 class GameSerializer(serializers.ModelSerializer):

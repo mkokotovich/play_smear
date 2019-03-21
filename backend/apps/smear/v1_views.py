@@ -19,6 +19,7 @@ from apps.smear.serializers import (
     PlayerIDSerializer,
     StatusStartingSerializer,
     StatusBiddingSerializer,
+    StatusPlayingTrickSerializer,
     TeamSummarySerializer,
     TeamSerializer,
     BidSerializer,
@@ -158,6 +159,8 @@ class GameViewSet(viewsets.ModelViewSet):
         status_serializer = {
             Game.STARTING: StatusStartingSerializer,
             Game.BIDDING: StatusBiddingSerializer,
+            Game.DECLARING_TRUMP: StatusBiddingSerializer,
+            Game.PLAYING_TRICK: StatusPlayingTrickSerializer,
         }.get(game.state, None)
         if not status_serializer:
             raise APIException(f"Unable to find status of game {game}, state ({game.state}) is not supported")
@@ -276,4 +279,7 @@ class BidViewSet(viewsets.ModelViewSet):
             if bid and bid != self.get_object().bid:
                 raise ValidationError("Changing the bid is not allowed while declaring trump")
 
-        serializer.save()
+        bid = serializer.save()
+
+        if hand.game.status == Game.DECLARING_TRUMP and bid.trump:
+            hand.finalize_trump_declaration(bid.trump)
