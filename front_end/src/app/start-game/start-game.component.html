@@ -6,16 +6,10 @@
         <div style="color: red; padding-left: 15px;"> {{gameService.errorMessage}} </div>
     </div>
     <div *ngIf="!gameService.gameIsActive">
-        <div class="container-flud">
-            <div align="right" style="padding-right: 15px">
-                <input *ngIf="!gameService.loggedIn" style="width: 250px" [(ngModel)]="gameService.userEmail" [disabled]="gameService.loggedIn" placeholder="email">
-                <a *ngIf="gameService.loggedIn" style="padding-right: 10px" routerLink="/stats"> {{ gameService.userEmail }} </a>
-                <button class="btn btn-primary" [disabled]="gameService.disableAuthButton || !gameService.userEmail" (click)="gameService.authButtonClicked()">{{ gameService.authButtonString }}</button>
-            </div>
-        </div>
         <div class="container-fluid">
-            <h4>Welcome to Play Smear</h4>
+            <h2>Welcome to Play Smear</h2>
             <p>Play the card game Smear online against the computer or friends. <a routerLink="/rules">Click here for more information and the rules of the game</a>.</p>
+            <h4>Find Other Players</h4><p>To find other people to play against, consider joining our Slack workspace! Slack is a free group communication tool that in this case can be used to find other players and coordinate games.  <a href="https://join.slack.com/t/playsmear/shared_invite/zt-d785bj03-RLU~t4ZTq1Sv0jOJKM59vA">Use this invite link</a> or submit feedback (using the "Contact Us" link below) with your email address to request an invite.</p>
             <br>
             <tabset>
             <tab heading="Play against computer" active=true><div class="tab-content tab-color"><app-create-game [playAgainstPeople]=false></app-create-game></div></tab>
