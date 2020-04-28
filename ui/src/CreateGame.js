@@ -168,9 +168,9 @@ class CreateGame extends Component {
           </Row>
           }
         </Modal>
-        <Row>
+        <div>
           <Button style={{width:300}} onClick={() => this.setState({visible: true})}>Create New Game</Button>
-        </Row>
+        </div>
       </div>
     );
   }

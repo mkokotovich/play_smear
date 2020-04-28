@@ -1,6 +1,12 @@
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
-import { Spin, Input, Popover, Icon, Button, Row, Col } from 'antd';
+import { Spin, Input, Popover, Button, Row, Col } from 'antd';
+import {
+  UserOutlined,
+  TeamOutlined,
+  TrophyOutlined,
+  LockOutlined
+} from '@ant-design/icons';
 import './GameList.css';
 
 class GameList extends Component {
@@ -24,20 +30,20 @@ class GameList extends Component {
           </Col>
           <Col className="GameIcons" xs={12} md={6}>
             <Popover placement="topLeft" content="The number of players who have joined out of the total number of players this game accepts" title="Players">
-              {game.players.length}/{game.num_players} <Icon type="user" />
+              {game.players.length}/{game.num_players} <UserOutlined />
             </Popover>
             <span style={{padding: "5px"}}> </span>
             <Popover placement="topLeft" content="The number of teams in this game" title="Teams">
-              {game.num_teams} <Icon type="team" />
+              {game.num_teams} <TeamOutlined />
             </Popover>
             <span style={{padding: "5px"}}> </span>
             <Popover placement="topLeft" content="The number of points needed to win this game" title="Points">
-              {game.score_to_play_to} <Icon type="trophy" />
+              {game.score_to_play_to} <TrophyOutlined />
             </Popover>
             <span style={{padding: "5px"}}> </span>
             { game.passcode_required &&
             <Popover placement="topLeft" content="A passcode is required to join this game" title="Passcode Required">
-              <Icon type="lock" />
+              <LockOutlined />
             </Popover>
             }
           </Col>

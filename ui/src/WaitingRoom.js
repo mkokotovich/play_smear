@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { withRouter } from 'react-router-dom';
-import { Card, Row, Col, Button, Modal, Icon } from 'antd';
+import { Card, Row, Col, Button, Modal } from 'antd';
+import {
+  LoadingOutlined,
+  PlusOutlined,
+  CloseCircleTwoTone,
+  DesktopOutlined,
+  UserOutlined
+} from '@ant-design/icons';
 import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import getErrorString from './utils';
@@ -70,8 +77,8 @@ function Player(props) {
   const [loading, setLoading] = useState(false);
   const {player, gameID, removePlayerFromList, removeIsVisible} = props;
 
-  const closeIcon = loading ? "loading" : "close-circle";
-  const playerIcon = loading ? "loading" : player.is_computer ? "desktop" : "user";
+  const CloseIcon = loading ? LoadingOutlined : CloseCircleTwoTone;
+  const PlayerIcon = loading ? LoadingOutlined : player.is_computer ? DesktopOutlined : UserOutlined;
 
   return (
     <div style={{
@@ -83,14 +90,14 @@ function Player(props) {
     }}>
       <Row type="flex">
       <Col span={3}>
-        <Icon style={{fontSize: '18px'}} type={playerIcon}/>
+        <PlayerIcon style={{fontSize: '18px'}} />
       </Col>
       <Col span={18} align="center">
         {player.name}
       </Col>
       {removeIsVisible && (
       <Col span={3}>
-        <Icon theme="twoTone" twoToneColor="#eb2f96" style={{cursor: "pointer", fontSize: '18px'}} disabled={loading} type={closeIcon} onClick={() => removePlayerFromGame(player, gameID, setLoading, removePlayerFromList)}/>
+        <CloseIcon twoToneColor="#eb2f96" style={{cursor: "pointer", fontSize: '18px'}} disabled={loading} onClick={() => removePlayerFromGame(player, gameID, setLoading, removePlayerFromList)} />
       </Col>
       )}
       </Row>
@@ -162,10 +169,10 @@ function AddComputer(props) {
   const { gameID, addPlayer } = props;
   const [loading, setLoading] = useState(false);
 
-  const icon = loading ? "loading" : "plus";
+  const PlusIcon = loading ? LoadingOutlined : PlusOutlined;
 
   return (
-    <Button style={{width: "100%"}} disabled={loading} onClick={() => addComputerToGame(gameID, setLoading, addPlayer)}><Icon type={icon} /> Computer Player</Button>
+    <Button style={{width: "100%"}} disabled={loading} onClick={() => addComputerToGame(gameID, setLoading, addPlayer)}><PlusIcon /> Computer Player</Button>
   );
 }
 
@@ -229,14 +236,13 @@ function initialPlayerAssignment(bench, setBench, teams, players) {
   }, initialTeams);
 
   Object.entries(teamsAndPlayers).forEach(([teamID, teamList]) => {
-    console.log("resetting", teamID, teamList)
     teams[teamID].setList(teamList);
   });
 
   setBench(bench);
 }
 
-function removePlayer(list, setList, allPlayers, setAllPlayers, player) {
+function removePlayer(player, list, setList, allPlayers, setAllPlayers) {
   const index = list.indexOf(player)
   if (index !== -1) {
     var listCopy = list.slice();
@@ -266,7 +272,7 @@ function TeamDroppable(props) {
             <TeamHolder
               players={teamList}
               gameID={gameID}
-              removePlayerFromList={(player) => removePlayer(teamList, setTeamList, player, allPlayers, setAllPlayers)}
+              removePlayerFromList={(player) => removePlayer(player, teamList, setTeamList, allPlayers, setAllPlayers)}
             />
             {provided.placeholder}
           </div>
@@ -464,7 +470,7 @@ function WaitingRoom(props) {
                   <TeamHolder
                     players={bench}
                     gameID={props.game.id}
-                    removePlayerFromList={(player) => removePlayer(bench, setBench, player, allPlayers, setAllPlayers)}
+                    removePlayerFromList={(player) => removePlayer(player, bench, setBench, allPlayers, setAllPlayers)}
                     removeIsVisible={true}
                   />
                   <AddComputer gameID={props.game.id} addPlayer={addPlayer}/>
