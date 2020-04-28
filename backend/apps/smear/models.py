@@ -224,7 +224,11 @@ class Hand(models.Model):
     winner_jick = models.ForeignKey(Player, related_name="games_winner_jick", on_delete=models.CASCADE, null=True, blank=True)
     winner_game = models.ForeignKey(Player, related_name="games_winner_game", on_delete=models.CASCADE, null=True, blank=True)
 
+    def __str__(self):
+        return f"Hand {self.id} (dealer: {self.dealer}) (bidder: {self.bidder}) (high_bid: {self.high_bid}) (trump: {self.trump})"
+
     def start(self, dealer):
+        LOG.info("Starting hand with dealer: {dealer}")
         # Set the dealer
         self.dealer = dealer
         self.bidder = self.game.next_player(dealer)
@@ -241,9 +245,10 @@ class Hand(models.Model):
     def submit_bid(self, new_bid):
         if new_bid.player.id != self.bidder.id:
             raise ValidationError(f"It is not {new_bid.player}'s turn to bid")
-        self.high_bid = self.high_bid if (self.high_bid and self.high_bid.bid > new_bid.bid) else new_bid
+        self.high_bid = self.high_bid if (self.high_bid and self.high_bid.bid >= new_bid.bid) else new_bid
         finished_bidding = self.bidder == self.dealer
         self.bidder = self.game.next_player(self.bidder)
+        LOG.info(f"Submitted bid {new_bid}, high bid is now {self.high_bid}, bidder is now {self.bidder}")
         self.save()
         return finished_bidding
 
@@ -337,7 +342,7 @@ class Bid(models.Model):
     trump = models.CharField(max_length=16, blank=True, default="")
 
     def __str__(self):
-        return f"{self.bid} ({self.id})"
+        return f"{self.bid} (by {self.player})"
 
     @staticmethod
     def create_bid_for_player(bid, trump, player, hand):

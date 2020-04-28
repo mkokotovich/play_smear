@@ -150,6 +150,10 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_URL = '/djangostatic/'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'staticfiles')
 
+def skip_status_requests(record):
+    url = record.args[0] if record.args else ""
+    return not ('GET /api/smear/v1/games/' in record.msg and '/status/ HTTP' in record.msg)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -166,11 +170,21 @@ LOGGING = {
             'formatter': 'default',
         },
     },
+    'filters': {
+        'skip_status_requests': {
+            '()': 'django.utils.log.CallbackFilter',
+            'callback': skip_status_requests,
+        },
+    },
     'loggers': {
         'django': {
             'handlers': ['console'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
+        'django.server':{
+            'filters': ['skip_status_requests'],
+            'propagate': False,
+        }
     },
     'root': {
         'level': 'DEBUG',

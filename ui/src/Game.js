@@ -4,12 +4,31 @@ import { Modal, Spin } from 'antd';
 import axios from 'axios';
 //import queryString from 'query-string';
 import WaitingRoom from './WaitingRoom';
+import Bidding from './Bidding';
+import DeclaringTrump from './DeclaringTrump';
 import getErrorString from './utils';
 
 import './Game.css';
 
 
 function loadGame(gameID, setLoading, setGame) {
+  // {
+  // created_at: "2020-04-28T15:57:38.064116Z"
+  // current_hand: {id: 4, dealer: 36, bidder: 34, high_bid: 4, cards: ["6C", "4S", "7C", "8H", "JD", "5H"]}
+  // deleted_at: null
+  // id: 7
+  // name: "asdfasdf"
+  // num_players: 6
+  // num_teams: 2
+  // owner: 9
+  // passcode_required: false
+  // players: [{id: 36, name: "Michelle O", user: 8, team: 18, is_computer: true},…]
+  // score_to_play_to: 11
+  // single_player: true
+  // state: "bidding"
+  // teams: [{id: 18, name: "Team 2"}, {id: 17, name: "Team 1"}]
+  // updated_at: "2020-04-28T15:57:45.979031Z"
+  // }
   setLoading(true);
   axios.get(`/api/smear/v1/games/${gameID}/`)
     .then((response) => {
@@ -69,9 +88,19 @@ function Game(props) {
   }
 
   function updateGame(newStatus) {
+    // current_hand updates don't contain cards, and the dict expansion below
+    // doesn't work recursively, so cards is lost if we don't grab it
+    const hand = newStatus.current_hand ? newStatus.current_hand : game.current_hand;
+    const cards = (game && game.current_hand) ? game.current_hand.cards : []
+    const current_hand = {
+      ...hand,
+      "cards": cards
+    }
+
     setGame({
       ...game,
-      ...newStatus
+      ...newStatus,
+      "current_hand": current_hand
     });
   }
 
@@ -91,10 +120,12 @@ function Game(props) {
   if (game) {
     if (game.state  === "starting") {
       gameDisplay = (<WaitingRoom game={game} loading={setLoading} reloadGame={reloadGame}/>);
-    } else if (game.state  === '') {
-      gameDisplay = (<></>);
+    } else if (game.state  === "bidding") {
+      gameDisplay = (<Bidding game={game} setLoading={setLoading} reloadGame={reloadGame} />);
+    } else if (game.state  === "declaring_trump") {
+      gameDisplay = (<DeclaringTrump game={game} setLoading={setLoading} reloadGame={reloadGame} />);
     } else {
-      gameDisplay = (<></>);
+      gameDisplay = (<>Unknown status {game.state}</>);
     }
   }
 
