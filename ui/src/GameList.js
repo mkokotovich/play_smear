@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
-import { Spin, Input, Popover, Icon, Divider, Button, Row, Col } from 'antd';
+import { Spin, Input, Popover, Icon, Button, Row, Col } from 'antd';
 import './GameList.css';
 
 class GameList extends Component {

@@ -1,71 +1,56 @@
-import React from 'react';
-import { Form, Icon, Input, Button } from 'antd';
+import React, {useState, useEffect} from 'react';
+import { Form, Input, Button } from 'antd';
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
 
 import './SignInForm.css';
 
-const FormItem = Form.Item;
+function SignInForm(props) {
+  const [form] = Form.useForm();
+  const [, forceUpdate] = useState();
 
-function hasErrors(fieldsError) {
-  return Object.keys(fieldsError).some(field => fieldsError[field]);
-}
+  // To disable submit button at the beginning.
+  useEffect(() => {
+    forceUpdate({});
+  }, []);
 
-class HorizontalSignInForm extends React.Component {
-  componentDidMount() {
-    // To disabled submit button at the beginning.
-    this.props.form.validateFields();
-  }
+  const onFinish = values => {
+    props.handleSignIn(values.username, values.password);
+  };
 
-  handleSubmit = (e) => {
-    e.preventDefault();
-    this.props.form.validateFields((err, values) => {
-      if (!err) {
-        this.props.handleSignIn(values.userName, values.password);
-      }
-    });
-  }
-
-  render() {
-    const { getFieldDecorator, getFieldsError, getFieldError, isFieldTouched } = this.props.form;
-
-    // Only show error after a field is touched.
-    const userNameError = isFieldTouched('userName') && getFieldError('userName');
-    const passwordError = isFieldTouched('password') && getFieldError('password');
-    return (
-      <Form layout="inline" onSubmit={this.handleSubmit}>
-        <FormItem
-          validateStatus={userNameError ? 'error' : ''}
-          help={userNameError || ''}
-        >
-          {getFieldDecorator('userName', {
-            rules: [{ required: true, message: 'Please input your email!' }],
-          })(
-            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Email" />
-          )}
-        </FormItem>
-        <FormItem
-          validateStatus={passwordError ? 'error' : ''}
-          help={passwordError || ''}
-        >
-          {getFieldDecorator('password', {
-            rules: [{ required: true, message: 'Please input your Password!' }],
-          })(
-            <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} type="password" placeholder="Password" />
-          )}
-        </FormItem>
-        <FormItem className="submitButton">
+  return (
+    <Form form={form} name="horizontal_login" layout="inline" onFinish={onFinish}>
+      <Form.Item
+        name="username"
+        rules={[{ required: true, message: 'Please input your email!' }]}
+      >
+        <Input prefix={<UserOutlined className="site-form-item-icon" />} placeholder="Email" />
+      </Form.Item>
+      <Form.Item
+        name="password"
+        rules={[{ required: true, message: 'Please input your password!' }]}
+      >
+        <Input
+          prefix={<LockOutlined className="site-form-item-icon" />}
+          type="password"
+          placeholder="Password"
+        />
+      </Form.Item>
+      <Form.Item shouldUpdate={true}>
+        {() => (
           <Button
             type="primary"
             htmlType="submit"
-            disabled={hasErrors(getFieldsError())}
+            disabled={
+              !form.isFieldsTouched(true) ||
+              form.getFieldsError().filter(({ errors }) => errors.length).length
+            }
           >
-            Sign In
+            Sign in
           </Button>
-        </FormItem>
-      </Form>
-    );
-  }
-}
-
-const SignInForm = Form.create()(HorizontalSignInForm);
+        )}
+      </Form.Item>
+    </Form>
+  );
+};
 
 export default SignInForm

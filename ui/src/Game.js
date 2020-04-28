@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, withRouter } from 'react-router-dom';
-import { Button, Modal, Spin } from 'antd';
+import { withRouter } from 'react-router-dom';
+import { Modal, Spin } from 'antd';
 import axios from 'axios';
-import queryString from 'query-string';
+//import queryString from 'query-string';
 import WaitingRoom from './WaitingRoom';
 import getErrorString from './utils';
 

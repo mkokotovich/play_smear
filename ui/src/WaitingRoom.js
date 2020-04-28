@@ -28,7 +28,7 @@ function removePlayerFromGame(player, gameID, setLoading, removePlayerFromList) 
 }
 
 function addPlayerToNewTeam(player, gameID, sourceTeamID, destinationTeamID, setLoading) {
-  if (destinationTeamID == "bench") {
+  if (destinationTeamID === "bench") {
     // Moving to bench is removing from previous team
     setLoading(true);
     axios.delete(`/api/smear/v1/games/${gameID}/teams/${sourceTeamID}/member/`,
@@ -173,8 +173,8 @@ function TeamHolder(props) {
   const {players, gameID, removePlayerFromList, removeIsVisible} = props;
   return players.map((item, index) => (
     <Draggable
-      key={item.id}
-      draggableId={item.id}
+      key={item.id.toString()}
+      draggableId={item.id.toString()}
       index={index}>
         {(provided, snapshot) => (
           <div
@@ -220,7 +220,7 @@ function initialPlayerAssignment(bench, setBench, teams, players) {
 
   const teamsAndPlayers = players.reduce((accum, player) => {
     if (player.team) {
-      accum[player.team] = [...accum[player.team], player];
+      accum[player.team.toString()] = [...accum[player.team.toString()], player];
 
       // Side effect: remove the player from our copy of the bench
       bench.splice(bench.indexOf(player), 1);
@@ -229,38 +229,90 @@ function initialPlayerAssignment(bench, setBench, teams, players) {
   }, initialTeams);
 
   Object.entries(teamsAndPlayers).forEach(([teamID, teamList]) => {
+    console.log("resetting", teamID, teamList)
     teams[teamID].setList(teamList);
   });
 
   setBench(bench);
 }
 
+function removePlayer(list, setList, allPlayers, setAllPlayers, player) {
+  const index = list.indexOf(player)
+  if (index !== -1) {
+    var listCopy = list.slice();
+    listCopy.splice(index, 1);
+    setList(listCopy);
+  }
+  const allIndex = allPlayers.indexOf(player)
+  if (allIndex !== -1) {
+    var allPlayersCopy = allPlayers.slice();
+    allPlayersCopy.splice(allIndex, 1);
+    setAllPlayers(allPlayersCopy);
+  }
+}
+
+function TeamDroppable(props) {
+  const {gameID, team, teamList, setTeamList, allPlayers, setAllPlayers} = props;
+  return (
+    <Droppable droppableId={team.id.toString()}>
+      {(provided, snapshot) => (
+        <Card
+          title={team.name}
+          headStyle={{backgroundColor: "#f0f5f0" }}
+          className="teamCard"
+          style={getListStyle(snapshot.isDraggingOver)}
+        >
+          <div ref={provided.innerRef} style={{minHeight: 200}}>
+            <TeamHolder
+              players={teamList}
+              gameID={gameID}
+              removePlayerFromList={(player) => removePlayer(teamList, setTeamList, player, allPlayers, setAllPlayers)}
+            />
+            {provided.placeholder}
+          </div>
+        </Card>
+      )}
+    </Droppable>
+  );
+}
+
 function WaitingRoom(props) {
   const [allPlayers, setAllPlayers] = useState([]);
   const [bench, setBench] = useState([]);
+  // TODO: see if teams needs to be like this
   // Build a dict that looks like
   // {
-  //   team_id: {
+  //   "team_id": {
   //     list: <state list>,
   //     setList: <state set list>
   //   }
   // }
-  const teams = props.game.teams.reduce((accum, team) => {
-    const [list, setList] = useState([]);
-    accum[team.id] = {
-      list: list,
-      setList: setList
-    };
+  const numTeams = props.game.teams.length;
+  const [allTeamsLists, setAllTeamsLists] = useState(Array(numTeams).fill([]));
+  const setTeamByIndex = (i, team) => {
+    setAllTeamsLists(prevState => {
+      var teamsListsCopy = prevState.slice();
+      teamsListsCopy[i] = team;
+      return teamsListsCopy;
+    });
+  };
+  const teams = props.game.teams.reduce((accum, team, idx) => {
+    accum[team.id.toString()] = {
+      list: allTeamsLists[idx],
+      setList: (teamList)=>{
+        setTeamByIndex(idx, teamList);
+      }
+    }
     return accum;
   }, {});
 
   const teamSetters = props.game.teams.reduce((accum, team) => {
-    accum[team.id] = teams[team.id].setList;
+    accum[team.id.toString()] = teams[team.id.toString()].setList;
     return accum;
   }, {});
 
   const teamLists = props.game.teams.reduce((accum, team) => {
-    accum[team.id] = teams[team.id].list;
+    accum[team.id.toString()] = teams[team.id.toString()].list;
     return accum;
   }, {});
 
@@ -272,21 +324,6 @@ function WaitingRoom(props) {
   const playerList = {
     bench: bench,
     ...teamLists
-  }
-
-  function removePlayer(list, setList, player) {
-    const index = list.indexOf(player)
-    if (index !== -1) {
-      var listCopy = list.slice();
-      listCopy.splice(index, 1);
-      setList(listCopy);
-    }
-    const allIndex = allPlayers.indexOf(player)
-    if (allIndex !== -1) {
-      var allPlayersCopy = allPlayers.slice();
-      allPlayersCopy.splice(allIndex, 1);
-      setAllPlayers(allPlayersCopy);
-    }
   }
 
   function addPlayer(player) {
@@ -351,7 +388,7 @@ function WaitingRoom(props) {
     setBench(newBench);
 
     initialPlayerAssignment(newBench, setBench, teams, props.game.players);
-  }, props.game.players);
+  }, [props.game.players]);
   
   // If in a multiplayer game, always refresh the game to check for changes
   // Otherwise we don't need to
@@ -400,25 +437,14 @@ function WaitingRoom(props) {
 
   const teamDroppables = props.game.teams.map((team, index) => (
     <Col key={index}>
-      <Droppable droppableId={""+team.id}>
-        {(provided, snapshot) => (
-          <Card
-            title={team.name}
-            headStyle={{backgroundColor: "#f0f5f0" }}
-            className="teamCard"
-            style={getListStyle(snapshot.isDraggingOver)}
-          >
-            <div ref={provided.innerRef} style={{minHeight: 200}}>
-              <TeamHolder
-                players={teams[team.id].list}
-                gameID={props.game.id}
-                removePlayerFromList={(player) => removePlayer(teams[team.id].list, teams[team.id].setList, player)}
-              />
-              {provided.placeholder}
-            </div>
-          </Card>
-        )}
-      </Droppable>
+      <TeamDroppable
+        gameID={props.game.id}
+        team={team}
+        teamList={teams[team.id.toString()].list}
+        setTeamList={teams[team.id.toString()].setList}
+        allPlayers={allPlayers}
+        setAllPlayers={setAllPlayers}
+      />
     </Col>
   ));
 
@@ -438,7 +464,7 @@ function WaitingRoom(props) {
                   <TeamHolder
                     players={bench}
                     gameID={props.game.id}
-                    removePlayerFromList={(player) => removePlayer(bench, setBench, player)}
+                    removePlayerFromList={(player) => removePlayer(bench, setBench, player, allPlayers, setAllPlayers)}
                     removeIsVisible={true}
                   />
                   <AddComputer gameID={props.game.id} addPlayer={addPlayer}/>

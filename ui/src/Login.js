@@ -1,170 +1,207 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { Link, withRouter, Redirect } from 'react-router-dom';
 import {
-  Spin, Form, Input, Icon, Row, Col, Button,
 } from 'antd';
 import { signIn, signUp } from './auth_utils';
 import './Login.css';
 
+import {
+  Spin,
+  Form,
+  Input,
+  Row,
+  Col,
+  Button,
+} from 'antd';
 
-class RegistrationForm extends React.Component {
-  state = {
-    confirmDirty: false,
+const formItemLayout = {
+  labelCol: {
+    xs: {
+      span: 24,
+    },
+    sm: {
+      span: 8,
+    },
+  },
+  wrapperCol: {
+    xs: {
+      span: 24,
+    },
+    sm: {
+      span: 16,
+    },
+  },
+};
+const tailFormItemLayout = {
+  wrapperCol: {
+    xs: {
+      span: 24,
+      offset: 0,
+    },
+    sm: {
+      span: 16,
+      offset: 8,
+    },
+  },
+};
+
+const RegistrationForm = (props) => {
+  const [form] = Form.useForm();
+  const [redirectHome, setRedirectHome] = useState(false);
+
+  const onFinish = values => {
+    console.log('Received values of form: ', values);
+    signUp(values.email, values.password, props.handleAuthChange, ()=>{
+     setRedirectHome(true);
+    })
   };
 
-  handleSubmit = (e) => {
-    e.preventDefault();
-    this.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        signUp(values.signUpEmail, values.signUpPassword, this.props.handleAuthChange, ()=>{
-          this.setState({redirectHome: true});
-        })
-      }
-    });
+  if (redirectHome) {
+    return <Redirect push to="/" />
   }
 
-  handleConfirmBlur = (e) => {
-    const value = e.target.value;
-    this.setState({ confirmDirty: this.state.confirmDirty || !!value });
+  return (
+    <Form
+      {...formItemLayout}
+      form={form}
+      name="register"
+      onFinish={onFinish}
+      initialValues={{
+      }}
+      scrollToFirstError
+      className="login-form"
+    >
+      <Form.Item
+        name="email"
+        label="E-mail"
+        rules={[
+          {
+            type: 'email',
+            message: 'The input is not valid E-mail!',
+          },
+          {
+            required: true,
+            message: 'Please input your E-mail!',
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        name="password"
+        label="Password"
+        rules={[
+          {
+            required: true,
+            message: 'Please input your password!',
+          },
+        ]}
+        hasFeedback
+      >
+        <Input.Password />
+      </Form.Item>
+
+      <Form.Item
+        name="confirm"
+        label="Confirm Password"
+        dependencies={['password']}
+        hasFeedback
+        rules={[
+          {
+            required: true,
+            message: 'Please confirm your password!',
+          },
+          ({ getFieldValue }) => ({
+            validator(rule, value) {
+              if (!value || getFieldValue('password') === value) {
+                return Promise.resolve();
+              }
+
+              return Promise.reject('The two passwords that you entered do not match!');
+            },
+          }),
+        ]}
+      >
+        <Input.Password />
+      </Form.Item>
+
+      <Form.Item {...tailFormItemLayout}>
+        <Button type="primary" htmlType="submit">
+          Register
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+};
+
+
+const NormalLoginForm = (props) => {
+  const [form] = Form.useForm();
+  const [redirectHome, setRedirectHome] = useState(false);
+
+  const onFinish = values => {
+    console.log('Received values of form: ', values);
+    signIn(values.email, values.password, props.handleAuthChange, ()=>{
+      setRedirectHome(true);
+    })
+  };
+
+  if (redirectHome) {
+    return <Redirect push to="/" />
   }
 
-  compareToFirstPassword = (rule, value, callback) => {
-    const form = this.props.form;
-    if (value && value !== form.getFieldValue('signUpPassword')) {
-      callback('Passwords do not match');
-    } else {
-      callback();
-    }
-  }
+  return (
+    <Form
+      {...formItemLayout}
+      form={form}
+      name="login"
+      onFinish={onFinish}
+      initialValues={{
+      }}
+      scrollToFirstError
+      className="login-form"
+    >
+      <Form.Item
+        name="email"
+        label="E-mail"
+        rules={[
+          {
+            type: 'email',
+            message: 'The input is not valid E-mail!',
+          },
+          {
+            required: true,
+            message: 'Please input your E-mail!',
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
 
-  validateToNextPassword = (rule, value, callback) => {
-    const form = this.props.form;
-    if (value && this.state.confirmDirty) {
-      form.validateFields(['confirm'], { force: true });
-    }
-    callback();
-  }
+      <Form.Item
+        name="password"
+        label="Password"
+        rules={[
+          {
+            required: true,
+            message: 'Please input your password!',
+          },
+        ]}
+        hasFeedback
+      >
+        <Input.Password />
+      </Form.Item>
 
-  render() {
-    if (this.state.redirectHome) {
-      return <Redirect push to="/" />
-    }
-
-    const { getFieldDecorator } = this.props.form;
-
-    return (
-      <Form onSubmit={this.handleSubmit} className="login-form">
-        <Form.Item>
-          {getFieldDecorator('signUpEmail', {
-            rules: [{
-              type: 'email', message: 'The input is not a valid email address!',
-            }, {
-              required: true, message: 'Please input your email address!',
-            }],
-          })(
-            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Email" />
-          )}
-        </Form.Item>
-        <Form.Item>
-          {getFieldDecorator('firstName', {
-            rules: [{
-              required: true, message: 'Please input your first name',
-            }],
-          })(
-            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="First Name" />
-          )}
-        </Form.Item>
-        <Form.Item>
-          {getFieldDecorator('lastName', {
-            rules: [{
-              required: true, message: 'Please input your last name',
-            }],
-          })(
-            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Last Name" />
-          )}
-        </Form.Item>
-        <Form.Item>
-          {getFieldDecorator('signUpPassword', {
-            rules: [{
-              required: true, message: 'Please input your password!',
-            }, {
-              validator: this.validateToNextPassword,
-            }],
-          })(
-            <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} type="password" placeholder="Password"/>
-          )}
-        </Form.Item>
-        <Form.Item>
-          {getFieldDecorator('confirm', {
-            rules: [{
-              required: true, message: 'Please confirm your password!',
-            }, {
-              validator: this.compareToFirstPassword,
-            }],
-          })(
-            <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} type="password" placeholder="Confirm Password" onBlur={this.handleConfirmBlur} />
-          )}
-        </Form.Item>
-        <Form.Item>
-          <Button type="primary" htmlType="submit" className="login-form-button">
-            Sign up for free account
-          </Button>
-        </Form.Item>
-      </Form>
-    );
-  }
-}
-
-const WrappedRegistrationForm = Form.create()(RegistrationForm);
-
-
-class NormalLoginForm extends React.Component {
-  state = {};
-
-  handleSubmit = (e) => {
-    e.preventDefault();
-    this.props.form.validateFields((err, values) => {
-      if (!err) {
-        signIn(values.email, values.password, this.props.handleAuthChange, ()=>{
-          this.setState({redirectHome: true});
-        })
-      }
-    });
-  }
-
-  render() {
-    if (this.state.redirectHome) {
-      return <Redirect push to="/" />
-    }
-    const { getFieldDecorator } = this.props.form;
-    return (
-      <Form onSubmit={this.handleSubmit} className="login-form">
-        <Form.Item>
-          {getFieldDecorator('email', {
-            rules: [{ required: true, message: 'Please input your email!' }],
-          })(
-            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Email" />
-          )}
-        </Form.Item>
-        <Form.Item>
-          {getFieldDecorator('password', {
-            rules: [{ required: true, message: 'Please input your password!' }],
-          })(
-            <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} type="password" placeholder="Password" />
-          )}
-        </Form.Item>
-        <Form.Item>
-          <Link className="login-form-forgot" to="/forgot">Forgot password</Link>
-          <Button type="primary" htmlType="submit" className="login-form-button">
-            Log in
-          </Button>
-        </Form.Item>
-      </Form>
-    );
-  }
-}
-
-const WrappedNormalLoginForm = Form.create()(NormalLoginForm);
+      <Form.Item {...tailFormItemLayout}>
+        <Link className="login-form-forgot" to="/forgot">Forgot password</Link>
+        <Button type="primary" htmlType="submit">
+          Sign in
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+};
 
 
 class Login extends Component {
@@ -187,10 +224,10 @@ class Login extends Component {
           </>
         </Col>
         <Col xs={24} md={12} align="center">
-          <WrappedNormalLoginForm {...this.props} />
+          <NormalLoginForm {...this.props} />
         </Col>
         <Col xs={24} md={12} align="center">
-          <WrappedRegistrationForm {...this.props} />
+          <RegistrationForm {...this.props} />
         </Col>
       </Row>
     );
