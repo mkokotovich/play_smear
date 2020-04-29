@@ -45,12 +45,24 @@ class IsGameOwnerPermission(permissions.IsAuthenticated):
 
 
 class IsPlayerOnTeam(permissions.IsAuthenticated):
+    def has_permission(self, request, view):
+        if view.detail is True:
+            # Allow this case to go to has_object_permissions
+            return True
+        return False
+
     def has_object_permission(self, request, view, obj):
         team = obj
         return Player.objects.filter(team_id=team.id, user_id=request.user.id).exists() or team.game.owner == request.user
 
 
 class IsBidOwnerPermission(permissions.IsAuthenticated):
+    def has_permission(self, request, view):
+        if view.detail is True:
+            # Allow this case to go to has_object_permissions
+            return True
+        return False
+
     def has_object_permission(self, request, view, obj):
         bid = obj
         return bid.player.user == request.user

@@ -279,7 +279,7 @@ class BidViewSet(viewsets.ModelViewSet):
             if bid and bid != self.get_object().bid:
                 raise ValidationError("Changing the bid is not allowed while declaring trump")
 
-        bid = serializer.save()
+        bid = serializer.save(**serializer.context['extra_kwargs'])
 
         if hand.game.status == Game.DECLARING_TRUMP and bid.trump:
             hand.finalize_trump_declaration(bid.trump)

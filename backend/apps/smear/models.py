@@ -197,8 +197,15 @@ class Player(models.Model):
     def create_bid(self):
         # TODO: bidding logic
         bid_value = 2
-        trump_value = "S"
+        trump_value = self.cards_in_hand[0][1]
+
+        LOG.info(f"{self} has {self.cards_in_hand}, bidding {bid_value} in {trump_value}")
         return Bid.create_bid_for_player(bid_value, trump_value, self, self.game.current_hand)
+
+    def play_card(self):
+        # TODO: playing logic
+        card = self.cards_in_hand.pop(0)
+        return Card(representation=card)
 
 
 class Hand(models.Model):
@@ -270,7 +277,6 @@ class Hand(models.Model):
         self._finalize_bidding()
 
     def _finalize_bidding(self):
-        self.high_bid = self.bids.order_by('-bid').first()
         self.bidder = self.high_bid.player
         self.game.set_state(Game.DECLARING_TRUMP)
 
@@ -283,16 +289,16 @@ class Hand(models.Model):
     def _reduce_find_low_trump(accum, player):
         trump, current_low = accum
         trump_cards = [card for card in player.get_cards() if card.suit == trump]
-        lowest_trump = min(trump_cards, key=lambda x: x.rank())
-        current_low = current_low if current_low and current_low.rank() < lowest_trump.rank() else lowest_trump
+        lowest_trump = min(trump_cards, key=lambda x: x.rank()) if trump_cards else None
+        current_low = current_low if (lowest_trump is None or (current_low and current_low.rank() < lowest_trump.rank())) else lowest_trump
         return trump, current_low
 
     @staticmethod
     def _reduce_find_high_trump(accum, player):
         trump, current_high = accum
         trump_cards = [card for card in player.get_cards() if card.suit == trump]
-        highest_trump = max(trump_cards, key=lambda x: x.rank())
-        current_high = current_high if current_high and current_high.rank() > highest_trump.rank() else highest_trump
+        highest_trump = max(trump_cards, key=lambda x: x.rank()) if trump_cards else None
+        current_high = current_high if (highest_trump is None or (current_high and current_high.rank() > highest_trump.rank())) else highest_trump
         return trump, current_high
 
     def finalize_trump_declaration(self, trump):

@@ -38,9 +38,8 @@ function DeclaringTrump(props) {
 
   function submitTrump() {
     console.log(trump);
-    /*
     setLoading(true);
-    axios.post(`/api/smear/v1/games/${game.id}/hands/${game.current_hand.id}/bids/`,
+    axios.patch(`/api/smear/v1/games/${game.id}/hands/${game.current_hand.id}/bids/${game.current_hand.high_bid}/`,
       { trump: trump }
     ).then((response) => {
       setLoading(false);
@@ -53,7 +52,6 @@ function DeclaringTrump(props) {
         maskClosable: true,
       })
     });
-    */
   }
 
   return (
