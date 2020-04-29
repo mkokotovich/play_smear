@@ -28,9 +28,11 @@ class Game(models.Model):
     single_player = models.BooleanField(blank=False, default=True)
     players = models.ManyToManyField('auth.User', through='Player')
     state = models.CharField(max_length=1024, blank=True, default="")
+    next_dealer = models.ForeignKey('Player', related_name='games_next_dealer', on_delete=models.CASCADE, null=True, blank=True)
 
     # Available states
     STARTING = "starting"
+    NEW_HAND = "new_hand"
     BIDDING = "bidding"
     DECLARING_TRUMP = "declaring_trump"
     PLAYING_TRICK = "playing_trick"
@@ -102,14 +104,11 @@ class Game(models.Model):
             raise ValidationError(f"Unable to start game, game requires {self.num_players} players, but {self.players.count()} have joined")
 
         self.set_seats()
-        first_dealer = self.set_plays_after()
+        self.next_dealer = self.set_plays_after()
+        LOG.info(f"Starting game {self} with players {', '.join([str(p) for p in self.player_set.all()])}")
 
-        hand = Hand.objects.create(game=self)
-        hand.start(dealer=first_dealer)
-        self.set_state(Game.BIDDING)
+        self.set_state(Game.NEW_HAND)
         self.advance_game()
-        self.save()
-        LOG.info(f"Started hand {hand} on game {self}")
 
     def set_seats(self):
         # Assign players to their seats
@@ -141,7 +140,14 @@ class Game(models.Model):
         return players[0]
 
     def advance_game(self):
-        if self.state == Game.BIDDING:
+        if self.state == Game.NEW_HAND:
+            hand = Hand.objects.create(game=self)
+            hand.start(dealer=self.next_dealer)
+            self.next_dealer = self.next_player(self.next_dealer)
+            self.set_state(Game.BIDDING)
+            self.save()
+            self.current_hand.advance_bidding()
+        elif self.state == Game.BIDDING:
             self.current_hand.advance_bidding()
 
 
@@ -316,6 +322,7 @@ class Hand(models.Model):
             list(self.game.player_set.all()),
             (self.trump, None)
         )
+        LOG.info(f"Trump is {self.trump}, high will be {self.high_card} and low will be {self.low_card}")
         self.advance_hand()
 
     def advance_hand(self):
@@ -326,6 +333,17 @@ class Hand(models.Model):
             trick.start(self.bidder)
             self.game.set_state(Game.PLAYING_TRICK)
             trick.advance_trick()
+        elif self.game.state == Game.PLAYING_TRICK:
+            # game.advance_hand() is only called when trick is finished
+            # Check to see if hand is finished, otherwise start next trick
+            if self.tricks.count() == 6:
+                # TODO - award game point
+                self.game.set_state(Game.DECLARING_TRUMP)
+                self.game.advance_game()
+            else:
+                trick = Trick.objects.create(hand=self)
+                trick.start(self.bidder)
+                trick.advance_trick()
 
     def player_can_change_bid(self, player):
         next_bidder = self.bidder
@@ -369,14 +387,17 @@ class Trick(models.Model):
     def __str__(self):
         return f"{', '.join(self.cards_played)} ({self.id})"
 
-    def submit_card_to_play(self, card):
+    def submit_card_to_play(self, card, player):
         """Handles validation of the card's legality
 
         Returns:
             trick_finished (bool): whether or not the trick is finished
         """
         # TODO Validate card is legal
+        if player != self.active_player:
+            raise ValidationError(f"It is not {player}'s turn to play")
 
+        LOG.info(f"{player} played {card}")
         self.cards_played.append(card.to_representation())
         self.active_player = self.hand.game.next_player(self.active_player)
         self.save()
@@ -393,6 +414,7 @@ class Trick(models.Model):
         return [Card(representation=rep) for rep in self.cards_played]
 
     def start(self, player_who_leads):
+        LOG.info(f"Starting trick with {player_who_leads} leading")
         self.active_player = player_who_leads
 
     def advance_trick(self):
@@ -403,7 +425,7 @@ class Trick(models.Model):
             if self.active_player.is_computer:
                 # Have computer choose a card to play, then play it
                 card_to_play = self.active_player.play_card()
-                trick_finished = self.submit_card_to_play(card_to_play)
+                trick_finished = self.submit_card_to_play(card_to_play, self.active_player)
             else:
                 # Waiting for a human to play, just return
                 return
@@ -411,5 +433,6 @@ class Trick(models.Model):
         self._finalize_trick()
 
     def _finalize_trick():
-        # TODO
-        pass
+        LOG.info(f"Trick is finished. Cards played: {self.cards_played}")
+        # TODO - find out who won the trick, award them the cards and any points
+        self.hand.advance_hand()
