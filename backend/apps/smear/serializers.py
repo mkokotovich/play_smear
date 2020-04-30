@@ -96,6 +96,7 @@ class GameSerializer(serializers.ModelSerializer):
 
 class GameDetailSerializer(GameSerializer):
     current_hand = HandSummaryWithCardsSerializer(read_only=True)
+    current_trick = TrickSummarySerializer(read_only=True)
 
 
 class GameJoinSerializer(serializers.Serializer):

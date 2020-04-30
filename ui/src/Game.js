@@ -6,6 +6,7 @@ import axios from 'axios';
 import WaitingRoom from './WaitingRoom';
 import Bidding from './Bidding';
 import DeclaringTrump from './DeclaringTrump';
+import Trick from './Trick';
 import getErrorString from './utils';
 
 import './Game.css';
@@ -32,7 +33,7 @@ function loadGame(gameID, setLoading, setGame) {
   setLoading(true);
   axios.get(`/api/smear/v1/games/${gameID}/`)
     .then((response) => {
-      console.log(response);
+      console.log("loadGame", response);
       setLoading(false);
       setGame(response.data);
     })
@@ -50,7 +51,7 @@ function loadGame(gameID, setLoading, setGame) {
 function reloadGameStatus(gameID, updateGame) {
   axios.get(`/api/smear/v1/games/${gameID}/status/`)
     .then((response) => {
-      console.log(response);
+      console.log("reloadGameStatus", response);
       updateGame(response.data);
     })
     .catch((error) => {
@@ -75,8 +76,8 @@ function Game(props) {
   const [loading, setLoading] = useState(false);
   const [game, setGame] = useState(null);
   const [needInput, setNeedInput] = useState(true);
+  const {signedInUser} = props;
 
-  // TODO allow calls to pass setLoading
   function reloadGame(fullReload, setPolling = undefined, displayLoading = false) {
     if (setPolling !== undefined) {
       setNeedInput(setPolling);
@@ -119,13 +120,22 @@ function Game(props) {
   }, 2000);
 
   var gameDisplay = null;
+  const allProps = {
+    game,
+    loading,
+    setLoading,
+    reloadGame,
+    signedInUser,
+  };
   if (game) {
     if (game.state  === "starting") {
-      gameDisplay = (<WaitingRoom game={game} loading={setLoading} reloadGame={reloadGame}/>);
+      gameDisplay = (<WaitingRoom {...allProps} />);
     } else if (game.state  === "bidding") {
-      gameDisplay = (<Bidding game={game} loading={loading} setLoading={setLoading} reloadGame={reloadGame} />);
+      gameDisplay = (<Bidding {...allProps} />);
     } else if (game.state  === "declaring_trump") {
-      gameDisplay = (<DeclaringTrump game={game} setLoading={setLoading} reloadGame={reloadGame} />);
+      gameDisplay = (<DeclaringTrump {...allProps} />);
+    } else if (game.state  === "playing_trick") {
+      gameDisplay = (<Trick {...allProps} />);
     } else {
       gameDisplay = (<>Unknown status {game.state}</>);
     }

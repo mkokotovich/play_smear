@@ -34,7 +34,7 @@ function TrumpInput(props) {
 
 function DeclaringTrump(props) {
   const [trump, setTrump] = useState();
-  const {game, setLoading} = props;
+  const {game, loading, setLoading, reloadGame} = props;
 
   function submitTrump() {
     console.log(trump);
@@ -42,7 +42,7 @@ function DeclaringTrump(props) {
     axios.patch(`/api/smear/v1/games/${game.id}/hands/${game.current_hand.id}/bids/${game.current_hand.high_bid}/`,
       { trump: trump }
     ).then((response) => {
-      setLoading(false);
+      reloadGame(true, true, true);
     }).catch((error) => {
       console.log(error);
       setLoading(false);
@@ -60,7 +60,7 @@ function DeclaringTrump(props) {
       <CardDisplay cards={game.current_hand.cards} />
       <TrumpInput trump={trump} setTrump={setTrump} />
       &nbsp;
-      <Button onClick={submitTrump}>Submit Trump</Button>
+      <Button onClick={submitTrump} disabled={loading}>Submit Trump</Button>
     </div>
   );
 }
