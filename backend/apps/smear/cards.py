@@ -10,6 +10,7 @@ HEARTS = 'hearts'
 CLUBS = 'clubs'
 DIAMONDS = 'diamonds'
 SUITS = [SPADES, HEARTS, CLUBS, DIAMONDS]
+SUIT_CHOICES = ((suit, suit) for suit in SUITS)
 
 
 class Card():
@@ -52,7 +53,7 @@ class Card():
             '7': 6,
             '8': 7,
             '9': 8,
-            '0': 9,
+            '10': 9,
             'jack': 10,
             'queen': 11,
             'king': 12,
@@ -72,7 +73,7 @@ class Card():
         self.suit = suit
 
     def __str__(self):
-        return f"Card({self.to_representation()})"
+        return f"{self.to_representation()}"
 
     def __repr__(self):
         return self.__str__()

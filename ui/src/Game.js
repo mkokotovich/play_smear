@@ -76,12 +76,14 @@ function Game(props) {
   const [game, setGame] = useState(null);
   const [needInput, setNeedInput] = useState(true);
 
-  function reloadGame(fullReload, setPolling = undefined) {
+  // TODO allow calls to pass setLoading
+  function reloadGame(fullReload, setPolling = undefined, displayLoading = false) {
     if (setPolling !== undefined) {
       setNeedInput(setPolling);
     }
     if (fullReload) {
-      loadGame(props.match.params.gameID, () => {}, setGame);
+      const showLoading = displayLoading ? setLoading : () => {};
+      loadGame(props.match.params.gameID, showLoading, setGame);
     } else {
       reloadGameStatus(props.match.params.gameID, updateGame);
     }
@@ -121,7 +123,7 @@ function Game(props) {
     if (game.state  === "starting") {
       gameDisplay = (<WaitingRoom game={game} loading={setLoading} reloadGame={reloadGame}/>);
     } else if (game.state  === "bidding") {
-      gameDisplay = (<Bidding game={game} setLoading={setLoading} reloadGame={reloadGame} />);
+      gameDisplay = (<Bidding game={game} loading={loading} setLoading={setLoading} reloadGame={reloadGame} />);
     } else if (game.state  === "declaring_trump") {
       gameDisplay = (<DeclaringTrump game={game} setLoading={setLoading} reloadGame={reloadGame} />);
     } else {

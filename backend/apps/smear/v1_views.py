@@ -269,11 +269,11 @@ class BidViewSet(viewsets.ModelViewSet):
         hand = serializer.context['extra_kwargs'].get('hand')
         player = serializer.context['extra_kwargs'].get('player')
 
-        if hand.game.status == Game.BIDDING:
+        if hand.game.state == Game.BIDDING:
             if not hand.player_can_change_bid(player):
                 raise ValidationError("No longer able to change bid")
-        elif hand.game.status == Game.DECLARING_TRUMP:
-            if player != hand.bidder:
+        elif hand.game.state == Game.DECLARING_TRUMP:
+            if player != hand.high_bid.player:
                 raise ValidationError("Not able to change bid after bidder is chosen")
             bid = serializer.validated_data.get('bid', None)
             if bid and bid != self.get_object().bid:
@@ -281,5 +281,5 @@ class BidViewSet(viewsets.ModelViewSet):
 
         bid = serializer.save(**serializer.context['extra_kwargs'])
 
-        if hand.game.status == Game.DECLARING_TRUMP and bid.trump:
+        if hand.game.state == Game.DECLARING_TRUMP and bid.trump:
             hand.finalize_trump_declaration(bid.trump)

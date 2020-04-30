@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from rest_framework.exceptions import ValidationError
 
-from apps.smear.cards import Card, Deck
+from apps.smear.cards import Card, Deck, SUIT_CHOICES
 
 
 LOG = logging.getLogger(__name__)
@@ -203,7 +203,7 @@ class Player(models.Model):
     def create_bid(self):
         # TODO: bidding logic
         bid_value = 2
-        trump_value = self.cards_in_hand[0][1]
+        trump_value = Card(representation=self.cards_in_hand[0]).suit
 
         LOG.info(f"{self} has {self.cards_in_hand}, bidding {bid_value} in {trump_value}")
         return Bid.create_bid_for_player(bid_value, trump_value, self, self.game.current_hand)
@@ -222,7 +222,7 @@ class Hand(models.Model):
     dealer = models.ForeignKey(Player, on_delete=models.CASCADE, null=True, blank=True)
     bidder = models.ForeignKey(Player, related_name='hands_was_bidder', on_delete=models.CASCADE, null=True, blank=True)
     high_bid = models.OneToOneField('smear.Bid', related_name='hand_with_high_bid', on_delete=models.SET_NULL, null=True, blank=True)
-    trump = models.CharField(max_length=16, blank=True, default="")
+    trump = models.CharField(max_length=16, blank=True, default="", choices=SUIT_CHOICES)
 
     # We calculate the high and low at the beginning
     # This is so we don't need to keep all the cards players have 'won',
@@ -296,28 +296,28 @@ class Hand(models.Model):
         trump, current_low = accum
         trump_cards = [card for card in player.get_cards() if card.suit == trump]
         lowest_trump = min(trump_cards, key=lambda x: x.rank()) if trump_cards else None
-        current_low = current_low if (lowest_trump is None or (current_low and current_low.rank() < lowest_trump.rank())) else lowest_trump
-        return trump, current_low
+        new_low = current_low if (lowest_trump is None or (current_low and current_low.rank() < lowest_trump.rank())) else lowest_trump
+        return trump, new_low
 
     @staticmethod
     def _reduce_find_high_trump(accum, player):
         trump, current_high = accum
         trump_cards = [card for card in player.get_cards() if card.suit == trump]
         highest_trump = max(trump_cards, key=lambda x: x.rank()) if trump_cards else None
-        current_high = current_high if (highest_trump is None or (current_high and current_high.rank() > highest_trump.rank())) else highest_trump
-        return trump, current_high
+        new_high = current_high if (highest_trump is None or (current_high and current_high.rank() > highest_trump.rank())) else highest_trump
+        return trump, new_high
 
     def finalize_trump_declaration(self, trump):
         """Now that we know trump, we will figure out what the high
         and low are, so we can watch and award those when won
         """
         self.trump = trump
-        self.low_card = reduce(
+        _, self.low_card = reduce(
             Hand._reduce_find_low_trump,
             list(self.game.player_set.all()),
             (self.trump, None)
         )
-        self.high_card = reduce(
+        _, self.high_card = reduce(
             Hand._reduce_find_high_trump,
             list(self.game.player_set.all()),
             (self.trump, None)
@@ -363,7 +363,7 @@ class Bid(models.Model):
     hand = models.ForeignKey(Hand, related_name='bids', on_delete=models.CASCADE, null=True)
     player = models.ForeignKey(Player, related_name='bids', on_delete=models.CASCADE, null=True)
     bid = models.IntegerField()
-    trump = models.CharField(max_length=16, blank=True, default="")
+    trump = models.CharField(max_length=16, blank=True, default="", choices=SUIT_CHOICES)
 
     def __str__(self):
         return f"{self.bid} (by {self.player})"

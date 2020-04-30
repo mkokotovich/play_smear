@@ -35,7 +35,7 @@ function BidInput(props) {
 
 function Bidding(props) {
   const [bidValue, setBidValue] = useState("0");
-  const {game, setLoading} = props;
+  const {game, loading, setLoading, reloadGame} = props;
 
   function submitBid() {
     console.log(bidValue);
@@ -43,7 +43,7 @@ function Bidding(props) {
     axios.post(`/api/smear/v1/games/${game.id}/hands/${game.current_hand.id}/bids/`,
       { bid: bidValue }
     ).then((response) => {
-      setLoading(false);
+      reloadGame(true, true, true);
     }).catch((error) => {
       console.log(error);
       setLoading(false);
@@ -61,7 +61,7 @@ function Bidding(props) {
       <CardDisplay cards={game.current_hand.cards} />
       <BidInput bidValue={bidValue} setBidValue={setBidValue} />
       &nbsp;
-      <Button onClick={submitBid}>Submit Bid</Button>
+      <Button onClick={submitBid} disabled={loading}>Submit Bid</Button>
     </div>
   );
 }
