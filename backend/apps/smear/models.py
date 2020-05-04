@@ -210,8 +210,12 @@ class Player(models.Model):
 
     def play_card(self):
         # TODO: playing logic
-        card = self.cards_in_hand.pop(0)
+        card = self.cards_in_hand[0]
         return Card(representation=card)
+
+    def card_played(self, card):
+        self.cards_in_hand.remove(card.to_representation())
+        self.save()
 
 
 class Hand(models.Model):
@@ -255,27 +259,31 @@ class Hand(models.Model):
 
         self.save()
 
-    def submit_bid(self, new_bid):
-        if new_bid.player.id != self.bidder.id:
-            raise ValidationError(f"It is not {new_bid.player}'s turn to bid")
+    def add_bid_to_hand(self, new_bid):
         self.high_bid = self.high_bid if (self.high_bid and self.high_bid.bid >= new_bid.bid) else new_bid
         finished_bidding = self.bidder == self.dealer
         self.bidder = self.game.next_player(self.bidder)
-        LOG.info(f"Submitted bid {new_bid}, high bid is now {self.high_bid}, bidder is now {self.bidder}")
+        LOG.info(f"Submitted bid {new_bid}, high bid is now {self.high_bid}, bidder is now {self.bidder}, finished_bidding is {finished_bidding}")
         self.save()
         return finished_bidding
 
-    def advance_bidding(self):
-        finished_bidding = False
+    def submit_bid(self, new_bid):
+        if new_bid.player.id != self.bidder.id:
+            raise ValidationError(f"It is not {new_bid.player}'s turn to bid")
+        finished_bidding = self.add_bid_to_hand(new_bid)
+        self.advance_bidding(finished_bidding)
+
+    def advance_bidding(self, finished_bidding_arg=False):
+        finished_bidding = finished_bidding_arg
         while not finished_bidding:
             bid_filter = self.bidder.bids.filter(hand=self)
             if bid_filter.exists():
                 # A human's bid exists, submit it
-                finished_bidding = self.submit_bid(bid_filter[0])
+                finished_bidding = self.add_bid_to_hand(bid_filter[0])
             elif self.bidder.is_computer:
                 # Generate computer bid and submit it
                 bid = self.bidder.create_bid()
-                finished_bidding = self.submit_bid(bid)
+                finished_bidding = self.add_bid_to_hand(bid)
             else:
                 # Waiting for a human to bid, just return
                 return
@@ -337,8 +345,8 @@ class Hand(models.Model):
             # game.advance_hand() is only called when trick is finished
             # Check to see if hand is finished, otherwise start next trick
             if self.tricks.count() == 6:
-                # TODO - award game point
-                self.game.set_state(Game.DECLARING_TRUMP)
+                self._finalize_hand()
+                self.game.set_state(Game.NEW_HAND)
                 self.game.advance_game()
             else:
                 trick = Trick.objects.create(hand=self)
@@ -354,6 +362,10 @@ class Hand(models.Model):
             if player == next_bidder:
                 return True
         return False
+
+    def _finalize_hand(self):
+        # TODO - award game point
+        pass
 
 
 class Bid(models.Model):
@@ -373,19 +385,27 @@ class Bid(models.Model):
         return Bid.objects.create(bid=bid, trump=trump, player=player, hand=hand)
 
 
+class Play(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    trick = models.ForeignKey('Trick', related_name='plays', on_delete=models.CASCADE, null=True)
+    player = models.ForeignKey(Player, related_name='plays', on_delete=models.CASCADE, null=True)
+    card = models.CharField(max_length=2)
+
+    def __str__(self):
+        return f"{self.card} (by {self.player})"
+
+
 class Trick(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     hand = models.ForeignKey(Hand, related_name='tricks', on_delete=models.CASCADE, null=True)
-    cards_played = ArrayField(
-        models.CharField(max_length=2),
-        default=list
-    )
     active_player = models.ForeignKey(Player, related_name='tricks_playing', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
-        return f"{', '.join(self.cards_played)} ({self.id})"
+        return f"{', '.join(self.plays.all())} ({self.id})"
 
     def submit_card_to_play(self, card, player):
         """Handles validation of the card's legality
@@ -398,29 +418,34 @@ class Trick(models.Model):
             raise ValidationError(f"It is not {player}'s turn to play")
 
         LOG.info(f"{player} played {card}")
-        self.cards_played.append(card.to_representation())
         self.active_player = self.hand.game.next_player(self.active_player)
         self.save()
-        return len(self.cards_played) == self.hand.game.num_players
 
-    def play_card(self, card):
-        trick_finished = self.submit_card_to_play(card)
-        if trick_finished:
-            self._finalize_trick()
-        else:
-            self.advance_trick()
+        # Let the player know to remove card from hand
+        player.card_played(card)
 
-    def get_cards(self):
-        return [Card(representation=rep) for rep in self.cards_played]
+        return self.plays.count() == self.hand.game.num_players
+
+    def submit_play(self, play):
+        card = Card(representation=play.card)
+        trick_finished = self.submit_card_to_play(card, play.player)
+        self.advance_trick(trick_finished)
+
+    def get_cards(self, as_rep=False):
+        cards = [play.card for play in self.plays.all()]
+        return [Card(representation=rep) for rep in cards] if not as_rep else cards
+
+    def get_lead_play(self):
+        return self.plays.first() if self.plays.exists() else None
 
     def start(self, player_who_leads):
         LOG.info(f"Starting trick with {player_who_leads} leading")
         self.active_player = player_who_leads
 
-    def advance_trick(self):
+    def advance_trick(self, trick_finished_arg=False):
         """Advances any computers playing
         """
-        trick_finished = False
+        trick_finished = trick_finished_arg
         while not trick_finished:
             if self.active_player.is_computer:
                 # Have computer choose a card to play, then play it
@@ -432,7 +457,15 @@ class Trick(models.Model):
 
         self._finalize_trick()
 
-    def _finalize_trick():
-        LOG.info(f"Trick is finished. Cards played: {self.cards_played}")
-        # TODO - find out who won the trick, award them the cards and any points
+    def award_cards_to_taker(self):
+        # TODO - find out who won the trick, award them the game points and any points
+        return self.get_lead_play().player
+
+    def _finalize_trick(self):
+        taker = self.award_cards_to_taker()
+        LOG.info(f"Trick is finished. {taker} took the following cards: {self.get_cards()}")
         self.hand.advance_hand()
+
+    def player_can_change_play(self, player):
+        # TODO - do we want to allow async play submission?
+        return False

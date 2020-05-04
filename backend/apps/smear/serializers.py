@@ -1,8 +1,8 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from apps.smear.models import Game, Team, Player, Hand, Bid, Trick
-from apps.smear.cards import SUITS
+from apps.smear.models import Game, Team, Player, Hand, Bid, Trick, Play
+from apps.smear.cards import SUITS, Card
 
 
 class PlayerSummarySerializer(serializers.ModelSerializer):
@@ -70,9 +70,16 @@ class StatusBiddingSerializer(serializers.ModelSerializer):
 
 
 class TrickSummarySerializer(serializers.ModelSerializer):
+    cards_played = serializers.SerializerMethodField()
+
     class Meta:
         model = Trick
         fields = ('id', 'active_player', 'cards_played')
+
+    def get_cards_played(self, obj):
+        # TODO: do we want a custom field to serialize a list of cards?
+        cards = obj.get_cards(as_rep=True)
+        return cards
 
 
 class StatusPlayingTrickSerializer(serializers.ModelSerializer):
@@ -128,5 +135,25 @@ class BidSerializer(serializers.ModelSerializer):
     def validate_trump(self, value):
         if value.lower() not in SUITS:
             raise ValidationError(f"{value} is not a valid suit")
+
+        return value.lower()
+
+
+class PlaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Play
+        fields = ('id', 'card')
+        read_only_fields = ('player',)
+
+    def validate_card(self, value):
+        try:
+            trick = self.context['extra_kwargs']['trick']
+            player = self.context['extra_kwargs']['player']
+        except KeyError:
+            raise ValidationError("context not set up correctly, extra_kwargs needs to contain trick and player")
+        try:
+            Card(representation=value)
+        except ValueError as ex:
+            raise ValidationError("invalid card, use short representation") from ex
 
         return value

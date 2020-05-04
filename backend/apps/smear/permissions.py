@@ -20,6 +20,8 @@ class IsPlayerInGame(permissions.IsAuthenticated):
             game = obj.game
         elif isinstance(obj, Bid):
             game = obj.hand.game
+        elif isinstance(obj, Play):
+            game = obj.trick.hand.game
         return Player.objects.filter(game_id=game.id, user_id=request.user.id).exists()
 
 
@@ -66,3 +68,14 @@ class IsBidOwnerPermission(permissions.IsAuthenticated):
     def has_object_permission(self, request, view, obj):
         bid = obj
         return bid.player.user == request.user
+
+
+class IsPlayOwnerPermission(permissions.IsAuthenticated):
+    def has_permission(self, request, view):
+        if view.detail is True:
+            # Allow this case to go to has_object_permissions
+            return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        return obj.player.user == request.user

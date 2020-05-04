@@ -39,22 +39,20 @@ function Trick(props) {
 
   function submitCard() {
     console.log(cardSelected);
-    /*
     setLoading(true);
-    axios.post(`/api/smear/v1/games/${game.id}/hands/${game.current_hand.id}/bids/`,
-      { bid: bidValue }
+    axios.post(`/api/smear/v1/games/${game.id}/hands/${game.current_hand.id}/tricks/${game.current_trick.id}/plays/`,
+      { card: cardSelected }
     ).then((response) => {
       reloadGame(true, true, true);
     }).catch((error) => {
       console.log(error);
       setLoading(false);
       Modal.error({
-        title: "Unable to submit bid",
+        title: "Unable to submit card to play",
         content: getErrorString(error.response.data),
         maskClosable: true,
       })
     });
-    */
   }
 
   const cardSelection = (

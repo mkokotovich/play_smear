@@ -8,8 +8,9 @@ from rest_framework.exceptions import ValidationError, APIException
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 
-from apps.smear.models import Game, Player, Team, Bid, Hand
+from apps.smear.models import Game, Player, Team, Bid, Hand, Trick, Play
 from apps.smear.pagination import SmearPagination
 from apps.smear.serializers import (
     GameSerializer,
@@ -23,6 +24,7 @@ from apps.smear.serializers import (
     TeamSummarySerializer,
     TeamSerializer,
     BidSerializer,
+    PlaySerializer,
 )
 from apps.smear.permissions import IsPlayerInGame, IsGameOwnerPermission, IsPlayerOnTeam, IsBidOwnerPermission
 
@@ -59,6 +61,7 @@ class GameViewSet(viewsets.ModelViewSet):
 
         return base_queryset.order_by('-id')
 
+    @transaction.atomic
     def perform_create(self, serializer):
         passcode = serializer.validated_data.get('passcode', None)
         instance = serializer.save(
@@ -259,10 +262,10 @@ class BidViewSet(viewsets.ModelViewSet):
         hand_id = self.kwargs.get('hand_id')
         return Bid.objects.filter(hand__game_id=game_id, hand_id=hand_id).select_related('hand__game').order_by('-id')
 
+    @transaction.atomic
     def perform_create(self, serializer):
         bid = serializer.save(**serializer.context['extra_kwargs'])
         bid.hand.submit_bid(bid)
-        bid.hand.advance_bidding()
         return bid
 
     def perform_update(self, serializer):
@@ -278,8 +281,55 @@ class BidViewSet(viewsets.ModelViewSet):
             bid = serializer.validated_data.get('bid', None)
             if bid and bid != self.get_object().bid:
                 raise ValidationError("Changing the bid is not allowed while declaring trump")
+        else:
+            raise ValidationError("No longer able to change bid")
 
         bid = serializer.save(**serializer.context['extra_kwargs'])
 
         if hand.game.state == Game.DECLARING_TRUMP and bid.trump:
             hand.finalize_trump_declaration(bid.trump)
+
+
+class PlayViewSet(viewsets.ModelViewSet):
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend,)
+    pagination_class = SmearPagination
+    serializer_class = PlaySerializer
+
+    def get_permissions(self):
+        if self.action in ['create', 'list', 'retrieve']:
+            self.permission_classes = [IsPlayerInGame]
+        if self.action in ['update', 'partial_update']:
+            self.permission_classes = [IsPlayOwnerPermission]
+
+        return super().get_permissions()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        player = Player.objects.get(game=self.kwargs['game_id'], user=self.request.user)
+        trick = Trick.objects.get(pk=self.kwargs['trick_id'])
+        context['extra_kwargs'] = {
+            'player': player,
+            'trick': trick,
+        }
+        return context
+
+    def get_queryset(self):
+        trick_id = self.kwargs.get('trick_id')
+        return Play.objects.filter(trick_id=trick_id).select_related('trick__hand__game').order_by('-id')
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        play = serializer.save(**serializer.context['extra_kwargs'])
+        trick = serializer.context['extra_kwargs'].get('trick')
+        trick.submit_play(play)
+        return play
+
+    def perform_update(self, serializer):
+        trick = serializer.context['extra_kwargs'].get('trick')
+        player = serializer.context['extra_kwargs'].get('player')
+
+        if not trick.player_can_change_play(player):
+            raise ValidationError("No longer able to change card to play")
+
+        play = serializer.save(**serializer.context['extra_kwargs'])
+        return play

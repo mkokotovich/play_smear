@@ -428,7 +428,7 @@ function WaitingRoom(props) {
         props.game.id,
         sourceTeamID,
         destinationTeamID,
-        props.loading,
+        props.setLoading,
       );
       move(
         playerList[source.droppableId],
@@ -495,11 +495,11 @@ function WaitingRoom(props) {
       </span>
       {dnd}
       <div className="flex">
-        <Button onClick={() => startGame(teams, props.game.id, props.loading, props.reloadGame)}>Start Game</Button>
+        <Button onClick={() => startGame(teams, props.game.id, props.setLoading, props.reloadGame)}>Start Game</Button>
         { props.game.teams.length > 0 &&
           <>
-            <Button onClick={() => autoAssign(props.game.id, props.loading)}>Auto Assign</Button>
-            <Button onClick={() => resetPlayers(props.game.id, props.loading)}>Reset</Button>
+            <Button onClick={() => autoAssign(props.game.id, props.setLoading)}>Auto Assign</Button>
+            <Button onClick={() => resetPlayers(props.game.id, props.setLoading)}>Reset</Button>
           </>
         }
       </div>
