@@ -99,7 +99,7 @@ class Game(models.Model):
         for team in self.teams.all():
             team.members.clear()
 
-    def start(self):
+    def start_game(self):
         if self.players.count() != self.num_players:
             raise ValidationError(f"Unable to start game, game requires {self.num_players} players, but {self.players.count()} have joined")
 
@@ -142,7 +142,7 @@ class Game(models.Model):
     def advance_game(self):
         if self.state == Game.NEW_HAND:
             hand = Hand.objects.create(game=self)
-            hand.start(dealer=self.next_dealer)
+            hand.start_hand(dealer=self.next_dealer)
             self.next_dealer = self.next_player(self.next_dealer)
             self.set_state(Game.BIDDING)
             self.save()
@@ -191,6 +191,10 @@ class Player(models.Model):
         if not name:
             name = user.username.split('@')[0]
         return name
+
+    def reset_for_new_hand(self):
+        self.cards_in_hand = []
+        self.save()
 
     def accept_dealt_cards(self, cards):
         representations = [card.to_representation() for card in cards]
@@ -244,17 +248,19 @@ class Hand(models.Model):
     def __str__(self):
         return f"Hand {self.id} (dealer: {self.dealer}) (bidder: {self.bidder}) (high_bid: {self.high_bid}) (trump: {self.trump})"
 
-    def start(self, dealer):
-        LOG.info("Starting hand with dealer: {dealer}")
+    def start_hand(self, dealer):
+        LOG.info(f"Starting hand with dealer: {dealer}")
         # Set the dealer
         self.dealer = dealer
         self.bidder = self.game.next_player(dealer)
 
         # Deal out six cards
         deck = Deck()
-        for player in self.game.player_set.all():
+        players = self.game.player_set.all()
+        for player in players:
+            player.reset_for_new_hand()
             player.accept_dealt_cards(deck.deal(3))
-        for player in self.game.player_set.all():
+        for player in players:
             player.accept_dealt_cards(deck.deal(3))
 
         self.save()
@@ -292,6 +298,7 @@ class Hand(models.Model):
 
     def _finalize_bidding(self):
         self.bidder = self.high_bid.player
+        self.save()
         self.game.set_state(Game.DECLARING_TRUMP)
 
         LOG.info(f"{self.bidder} has the high bid of {self.high_bid}")
@@ -330,6 +337,7 @@ class Hand(models.Model):
             list(self.game.player_set.all()),
             (self.trump, None)
         )
+        self.save()
         LOG.info(f"Trump is {self.trump}, high will be {self.high_card} and low will be {self.low_card}")
         self.advance_hand()
 
@@ -338,7 +346,7 @@ class Hand(models.Model):
             self.advance_bidding()
         elif self.game.state == Game.DECLARING_TRUMP:
             trick = Trick.objects.create(hand=self)
-            trick.start(self.bidder)
+            trick.start_trick(self.bidder)
             self.game.set_state(Game.PLAYING_TRICK)
             trick.advance_trick()
         elif self.game.state == Game.PLAYING_TRICK:
@@ -350,7 +358,7 @@ class Hand(models.Model):
                 self.game.advance_game()
             else:
                 trick = Trick.objects.create(hand=self)
-                trick.start(self.bidder)
+                trick.start_trick(self.bidder)
                 trick.advance_trick()
 
     def player_can_change_bid(self, player):
@@ -364,6 +372,7 @@ class Hand(models.Model):
         return False
 
     def _finalize_hand(self):
+        LOG.info("Hand is finished")
         # TODO - award game point
         pass
 
@@ -421,6 +430,9 @@ class Trick(models.Model):
         self.active_player = self.hand.game.next_player(self.active_player)
         self.save()
 
+        # Officially "play" the card, if the play hasn't already been created in the view
+        play, created = Play.objects.get_or_create(card=card.to_representation(), player=player, trick=self)
+
         # Let the player know to remove card from hand
         player.card_played(card)
 
@@ -438,9 +450,10 @@ class Trick(models.Model):
     def get_lead_play(self):
         return self.plays.first() if self.plays.exists() else None
 
-    def start(self, player_who_leads):
+    def start_trick(self, player_who_leads):
         LOG.info(f"Starting trick with {player_who_leads} leading")
         self.active_player = player_who_leads
+        self.save()
 
     def advance_trick(self, trick_finished_arg=False):
         """Advances any computers playing

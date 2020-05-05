@@ -27,6 +27,26 @@ class TeamSummarySerializer(serializers.ModelSerializer):
         fields = ('id', 'name')
 
 
+class PlaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Play
+        fields = ('id', 'card', 'player')
+        read_only_fields = ('player',)
+
+    def validate_card(self, value):
+        try:
+            trick = self.context['extra_kwargs']['trick']
+            player = self.context['extra_kwargs']['player']
+        except KeyError:
+            raise ValidationError("context not set up correctly, extra_kwargs needs to contain trick and player")
+        try:
+            Card(representation=value)
+        except ValueError as ex:
+            raise ValidationError("invalid card, use short representation") from ex
+
+        return value
+
+
 class StatusStartingSerializer(serializers.ModelSerializer):
     teams = TeamSummarySerializer(read_only=True, many=True)
     players = PlayerSummarySerializer(source='player_set', read_only=True, many=True)
@@ -70,16 +90,11 @@ class StatusBiddingSerializer(serializers.ModelSerializer):
 
 
 class TrickSummarySerializer(serializers.ModelSerializer):
-    cards_played = serializers.SerializerMethodField()
+    plays = PlaySerializer(read_only=True, many=True)
 
     class Meta:
         model = Trick
-        fields = ('id', 'active_player', 'cards_played')
-
-    def get_cards_played(self, obj):
-        # TODO: do we want a custom field to serialize a list of cards?
-        cards = obj.get_cards(as_rep=True)
-        return cards
+        fields = ('id', 'active_player', 'plays')
 
 
 class StatusPlayingTrickSerializer(serializers.ModelSerializer):
@@ -137,23 +152,3 @@ class BidSerializer(serializers.ModelSerializer):
             raise ValidationError(f"{value} is not a valid suit")
 
         return value.lower()
-
-
-class PlaySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Play
-        fields = ('id', 'card')
-        read_only_fields = ('player',)
-
-    def validate_card(self, value):
-        try:
-            trick = self.context['extra_kwargs']['trick']
-            player = self.context['extra_kwargs']['player']
-        except KeyError:
-            raise ValidationError("context not set up correctly, extra_kwargs needs to contain trick and player")
-        try:
-            Card(representation=value)
-        except ValueError as ex:
-            raise ValidationError("invalid card, use short representation") from ex
-
-        return value

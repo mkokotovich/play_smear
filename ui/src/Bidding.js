@@ -57,7 +57,7 @@ function Bidding(props) {
 
   return (
     <div>
-      <PlayerDisplay players={game.players} teams={game.teams} />
+      <PlayerDisplay {...props} />
       <CardDisplay cards={game.current_hand.cards} />
       <BidInput bidValue={bidValue} setBidValue={setBidValue} />
       &nbsp;

@@ -117,7 +117,7 @@ class GameViewSet(viewsets.ModelViewSet):
     )
     def start(self, request, pk=None):
         game = self.get_object()
-        game.start()
+        game.start_game()
         LOG.info(f"Started game {game}")
         return Response({'status': 'success'})
 

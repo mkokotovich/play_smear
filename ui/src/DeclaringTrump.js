@@ -56,7 +56,7 @@ function DeclaringTrump(props) {
 
   return (
     <div>
-      <PlayerDisplay players={game.players} teams={game.teams} />
+      <PlayerDisplay {...props} />
       <CardDisplay cards={game.current_hand.cards} />
       <TrumpInput trump={trump} setTrump={setTrump} />
       &nbsp;

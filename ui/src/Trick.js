@@ -71,7 +71,7 @@ function Trick(props) {
   const selectOrWait = game?.current_trick?.active_player === myPlayer ? cardSelection : waitingForTurn;
   return (
     <div>
-      <PlayerDisplay players={game.players} teams={game.teams} />
+      <PlayerDisplay {...props} />
       <CardDisplay cards={game.current_hand.cards} />
       {selectOrWait}
     </div>
