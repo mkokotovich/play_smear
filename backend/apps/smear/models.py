@@ -54,7 +54,8 @@ class Game(models.Model):
 
     @property
     def current_trick(self):
-        return self.hands.last().tricks.last()
+        hand = self.hands.last()
+        return hand.tricks.last() if hand else None
 
     def next_player(self, player):
         # TODO determine if this is really more performant
@@ -141,7 +142,7 @@ class Game(models.Model):
 
     def advance_game(self):
         if self.state == Game.NEW_HAND:
-            hand = Hand.objects.create(game=self)
+            hand = Hand.objects.create(game=self, num=self.hands.count() + 1)
             hand.start_hand(dealer=self.next_dealer)
             self.next_dealer = self.next_player(self.next_dealer)
             self.set_state(Game.BIDDING)
@@ -225,6 +226,8 @@ class Player(models.Model):
 class Hand(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # num is the number hand in the game, starting at 1
+    num = models.IntegerField()
 
     game = models.ForeignKey(Game, related_name='hands', on_delete=models.CASCADE, null=True)
     dealer = models.ForeignKey(Player, on_delete=models.CASCADE, null=True, blank=True)
@@ -244,6 +247,9 @@ class Hand(models.Model):
     winner_jack = models.ForeignKey(Player, related_name="games_winner_jack", on_delete=models.CASCADE, null=True, blank=True)
     winner_jick = models.ForeignKey(Player, related_name="games_winner_jick", on_delete=models.CASCADE, null=True, blank=True)
     winner_game = models.ForeignKey(Player, related_name="games_winner_game", on_delete=models.CASCADE, null=True, blank=True)
+
+    class Meta:
+        unique_together = (('game', 'num'),)
 
     def __str__(self):
         return f"Hand {self.id} (dealer: {self.dealer}) (bidder: {self.bidder}) (high_bid: {self.high_bid}) (trump: {self.trump})"
@@ -345,7 +351,7 @@ class Hand(models.Model):
         if self.game.state == Game.BIDDING:
             self.advance_bidding()
         elif self.game.state == Game.DECLARING_TRUMP:
-            trick = Trick.objects.create(hand=self)
+            trick = Trick.objects.create(hand=self, num=self.tricks.count() + 1)
             trick.start_trick(self.bidder)
             self.game.set_state(Game.PLAYING_TRICK)
             trick.advance_trick()
@@ -357,7 +363,7 @@ class Hand(models.Model):
                 self.game.set_state(Game.NEW_HAND)
                 self.game.advance_game()
             else:
-                trick = Trick.objects.create(hand=self)
+                trick = Trick.objects.create(hand=self, num=self.tricks.count() + 1)
                 trick.start_trick(self.bidder)
                 trick.advance_trick()
 
@@ -409,9 +415,14 @@ class Play(models.Model):
 class Trick(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # num is the number trick of the hand (e.g. 1, 2, 3, 4, 5, and then 6)
+    num = models.IntegerField()
 
     hand = models.ForeignKey(Hand, related_name='tricks', on_delete=models.CASCADE, null=True)
     active_player = models.ForeignKey(Player, related_name='tricks_playing', on_delete=models.CASCADE, null=True)
+
+    class Meta:
+        unique_together = (('hand', 'num'),)
 
     def __str__(self):
         return f"{', '.join(self.plays.all())} ({self.id})"

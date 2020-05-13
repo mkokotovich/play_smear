@@ -167,7 +167,13 @@ class GameViewSet(viewsets.ModelViewSet):
         }.get(game.state, None)
         if not status_serializer:
             raise APIException(f"Unable to find status of game {game}, state ({game.state}) is not supported")
-        serializer = status_serializer(game, context={'request': request})
+
+        context = {
+            **self.get_serializer_context(),
+            'trick_num': request.query_params.get('trick_num'),
+            'hand_num': request.query_params.get('hand_num'),
+        }
+        serializer = status_serializer(game, context=self.get_serializer_context())
 
         return Response(serializer.data)
 

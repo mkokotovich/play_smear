@@ -1,8 +1,13 @@
+import logging
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from apps.smear.models import Game, Team, Player, Hand, Bid, Trick, Play
 from apps.smear.cards import SUITS, Card
+
+
+LOG = logging.getLogger(__name__)
 
 
 class PlayerSummarySerializer(serializers.ModelSerializer):
@@ -59,7 +64,7 @@ class StatusStartingSerializer(serializers.ModelSerializer):
 class HandSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Hand
-        fields = ('id', 'dealer', 'bidder', 'high_bid', 'trump')
+        fields = ('id', 'num', 'dealer', 'bidder', 'high_bid', 'trump')
 
 
 class HandSummaryWithCardsSerializer(serializers.ModelSerializer):
@@ -78,15 +83,20 @@ class HandSummaryWithCardsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Hand
-        fields = ('id', 'dealer', 'bidder', 'high_bid', 'cards')
+        fields = ('id', 'num', 'dealer', 'bidder', 'high_bid', 'cards')
 
 
 class StatusBiddingSerializer(serializers.ModelSerializer):
-    current_hand = HandSummarySerializer(read_only=True)
+    current_hand = serializers.SerializerMethodField()
 
     class Meta:
         model = Game
         fields = ('state', 'current_hand')
+
+    def get_current_hand(self, game):
+        hand_num = self.context.get('hand_num')
+        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+        return HandSummarySerializer(hand, read_only=True, context=self.context).data if hand else {}
 
 
 class TrickSummarySerializer(serializers.ModelSerializer):
@@ -94,15 +104,22 @@ class TrickSummarySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Trick
-        fields = ('id', 'active_player', 'plays')
+        fields = ('id', 'num', 'active_player', 'plays')
 
 
 class StatusPlayingTrickSerializer(serializers.ModelSerializer):
-    current_trick = TrickSummarySerializer(read_only=True)
+    current_trick = serializers.SerializerMethodField()
 
     class Meta:
         model = Game
         fields = ('state', 'current_trick')
+
+    def get_current_trick(self, game):
+        trick_num = self.context.get('trick_num')
+        hand_num = self.context.get('hand_num')
+        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+        trick = Trick.objects.get(hand=hand, num=trick_num) if trick_num else game.current_trick
+        return TrickSummarySerializer(trick, read_only=True, context=self.context).data if trick else {}
 
 
 class GameSerializer(serializers.ModelSerializer):
@@ -117,8 +134,20 @@ class GameSerializer(serializers.ModelSerializer):
 
 
 class GameDetailSerializer(GameSerializer):
-    current_hand = HandSummaryWithCardsSerializer(read_only=True)
-    current_trick = TrickSummarySerializer(read_only=True)
+    current_hand = serializers.SerializerMethodField()
+    current_trick = serializers.SerializerMethodField()
+
+    def get_current_hand(self, game):
+        hand_num = self.context.get('hand_num')
+        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+        return HandSummaryWithCardsSerializer(hand, read_only=True, context=self.context).data if hand else {}
+
+    def get_current_trick(self, game):
+        trick_num = self.context.get('trick_num')
+        hand_num = self.context.get('hand_num')
+        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+        trick = Trick.objects.get(hand=hand, num=trick_num) if trick_num else game.current_trick
+        return TrickSummarySerializer(trick, read_only=True, context=self.context).data if trick else {}
 
 
 class GameJoinSerializer(serializers.Serializer):
