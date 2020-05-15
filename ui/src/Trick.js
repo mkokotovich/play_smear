@@ -39,11 +39,12 @@ function Trick(props) {
 
   function submitCard() {
     console.log(cardSelected);
+    const fullReload = game.current_trick.num === 6;
     setLoading(true);
     axios.post(`/api/smear/v1/games/${game.id}/hands/${game.current_hand.id}/tricks/${game.current_trick.id}/plays/`,
       { card: cardSelected }
     ).then((response) => {
-      reloadGame(true, true, true);
+      reloadGame(fullReload, true, true);
     }).catch((error) => {
       console.log(error);
       setLoading(false);

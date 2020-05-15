@@ -173,9 +173,22 @@ class GameViewSet(viewsets.ModelViewSet):
             'trick_num': request.query_params.get('trick_num'),
             'hand_num': request.query_params.get('hand_num'),
         }
-        serializer = status_serializer(game, context=self.get_serializer_context())
+        serializer = status_serializer(game, context=context)
 
         return Response(serializer.data)
+
+    @action(
+        detail=True,
+        methods=['post'],
+        permission_classes=[IsPlayerInGame],
+    )
+    def auto_pilot(self, request, pk=None):
+        game = self.get_object()
+        player = Player.objects.get(game=game, user=self.request.user)
+        LOG.info(f"Setting player {player} to auto-pilot {'disabled' if player.is_computer else 'enabled'}")
+        player.is_computer = not player.is_computer
+        player.save()
+        return Response({'status': 'success'})
 
 
 class TeamViewSet(viewsets.ModelViewSet):

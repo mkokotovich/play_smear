@@ -108,11 +108,17 @@ class TrickSummarySerializer(serializers.ModelSerializer):
 
 
 class StatusPlayingTrickSerializer(serializers.ModelSerializer):
+    current_hand = serializers.SerializerMethodField()
     current_trick = serializers.SerializerMethodField()
 
     class Meta:
         model = Game
-        fields = ('state', 'current_trick')
+        fields = ('state', 'current_hand', 'current_trick')
+
+    def get_current_hand(self, game):
+        hand_num = self.context.get('hand_num')
+        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+        return HandSummaryWithCardsSerializer(hand, read_only=True, context=self.context).data if hand else {}
 
     def get_current_trick(self, game):
         trick_num = self.context.get('trick_num')
