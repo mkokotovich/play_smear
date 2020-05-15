@@ -173,6 +173,11 @@ class GameViewSet(viewsets.ModelViewSet):
             'trick_num': request.query_params.get('trick_num'),
             'hand_num': request.query_params.get('hand_num'),
         }
+
+        if context.get('trick_num'):
+            # Not the best way to do this...
+            status_serializer = StatusPlayingTrickSerializer
+
         serializer = status_serializer(game, context=context)
 
         return Response(serializer.data)

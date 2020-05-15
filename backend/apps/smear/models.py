@@ -420,6 +420,7 @@ class Trick(models.Model):
 
     hand = models.ForeignKey(Hand, related_name='tricks', on_delete=models.CASCADE, null=True)
     active_player = models.ForeignKey(Player, related_name='tricks_playing', on_delete=models.CASCADE, null=True)
+    taker = models.ForeignKey(Player, related_name='tricks_taken', on_delete=models.CASCADE, null=True)
 
     class Meta:
         unique_together = (('hand', 'num'),)
@@ -486,8 +487,10 @@ class Trick(models.Model):
         return self.get_lead_play().player
 
     def _finalize_trick(self):
-        taker = self.award_cards_to_taker()
-        LOG.info(f"Trick is finished. {taker} took the following cards: {self.get_cards()}")
+        self.active_player = None
+        self.taker = self.award_cards_to_taker()
+        LOG.info(f"Trick is finished. {self.taker} took the following cards: {self.get_cards()}")
+        self.save()
         self.hand.advance_hand()
 
     def player_can_change_play(self, player):

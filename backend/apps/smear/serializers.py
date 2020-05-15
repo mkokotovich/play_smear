@@ -104,7 +104,7 @@ class TrickSummarySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Trick
-        fields = ('id', 'num', 'active_player', 'plays')
+        fields = ('id', 'num', 'active_player', 'taker', 'plays')
 
 
 class StatusPlayingTrickSerializer(serializers.ModelSerializer):
@@ -113,7 +113,7 @@ class StatusPlayingTrickSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Game
-        fields = ('state', 'current_hand', 'current_trick')
+        fields = ('current_hand', 'current_trick')
 
     def get_current_hand(self, game):
         hand_num = self.context.get('hand_num')
