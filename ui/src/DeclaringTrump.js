@@ -34,7 +34,9 @@ function TrumpInput(props) {
 
 function DeclaringTrump(props) {
   const [trump, setTrump] = useState();
-  const {game, loading, setLoading, reloadGame} = props;
+  const {game, loading, setLoading, reloadGame, signedInUser} = props;
+  const myPlayer = game.players.find(player => player.user === signedInUser.id)?.id;
+  const myTurn = game.current_hand.bidder === myPlayer;
 
   function submitTrump() {
     console.log(trump);
@@ -54,13 +56,26 @@ function DeclaringTrump(props) {
     });
   }
 
+  const submitTrumpDialog = (
+    <>
+      <TrumpInput trump={trump} setTrump={setTrump} />
+      &nbsp;
+      <Button onClick={submitTrump} disabled={loading}>Submit Trump</Button>
+    </>
+  );
+  const player = game.players.find(player => player.id === game?.current_hand?.bidder);
+  const waitingForTurn = (
+    <>
+      <p>Waiting for {player?.name} to declare trump</p>
+    </>
+  );
+
   return (
     <div>
       <PlayerDisplay {...props} />
       <CardDisplay cards={game.current_hand.cards} />
-      <TrumpInput trump={trump} setTrump={setTrump} />
-      &nbsp;
-      <Button onClick={submitTrump} disabled={loading}>Submit Trump</Button>
+      { myTurn && submitTrumpDialog }
+      { !myTurn && waitingForTurn }
     </div>
   );
 }

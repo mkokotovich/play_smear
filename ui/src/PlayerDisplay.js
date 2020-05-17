@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { withRouter } from 'react-router-dom';
 import Card from './Card';
+import Bid from './Bid';
 
 function Player(props) {
-  const { player, game: { current_trick: { plays = [] } = {} } = {} } = props;
+  const {
+    player,
+    game: {
+      current_trick: {
+        plays = []
+      } = {},
+      current_hand: {
+        bids = []
+      } = {},
+    } = {}
+  } = props;
+  const bid = bids.find(bid => bid.player === player.id);
   const play = plays.find(play => play.player === player.id);
   const card = play ? play.card : "";
 
@@ -12,6 +24,8 @@ function Player(props) {
       {player.name}
       <br />
       Team {player.team}
+      <br />
+      <Bid bid={bid} />
       <br />
       <Card card={card} />
     </div>

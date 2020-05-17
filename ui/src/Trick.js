@@ -60,7 +60,12 @@ function Trick(props) {
   }
 
   function nextTrick() {
+    if (game.current_trick.num == 6) {
+      // Hand is over, load results
+      // TODO
+    } else {
       reloadGame(true, true, true);
+    }
   }
 
   const cardSelection = (

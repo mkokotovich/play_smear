@@ -35,7 +35,9 @@ function BidInput(props) {
 
 function Bidding(props) {
   const [bidValue, setBidValue] = useState("0");
-  const {game, loading, setLoading, reloadGame} = props;
+  const {game, loading, setLoading, reloadGame, signedInUser} = props;
+  const myPlayer = game.players.find(player => player.user === signedInUser.id)?.id;
+  const myTurn = game?.current_hand?.bidder === myPlayer;
 
   function submitBid() {
     console.log(bidValue);
@@ -55,13 +57,26 @@ function Bidding(props) {
     });
   }
 
+  const player = game.players.find(player => player.id === game?.current_hand?.bidder);
+  const waitingForTurn = (
+    <>
+      <p>Waiting for {player?.name} to bid</p>
+    </>
+  );
+  const bidInput = (
+    <>
+      <BidInput bidValue={bidValue} setBidValue={setBidValue} />
+      &nbsp;
+      <Button onClick={submitBid} disabled={loading}>Submit Bid</Button>
+    </>
+  );
+
   return (
     <div>
       <PlayerDisplay {...props} />
       <CardDisplay cards={game.current_hand.cards} />
-      <BidInput bidValue={bidValue} setBidValue={setBidValue} />
-      &nbsp;
-      <Button onClick={submitBid} disabled={loading}>Submit Bid</Button>
+      { !myTurn && waitingForTurn }
+      { myTurn && bidInput }
     </div>
   );
 }
