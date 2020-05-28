@@ -1,6 +1,5 @@
 from random import shuffle
 import logging
-from functools import reduce
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -155,6 +154,7 @@ class Game(models.Model):
 class Team(models.Model):
     game = models.ForeignKey(Game, related_name='teams', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
+    score = models.IntegerField(blank=True, default=0)
 
     def __str__(self):
         return f"{self.name} ({self.id})"
@@ -166,6 +166,7 @@ class Player(models.Model):
 
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    score = models.IntegerField(blank=True, default=0)
 
     is_computer = models.BooleanField(blank=True, default=False)
     name = models.CharField(max_length=1024)
@@ -177,6 +178,7 @@ class Player(models.Model):
         models.CharField(max_length=2),
         default=list
     )
+    current_hand_game_points_won = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.name} ({self.id})"
@@ -195,6 +197,7 @@ class Player(models.Model):
 
     def reset_for_new_hand(self):
         self.cards_in_hand = []
+        self.current_hand_game_points_won = 0
         self.save()
 
     def accept_dealt_cards(self, cards):
@@ -222,6 +225,14 @@ class Player(models.Model):
         self.cards_in_hand.remove(card.to_representation())
         self.save()
 
+    def increment_score(self):
+        if self.team:
+            self.team.score += 1
+            self.team.save()
+        else:
+            self.score += 1
+            self.save()
+
 
 class Hand(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -235,11 +246,6 @@ class Hand(models.Model):
     high_bid = models.OneToOneField('smear.Bid', related_name='hand_with_high_bid', on_delete=models.SET_NULL, null=True, blank=True)
     trump = models.CharField(max_length=16, blank=True, default="", choices=SUIT_CHOICES)
 
-    # We calculate the high and low at the beginning
-    # This is so we don't need to keep all the cards players have 'won',
-    # we can just keep a running tally of who won which points
-    high_card = models.CharField(max_length=2, blank=True, default="")
-    low_card = models.CharField(max_length=2, blank=True, default="")
     # These values are updated as players win the cards, but game is
     # awarded at the end of the game
     winner_high = models.ForeignKey(Player, related_name="games_winner_high", on_delete=models.CASCADE, null=True, blank=True)
@@ -312,39 +318,39 @@ class Hand(models.Model):
         if self.high_bid.trump:
             self.finalize_trump_declaration(self.high_bid.trump)
 
-    @staticmethod
-    def _reduce_find_low_trump(accum, player):
-        trump, current_low = accum
-        trump_cards = [card for card in player.get_cards() if card.suit == trump]
-        lowest_trump = min(trump_cards, key=lambda x: x.rank()) if trump_cards else None
-        new_low = current_low if (lowest_trump is None or (current_low and current_low.rank() < lowest_trump.rank())) else lowest_trump
-        return trump, new_low
+    def award_low_trump(self):
+        current_low = None
+        current_low_winner = None
+        for player in self.game.player_set.all():
+            trump_cards = [card for card in player.get_cards() if card.suit == self.trump]
+            lowest_trump = min(trump_cards, key=lambda x: x.rank()) if trump_cards else None
+            new_low = current_low if (lowest_trump is None or (current_low and current_low.rank() < lowest_trump.rank())) else lowest_trump
+            if new_low != current_low and new_low is not None:
+                current_low_winner = player
+        self.winner_low = current_low_winner
+        LOG.info(f"Awarding low to {self.winner_low} - low is {current_low}")
 
-    @staticmethod
-    def _reduce_find_high_trump(accum, player):
-        trump, current_high = accum
-        trump_cards = [card for card in player.get_cards() if card.suit == trump]
-        highest_trump = max(trump_cards, key=lambda x: x.rank()) if trump_cards else None
-        new_high = current_high if (highest_trump is None or (current_high and current_high.rank() > highest_trump.rank())) else highest_trump
-        return trump, new_high
+    def award_high_trump(self):
+        current_high = None
+        current_high_winner = None
+        for player in self.game.player_set.all():
+            trump_cards = [card for card in player.get_cards() if card.suit == self.trump]
+            highest_trump = max(trump_cards, key=lambda x: x.rank()) if trump_cards else None
+            new_high = current_high if (highest_trump is None or (current_high and current_high.rank() > highest_trump.rank())) else highest_trump
+            if new_high != current_high and new_high is not None:
+                current_high_winner = player
+        self.winner_high = current_high_winner
+        LOG.info(f"Awarding high to {self.winner_high} - high is {current_high}")
 
     def finalize_trump_declaration(self, trump):
         """Now that we know trump, we will figure out what the high
-        and low are, so we can watch and award those when won
+        and low are and "award" them in advance
         """
+        LOG.info(f"Trump is {trump}")
         self.trump = trump
-        _, self.low_card = reduce(
-            Hand._reduce_find_low_trump,
-            list(self.game.player_set.all()),
-            (self.trump, None)
-        )
-        _, self.high_card = reduce(
-            Hand._reduce_find_high_trump,
-            list(self.game.player_set.all()),
-            (self.trump, None)
-        )
+        self.award_low_trump()
+        self.award_high_trump()
         self.save()
-        LOG.info(f"Trump is {self.trump}, high will be {self.high_card} and low will be {self.low_card}")
         self.advance_hand()
 
     def advance_hand(self):
@@ -377,10 +383,30 @@ class Hand(models.Model):
                 return True
         return False
 
-    def _finalize_hand(self):
-        LOG.info("Hand is finished")
+    def award_game(self):
         # TODO - award game point
-        pass
+        # Take into account teams
+        self.winner_game = self.bidder
+        LOG.info(f"Awarding game to {self.winner_game}")
+
+    def _finalize_hand(self):
+        self.award_game()
+        self.save()
+        LOG.info(
+            f"Hand is finished. High: {self.winner_high} "
+            "Low: {self.winner_low} Jack: {self.winner_jack} "
+            "Jick: {self.winner_jick} Game: {self.winner_game}"
+        )
+        if self.winner_high:
+            self.winner_high.increment_score()
+        if self.winner_low:
+            self.winner_low.increment_score()
+        if self.winner_jick:
+            self.winner_jick.increment_score()
+        if self.winner_jack:
+            self.winner_jack.increment_score()
+        if self.winner_game:
+            self.winner_game.increment_score()
 
 
 class Bid(models.Model):
@@ -482,13 +508,25 @@ class Trick(models.Model):
 
         self._finalize_trick()
 
-    def award_cards_to_taker(self):
-        # TODO - find out who won the trick, award them the game points and any points
-        return self.get_lead_play().player
+    def _award_cards_to_taker(self):
+        # TODO - find out who won the trick
+        self.taker = self.get_lead_play().player
+        cards = self.get_cards()
+
+        # Give games points to taker
+        game_points = sum(card.game_points for card in cards)
+        self.taker.current_hand_game_points_won += game_points
+        self.taker.save()
+
+        # Award Jack or Jick, if taken
+        jack = next((card for card in cards if card.is_jack(self.hand.trump)), None)
+        jick = next((card for card in cards if card.is_jick(self.hand.trump)), None)
+        self.winner_jack = (self.taker if jack else None)
+        self.winner_jick = (self.taker if jick else None)
 
     def _finalize_trick(self):
         self.active_player = None
-        self.taker = self.award_cards_to_taker()
+        self._award_cards_to_taker()
         LOG.info(f"Trick is finished. {self.taker} took the following cards: {self.get_cards()}")
         self.save()
         self.hand.advance_hand()

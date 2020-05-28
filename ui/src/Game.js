@@ -7,6 +7,8 @@ import WaitingRoom from './WaitingRoom';
 import Bidding from './Bidding';
 import DeclaringTrump from './DeclaringTrump';
 import Trick from './Trick';
+import HandResults from './HandResults';
+import GameResults from './GameResults';
 import Settings from './Settings';
 import getErrorString from './utils';
 
@@ -155,6 +157,8 @@ function Game(props) {
       gameDisplay = (<DeclaringTrump {...allProps} />);
     } else if (game.state  === "playing_trick") {
       gameDisplay = (<Trick {...allProps} />);
+    } else if (game.state  === "game_over") {
+      gameDisplay = (<GameResults {...allProps} />);
     } else {
       gameDisplay = (<>Unknown status {game.state}</>);
     }

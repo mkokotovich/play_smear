@@ -13,7 +13,7 @@ LOG = logging.getLogger(__name__)
 class PlayerSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ('id', 'name', 'user', 'team', 'is_computer')
+        fields = ('id', 'name', 'user', 'team', 'is_computer', 'score')
 
 
 class PlayerIDSerializer(serializers.Serializer):
@@ -23,13 +23,13 @@ class PlayerIDSerializer(serializers.Serializer):
 class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
-        fields = ('id', 'name', 'members')
+        fields = ('id', 'name', 'members', 'score')
 
 
 class TeamSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
-        fields = ('id', 'name')
+        fields = ('id', 'name', 'score')
 
 
 class PlaySerializer(serializers.ModelSerializer):
@@ -74,6 +74,7 @@ class HandSummarySerializer(serializers.ModelSerializer):
 
 class HandSummaryWithCardsSerializer(HandSummarySerializer):
     cards = serializers.SerializerMethodField('current_users_cards')
+    results = serializers.SerializerMethodField()
 
     def current_users_cards(self, obj):
         request = self.context.get('request', None)
@@ -86,9 +87,19 @@ class HandSummaryWithCardsSerializer(HandSummarySerializer):
             return []
         return player.cards_in_hand
 
+    def get_results(self, hand):
+        # winner_game is the last to be awarded, so if that is set we can display
+        return {
+            'winner_high': hand.winner_high.id if hand.winner_high else None,
+            'winner_low': hand.winner_low.id if hand.winner_low else None,
+            'winner_jick': hand.winner_jick.id if hand.winner_jick else None,
+            'winner_jack': hand.winner_jack.id if hand.winner_jack else None,
+            'winner_game': hand.winner_game.id if hand.winner_game else None,
+        } if hand.winner_game else None
+
     class Meta:
         model = Hand
-        fields = ('id', 'num', 'dealer', 'bidder', 'high_bid', 'trump', 'bids', 'cards')
+        fields = ('id', 'num', 'dealer', 'bidder', 'high_bid', 'trump', 'bids', 'cards', 'results')
 
 
 class StatusBiddingSerializer(serializers.ModelSerializer):

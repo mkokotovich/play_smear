@@ -5,6 +5,7 @@ import axios from 'axios';
 
 import PlayerDisplay from './PlayerDisplay';
 import CardDisplay from './CardDisplay';
+import HandResults from './HandResults';
 import getErrorString from './utils';
 
 const RadioButton = Radio.Button;
@@ -34,6 +35,7 @@ function CardSelection(props) {
 
 function Trick(props) {
   const [cardSelected, setCardSelected] = useState();
+  const [trickAcknowledged, setTrickAcknowledged] = useState(false);
   const {game, loading, setLoading, reloadGame, signedInUser} = props;
   const myPlayer = game.players.find(player => player.user === signedInUser.id)?.id;
 
@@ -61,8 +63,7 @@ function Trick(props) {
 
   function nextTrick() {
     if (game.current_trick.num == 6) {
-      // Hand is over, load results
-      // TODO
+      setTrickAcknowledged(true);
     } else {
       reloadGame(true, true, true);
     }
@@ -87,6 +88,7 @@ function Trick(props) {
     </>
   );
   const trickIsFinished = Boolean(game.current_trick.taker);
+  const handIsFinished = Boolean(game.current_hand.results);
   const myTurn = game.current_trick.active_player === myPlayer;
   return (
     <div>
@@ -94,7 +96,8 @@ function Trick(props) {
       { !trickIsFinished && <CardDisplay cards={game.current_hand.cards} /> }
       { myTurn && cardSelection }
       { !myTurn && !trickIsFinished && waitingForTurn }
-      { !myTurn && trickIsFinished && trickFinishedPrompt }
+      { !trickAcknowledged && trickIsFinished && trickFinishedPrompt }
+      { trickAcknowledged && handIsFinished && <HandResults {...props} /> }
     </div>
   );
 }

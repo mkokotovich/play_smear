@@ -125,6 +125,12 @@ class Card():
 
         return False
 
+    def is_jick(self, trump):
+        return self.value == 'jack' and self.suit != trump and self._same_color(trump)
+
+    def is_jack(self, trump):
+        return self.value == 'jack' and self.suit == trump
+
     def is_less_than(self, other, trump):
         less_than = False
         if other is None:
@@ -154,6 +160,16 @@ class Card():
             less_than = self.rank() < other.rank()
 
         return less_than
+
+    @property
+    def game_points(self):
+        return {
+            '10': 10,
+            'jack': 1,
+            'queen': 2,
+            'king': 3,
+            'ace': 4,
+        }.get(self.value, 0)
 
 
 class Deck():
