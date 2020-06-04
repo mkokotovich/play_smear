@@ -13,7 +13,7 @@ LOG = logging.getLogger(__name__)
 class PlayerSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ('id', 'name', 'user', 'team', 'is_computer', 'score')
+        fields = ('id', 'name', 'user', 'team', 'is_computer', 'score', 'winner')
 
 
 class PlayerIDSerializer(serializers.Serializer):
@@ -23,13 +23,13 @@ class PlayerIDSerializer(serializers.Serializer):
 class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
-        fields = ('id', 'name', 'members', 'score')
+        fields = ('id', 'name', 'members', 'score', 'winner')
 
 
 class TeamSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
-        fields = ('id', 'name', 'score')
+        fields = ('id', 'name', 'score', 'winner')
 
 
 class PlaySerializer(serializers.ModelSerializer):

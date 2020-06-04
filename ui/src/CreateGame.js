@@ -142,6 +142,7 @@ class CreateGame extends Component {
           <Row className="create_div">
             <p className="inputLabel">Score to play to:</p>
             <RadioGroup name="scoreToPlayTo" onChange={this.onChangeInput}>
+              <RadioButton value="1">1</RadioButton>
               <RadioButton value="11">11</RadioButton>
               <RadioButton value="15">15</RadioButton>
               <RadioButton value="21">21</RadioButton>

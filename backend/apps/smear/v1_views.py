@@ -164,6 +164,7 @@ class GameViewSet(viewsets.ModelViewSet):
             Game.BIDDING: StatusBiddingSerializer,
             Game.DECLARING_TRUMP: StatusBiddingSerializer,
             Game.PLAYING_TRICK: StatusPlayingTrickSerializer,
+            Game.GAME_OVER: GameDetailSerializer,
         }.get(game.state, None)
         if not status_serializer:
             raise APIException(f"Unable to find status of game {game}, state ({game.state}) is not supported")

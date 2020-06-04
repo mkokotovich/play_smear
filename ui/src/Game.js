@@ -135,7 +135,16 @@ function Game(props) {
 
   // Set a timer to reload game every 2 seconds
   useInterval(() => {
-    if (needInput) {
+    const myPlayer = game?.players.find(player => player.user === signedInUser.id);
+    const autoPilotEnabled = myPlayer?.is_computer;
+    const myTurnTrick = game?.current_trick?.active_player === myPlayer.id;
+    const myTurnBidding = (game?.current_hand?.bidder === myPlayer.id) && (game?.state === "bidding" || game?.state == "declaring_trump");
+    const myTurn = myTurnTrick || myTurnBidding;
+    const gameOver = game?.state === "game_over";
+    console.log(needInput, myPlayer, autoPilotEnabled, myTurn, gameOver);
+    if (needInput && (!myTurn || autoPilotEnabled) && !gameOver) {
+      // Do not reload status if it is my turn (unless autopilot is enabled,
+      // then reload anyway because we won't be waiting for user input
       reloadGameStatus(props.match.params.gameID, game?.current_hand?.num, game?.current_trick?.num, () => {}, updateGame);
     }
   }, 2000);

@@ -2,6 +2,7 @@ from random import shuffle
 import logging
 
 from django.db import models
+from django.db.models import F
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from rest_framework.exceptions import ValidationError
@@ -35,6 +36,7 @@ class Game(models.Model):
     BIDDING = "bidding"
     DECLARING_TRUMP = "declaring_trump"
     PLAYING_TRICK = "playing_trick"
+    GAME_OVER = "game_over"
 
     def set_state(self, new_state):
         # For now just set state. At some point we might invalidate cache
@@ -155,6 +157,7 @@ class Team(models.Model):
     game = models.ForeignKey(Game, related_name='teams', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
     score = models.IntegerField(blank=True, default=0)
+    winner = models.BooleanField(blank=True, default=False)
 
     def __str__(self):
         return f"{self.name} ({self.id})"
@@ -167,6 +170,7 @@ class Player(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     score = models.IntegerField(blank=True, default=0)
+    winner = models.BooleanField(blank=True, default=False)
 
     is_computer = models.BooleanField(blank=True, default=False)
     name = models.CharField(max_length=1024)
@@ -227,10 +231,18 @@ class Player(models.Model):
 
     def increment_score(self):
         if self.team:
-            self.team.score += 1
+            self.team.score = F('score') + 1
             self.team.save()
         else:
-            self.score += 1
+            self.score = F('score') + 1
+            self.save()
+
+    def decrement_score(self, amount):
+        if self.team:
+            self.team.score = F('score') - amount
+            self.team.save()
+        else:
+            self.score = F('score') - amount
             self.save()
 
 
@@ -326,6 +338,7 @@ class Hand(models.Model):
             lowest_trump = min(trump_cards, key=lambda x: x.rank()) if trump_cards else None
             new_low = current_low if (lowest_trump is None or (current_low and current_low.rank() < lowest_trump.rank())) else lowest_trump
             if new_low != current_low and new_low is not None:
+                current_low = new_low
                 current_low_winner = player
         self.winner_low = current_low_winner
         LOG.info(f"Awarding low to {self.winner_low} - low is {current_low}")
@@ -338,6 +351,7 @@ class Hand(models.Model):
             highest_trump = max(trump_cards, key=lambda x: x.rank()) if trump_cards else None
             new_high = current_high if (highest_trump is None or (current_high and current_high.rank() > highest_trump.rank())) else highest_trump
             if new_high != current_high and new_high is not None:
+                current_high = new_high
                 current_high_winner = player
         self.winner_high = current_high_winner
         LOG.info(f"Awarding high to {self.winner_high} - high is {current_high}")
@@ -365,8 +379,9 @@ class Hand(models.Model):
             # game.advance_hand() is only called when trick is finished
             # Check to see if hand is finished, otherwise start next trick
             if self.tricks.count() == 6:
-                self._finalize_hand()
-                self.game.set_state(Game.NEW_HAND)
+                game_is_over = self._finalize_hand()
+                new_state = Game.GAME_OVER if game_is_over else Game.NEW_HAND
+                self.game.set_state(new_state)
                 self.game.advance_game()
             else:
                 trick = Trick.objects.create(hand=self, num=self.tricks.count() + 1)
@@ -389,24 +404,91 @@ class Hand(models.Model):
         self.winner_game = self.bidder
         LOG.info(f"Awarding game to {self.winner_game}")
 
+    def _declare_winner_if_game_is_over(self):
+        # This function deals with players or teams. We will use the generic
+        # noun contestants to describe either
+        teams = self.game.teams.exists()
+        winners = None
+        contestants = self.game.teams.all() if teams else self.game.player_set.all()
+        contestants_at_or_over = list(contestants.filter(score__gte=self.game.score_to_play_to))
+        game_is_over = bool(contestants_at_or_over)
+
+        if game_is_over:
+            bidding_contestant = self.bidder.team if teams else self.bidder
+            if bidding_contestant in contestants_at_or_over:
+                # Bidder always goes out
+                high_score = bidding_contestant.score
+                winners = [bidding_contestant]
+            else:
+                high_score = max(contestants_at_or_over, key=lambda c: c.score).score
+                # Accounting for the unlikely scenario of a tie
+                winners = [contestant for contestant in contestants_at_or_over if contestant.score == high_score]
+                LOG.info(f"high_score: {high_score} c_a_o_o: {contestants_at_or_over} winners: {winners}")
+
+            for winner in winners:
+                winner.winner = True
+                winner.save()
+
+            LOG.info(f"Game Over! Winners are {winners} with a score of {high_score}")
+
+        return game_is_over
+
+    def _calculate_if_bid_was_won(self):
+        teammate_ids = (
+            [self.bidder.id]
+            if self.bidder.team is None else
+            self.bidder.team.members.values_list('id', flat=True)
+        )
+
+        bidders_points = 0
+        if self.winner_high and self.winner_high.id in teammate_ids:
+            bidders_points += 1
+        if self.winner_low and self.winner_low.id in teammate_ids:
+            bidders_points += 1
+        if self.winner_jick and self.winner_jick.id in teammate_ids:
+            bidders_points += 1
+        if self.winner_jack and self.winner_jack.id in teammate_ids:
+            bidders_points += 1
+        if self.winner_game and self.winner_game.id in teammate_ids:
+            bidders_points += 1
+
+        bid_won = bidders_points >= self.high_bid.bid
+        LOG.info(f"{self.bidder} bid {self.high_bid.bid} and got {bidders_points}: {'was not' if bid_won else 'was'} set")
+        return bid_won, teammate_ids
+
+    def _refresh_all_scores(self):
+        contestants = self.game.teams.all() if self.game.teams.exists() else self.game.player_set.all()
+        for contestant in contestants:
+            contestant.refresh_from_db(fields=['score'])
+
     def _finalize_hand(self):
         self.award_game()
         self.save()
         LOG.info(
             f"Hand is finished. High: {self.winner_high} "
-            "Low: {self.winner_low} Jack: {self.winner_jack} "
-            "Jick: {self.winner_jick} Game: {self.winner_game}"
+            f"Low: {self.winner_low} Jack: {self.winner_jack} "
+            f"Jick: {self.winner_jick} Game: {self.winner_game}"
         )
-        if self.winner_high:
+        bid_won, teammate_ids = self._calculate_if_bid_was_won()
+        if not bid_won:
+            self.bidder.decrement_score(self.high_bid.bid)
+
+        # Award the points, but not to the bidder if the bidder was set
+        if self.winner_high and (bid_won or self.winner_high.id not in teammate_ids):
             self.winner_high.increment_score()
-        if self.winner_low:
+        if self.winner_low and (bid_won or self.winner_low.id not in teammate_ids):
             self.winner_low.increment_score()
-        if self.winner_jick:
+        if self.winner_jick and (bid_won or self.winner_jick.id not in teammate_ids):
             self.winner_jick.increment_score()
-        if self.winner_jack:
+        if self.winner_jack and (bid_won or self.winner_jack.id not in teammate_ids):
             self.winner_jack.increment_score()
-        if self.winner_game:
+        if self.winner_game and (bid_won or self.winner_game.id not in teammate_ids):
             self.winner_game.increment_score()
+
+        # Refresh the scores of all contestants to get the latest loaded from DB
+        self._refresh_all_scores()
+
+        return self._declare_winner_if_game_is_over()
 
 
 class Bid(models.Model):
@@ -515,7 +597,7 @@ class Trick(models.Model):
 
         # Give games points to taker
         game_points = sum(card.game_points for card in cards)
-        self.taker.current_hand_game_points_won += game_points
+        self.taker.current_hand_game_points_won = F('current_hand_game_points_won') + game_points
         self.taker.save()
 
         # Award Jack or Jick, if taken
