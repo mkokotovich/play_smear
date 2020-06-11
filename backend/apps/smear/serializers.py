@@ -45,9 +45,13 @@ class PlaySerializer(serializers.ModelSerializer):
         except KeyError:
             raise ValidationError("context not set up correctly, extra_kwargs needs to contain trick and player")
         try:
-            Card(representation=value)
+            card = Card(representation=value)
         except ValueError as ex:
             raise ValidationError("invalid card, use short representation") from ex
+
+        error_msg = trick.is_card_invalid_to_play(card, player)
+        if error_msg:
+            raise ValidationError(f"Unable to play {card.pretty} ({error_msg}), please choose another card")
 
         return value
 

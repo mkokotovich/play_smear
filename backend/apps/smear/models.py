@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models import F
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
+from django.utils.functional import cached_property
 from rest_framework.exceptions import ValidationError
 
 from apps.smear.cards import Card, Deck, SUIT_CHOICES
@@ -220,10 +221,12 @@ class Player(models.Model):
         LOG.info(f"{self} has {self.cards_in_hand}, bidding {bid_value} in {trump_value}")
         return Bid.create_bid_for_player(bid_value, trump_value, self, self.game.current_hand)
 
-    def play_card(self):
+    def play_card(self, trick):
         # TODO: playing logic
-        card = self.cards_in_hand[0]
-        return Card(representation=card)
+        card = next((card for card in self.get_cards() if not trick.is_card_invalid_to_play(card, self)), None)
+        assert card is not None, f'unable to find a card for {self}, {self.cards_in_hand} are all invalid'
+
+        return card
 
     def card_played(self, card):
         self.cards_in_hand.remove(card.to_representation())
@@ -267,6 +270,7 @@ class Hand(models.Model):
     winner_game = models.ForeignKey(Player, related_name="games_winner_game", on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
+        ordering = ['num']
         unique_together = (('game', 'num'),)
 
     def __str__(self):
@@ -384,8 +388,9 @@ class Hand(models.Model):
                 self.game.set_state(new_state)
                 self.game.advance_game()
             else:
+                last_taker = self.tricks.last().taker
                 trick = Trick.objects.create(hand=self, num=self.tricks.count() + 1)
-                trick.start_trick(self.bidder)
+                trick.start_trick(last_taker)
                 trick.advance_trick()
 
     def player_can_change_bid(self, player):
@@ -417,10 +422,13 @@ class Hand(models.Model):
             bidding_contestant = self.bidder.team if teams else self.bidder
             if bidding_contestant in contestants_at_or_over:
                 # Bidder always goes out
+                bidding_contestant.refresh_from_db()
                 high_score = bidding_contestant.score
                 winners = [bidding_contestant]
             else:
-                high_score = max(contestants_at_or_over, key=lambda c: c.score).score
+                high_scorer = max(contestants_at_or_over, key=lambda c: c.score).score
+                high_scorer.refresh_from_db()
+                high_score = high_scorer.score
                 # Accounting for the unlikely scenario of a tie
                 winners = [contestant for contestant in contestants_at_or_over if contestant.score == high_score]
                 LOG.info(f"high_score: {high_score} c_a_o_o: {contestants_at_or_over} winners: {winners}")
@@ -516,8 +524,15 @@ class Play(models.Model):
     player = models.ForeignKey(Player, related_name='plays', on_delete=models.CASCADE, null=True)
     card = models.CharField(max_length=2)
 
+    class Meta:
+        ordering = ['-id']
+
     def __str__(self):
         return f"{self.card} (by {self.player})"
+
+    @cached_property
+    def card_obj(self):
+        return Card(representation=self.card)
 
 
 class Trick(models.Model):
@@ -532,26 +547,59 @@ class Trick(models.Model):
 
     class Meta:
         unique_together = (('hand', 'num'),)
+        ordering = ['num']
 
     def __str__(self):
         return f"{', '.join(self.plays.all())} ({self.id})"
+
+    def is_card_invalid_to_play(self, card, player):
+        cards = player.get_cards()
+
+        # First check to make sure the player didn't pull a card out of their sleave
+        if card not in cards:
+            return f"{card.pretty} is not one of the player's cards"
+
+        lead_card = self.get_lead_play().card_obj if self.get_lead_play() else None
+        # If this is the first card, it's valid
+        if lead_card is None:
+            return
+
+        # If trump was lead, did they follow suit if able?
+        has_trump = any(c.is_trump(self.hand.trump) for c in cards)
+        if lead_card.is_trump(self.hand.trump) and not card.is_trump(self.hand.trump) and has_trump:
+            return "must follow suit"
+
+        # For other lead suits, ensure card is following suit (or player is trumping)
+        has_lead_suit = any(c.suit == lead_card.suit for c in cards)
+        if (lead_card.suit != card.suit) and has_lead_suit and not card.is_trump(self.hand.trump):
+            return "must follow suit"
+
+        return None
 
     def submit_card_to_play(self, card, player):
         """Handles validation of the card's legality
 
         Returns:
             trick_finished (bool): whether or not the trick is finished
+
         """
-        # TODO Validate card is legal
         if player != self.active_player:
             raise ValidationError(f"It is not {player}'s turn to play")
+
+        error_msg = self.is_card_invalid_to_play(card, player)
+        if error_msg:
+            raise ValidationError(f"Unable to play {card.pretty} ({error_msg}), please choose another card")
 
         LOG.info(f"{player} played {card}")
         self.active_player = self.hand.game.next_player(self.active_player)
         self.save()
 
         # Officially "play" the card, if the play hasn't already been created in the view
-        play, created = Play.objects.get_or_create(card=card.to_representation(), player=player, trick=self)
+        play, created = Play.objects.get_or_create(
+            card=card.to_representation(),
+            player=player,
+            trick=self,
+        )
 
         # Let the player know to remove card from hand
         player.card_played(card)
@@ -582,7 +630,7 @@ class Trick(models.Model):
         while not trick_finished:
             if self.active_player.is_computer:
                 # Have computer choose a card to play, then play it
-                card_to_play = self.active_player.play_card()
+                card_to_play = self.active_player.play_card(self)
                 trick_finished = self.submit_card_to_play(card_to_play, self.active_player)
             else:
                 # Waiting for a human to play, just return
@@ -590,9 +638,18 @@ class Trick(models.Model):
 
         self._finalize_trick()
 
+    def _find_winning_play(self):
+        plays = list(self.plays.all())
+        current_high = plays[0]
+        for play in plays[1:]:
+            if current_high.card_obj.is_less_than(play.card_obj, self.hand.trump):
+                current_high = play
+        return current_high
+
     def _award_cards_to_taker(self):
-        # TODO - find out who won the trick
-        self.taker = self.get_lead_play().player
+        winning_play = self._find_winning_play()
+        LOG.info(f"Winning play was {winning_play}")
+        self.taker = winning_play.player
         cards = self.get_cards()
 
         # Give games points to taker

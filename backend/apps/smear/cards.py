@@ -78,8 +78,16 @@ class Card():
     def __repr__(self):
         return self.__str__()
 
+    @property
+    def pretty(self):
+        return f"{self.value} of {self.suit}"
+
     def __eq__(self, other):
         return other and self.value == other.value and self.suit == other.suit
+
+    @property
+    def representation(self):
+        return self.to_representation()
 
     def to_representation(self):
         value = {
@@ -155,9 +163,15 @@ class Card():
                     # other is a jick, if both are value=jack than self is not less
                     less_than = self.rank() < other.rank()
         else:
-            # Neither are trump, just compare values (although this isn't how tricks are taken)
-            LOG.warning("Warning, comparing cards with different suits")
-            less_than = self.rank() < other.rank()
+            # Neither are trump
+            if other.suit != self.suit:
+                # When deciding who takes a trick between two non-trump cards,
+                # if the other card didn't follow suit it isn't greater than
+                # our card
+                less_than = False
+            else:
+                # Both cards are same suit, just compare rank
+                less_than = self.rank() < other.rank()
 
         return less_than
 
