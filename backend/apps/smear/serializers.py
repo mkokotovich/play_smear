@@ -13,7 +13,7 @@ LOG = logging.getLogger(__name__)
 class PlayerSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ('id', 'name', 'user', 'team', 'is_computer', 'score', 'winner')
+        fields = ('id', 'name', 'user', 'team', 'is_computer', 'score', 'winner', 'seat')
 
 
 class PlayerIDSerializer(serializers.Serializer):
@@ -58,11 +58,15 @@ class PlaySerializer(serializers.ModelSerializer):
 
 class StatusStartingSerializer(serializers.ModelSerializer):
     teams = TeamSummarySerializer(read_only=True, many=True)
-    players = PlayerSummarySerializer(source='player_set', read_only=True, many=True)
+    players = serializers.SerializerMethodField()
 
     class Meta:
         model = Game
         fields = ('teams', 'players', 'state')
+
+    def get_players(self, game):
+        players = game.player_set.all().order_by('seat')
+        return PlayerSummarySerializer(players, many=True, read_only=True, context=self.context).data
 
 
 class HandSummarySerializer(serializers.ModelSerializer):
@@ -156,13 +160,17 @@ class StatusPlayingTrickSerializer(serializers.ModelSerializer):
 
 class GameSerializer(serializers.ModelSerializer):
     passcode = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    players = PlayerSummarySerializer(source='player_set', read_only=True, many=True)
+    players = serializers.SerializerMethodField()
     teams = TeamSummarySerializer(read_only=True, many=True)
 
     class Meta:
         model = Game
         fields = '__all__'
         read_only_fields = ('owner', 'passcode_required')
+
+    def get_players(self, game):
+        players = game.player_set.all().order_by('seat')
+        return PlayerSummarySerializer(players, many=True, read_only=True, context=self.context).data
 
 
 class GameDetailSerializer(GameSerializer):

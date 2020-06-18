@@ -525,7 +525,7 @@ class Play(models.Model):
     card = models.CharField(max_length=2)
 
     class Meta:
-        ordering = ['-id']
+        ordering = ['id']
 
     def __str__(self):
         return f"{self.card} (by {self.player})"
@@ -660,8 +660,14 @@ class Trick(models.Model):
         # Award Jack or Jick, if taken
         jack = next((card for card in cards if card.is_jack(self.hand.trump)), None)
         jick = next((card for card in cards if card.is_jick(self.hand.trump)), None)
-        self.winner_jack = (self.taker if jack else None)
-        self.winner_jick = (self.taker if jick else None)
+        if jack:
+            self.hand.winner_jack = self.taker
+            LOG.info(f"{self.taker} won Jack ({jack})")
+        if jick:
+            self.hand.winner_jick = self.taker
+            LOG.info(f"{self.taker} won Jick ({jick})")
+        if jick or jack:
+            self.hand.save()
 
     def _finalize_trick(self):
         self.active_player = None
