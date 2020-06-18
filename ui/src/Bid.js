@@ -1,11 +1,14 @@
 import React from 'react';
 
 function Bid(props) {
-  const {bid} = props;
-  const bidMessage = !bid ? "" : bid?.bid === 0 ? "Passed" : `Bid ${bid?.bid}`;
+  const {bid, isDealer, isBidder, currentlyBidding} = props;
+  const bidMessageWhileBidding = !bid ? " " : bid?.bid === 0 ? "Passed" : `Bid ${bid?.bid}`;
+  const bidMessageAfterBidding = isBidder ? `Bidder, bid ${bid?.bid}` : bidMessageWhileBidding;
+  const bidMessage = currentlyBidding ? bidMessageWhileBidding : bidMessageAfterBidding;
   return (
-    <div style={{display: "inline-block", padding: 5}}>
-      { bidMessage }
+    <div>
+      {isDealer && currentlyBidding && <b>Dealer</b>}
+      <p>{ bidMessage }</p>
     </div>
   );
 }

@@ -213,9 +213,9 @@ class Player(models.Model):
     def get_cards(self):
         return [Card(representation=rep) for rep in self.cards_in_hand]
 
-    def create_bid(self):
+    def create_bid(self, hand):
         # TODO: bidding logic
-        bid_value = 2
+        bid_value = 0 if hand.high_bid else 2
         trump_value = Card(representation=self.cards_in_hand[0]).suit
 
         LOG.info(f"{self} has {self.cards_in_hand}, bidding {bid_value} in {trump_value}")
@@ -294,6 +294,9 @@ class Hand(models.Model):
         self.save()
 
     def add_bid_to_hand(self, new_bid):
+        if self.high_bid and new_bid.bid <= self.high_bid.bid and new_bid.bid != 0:
+            # User bid the same as the current bid, invalid
+            raise ValueError(f"Unable to bid {new_bid.bid} when the current high bid is {self.high_bid.bid}")
         self.high_bid = self.high_bid if (self.high_bid and self.high_bid.bid >= new_bid.bid) else new_bid
         finished_bidding = self.bidder == self.dealer
         self.bidder = self.game.next_player(self.bidder)
@@ -316,7 +319,7 @@ class Hand(models.Model):
                 finished_bidding = self.add_bid_to_hand(bid_filter[0])
             elif self.bidder.is_computer:
                 # Generate computer bid and submit it
-                bid = self.bidder.create_bid()
+                bid = self.bidder.create_bid(self)
                 finished_bidding = self.add_bid_to_hand(bid)
             else:
                 # Waiting for a human to bid, just return
@@ -426,7 +429,7 @@ class Hand(models.Model):
                 high_score = bidding_contestant.score
                 winners = [bidding_contestant]
             else:
-                high_scorer = max(contestants_at_or_over, key=lambda c: c.score).score
+                high_scorer = max(contestants_at_or_over, key=lambda c: c.score)
                 high_scorer.refresh_from_db()
                 high_score = high_scorer.score
                 # Accounting for the unlikely scenario of a tie
