@@ -1,10 +1,15 @@
 import React from 'react';
 
+const reqSvgs = require.context('./svgcards', true, /\.svg$/)
+const paths = reqSvgs.keys()
+const cards = paths.map(path => reqSvgs(path))
+
 function Card(props) {
   const {card} = props;
+  const cardFile = cards.find(filename => filename.includes(card));
   return (
-    <div style={{display: "inline-flex", height: "80px", width: "40px", padding: "5px"}}>
-      <p>{card}</p>
+    <div style={{flex: "1", padding: "5px"}}>
+      <img src={cardFile} />
     </div>
   );
 }

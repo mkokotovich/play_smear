@@ -9,7 +9,7 @@ function CardDisplay(props) {
   ))
 
   return (
-    <div>
+    <div style={{display: "flex"}}>
       {cardComponents}
     </div>
   );
