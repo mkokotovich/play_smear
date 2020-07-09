@@ -5,7 +5,7 @@ import Card from './Card';
 function CardDisplay(props) {
   const {cards} = props;
   const cardComponents = cards.map((card, index) => (
-    <Card card={card} key={index} />
+    <Card card={card} key={index} small={false}/>
   ))
 
   return (
