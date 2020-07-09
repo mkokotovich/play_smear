@@ -7,17 +7,22 @@ const cards = paths.map(path => reqSvgs(path))
 function Card(props) {
   const {card, small} = props;
   const cardFile = cards.find(filename => filename.includes(card));
-  const style = small ? {
+  const cardStyle = small ? {
       height: "auto",
-      width: "80px",
+      width: "100px",
   } : {
       height: "auto",
       width: "15vw",
       maxWidth: "150px",
   };
+  const divStyle = small ? {
+    padding: "0px",
+  } : {
+    padding: "0.5vw",
+  };
   return (
-    <div style={{padding: "0.5vw"}}>
-      <img style={style} src={cardFile} />
+    <div style={divStyle}>
+      <img style={cardStyle} src={cardFile} />
     </div>
   );
 }

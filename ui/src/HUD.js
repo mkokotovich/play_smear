@@ -5,13 +5,14 @@ import axios from 'axios';
 
 import PlayerDisplay from './PlayerDisplay';
 import CardDisplay from './CardDisplay';
+import TrumpHint from './TrumpHint';
 import getErrorString from './utils';
 
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
 
 
-function Settings(props) {
+function HUD(props) {
   const [autoPilot, setAutoPilot] = useState(false);
   const {game, loading, setLoading } = props;
 
@@ -32,11 +33,17 @@ function Settings(props) {
     });
   }
 
+  const trump = game?.current_hand?.trump;
+
   return (
-    <div>
-      <Button onClick={toggleAutoPilot} disabled={loading}>{autoPilot ? "Disable" : "Enable"} AutoPilot</Button>
+    <div style={{display: "flex-inline" }}>
+      <div style={{display: "flex" }}>
+        <Button onClick={toggleAutoPilot} disabled={loading}>{autoPilot ? "Disable" : "Enable"} AutoPilot</Button>
+        <TrumpHint trump={trump} />
+      </div>
+      <hr />
     </div>
   );
 }
 
-export default withRouter(Settings);
+export default withRouter(HUD);

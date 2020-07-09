@@ -16,6 +16,7 @@ function Player(props) {
         bids = [],
         dealer,
         bidder,
+        results = {},
       } = {},
       teams = [],
     } = {}
@@ -29,14 +30,33 @@ function Player(props) {
   const isActivePlayer = active_player === player.id;
   const waitingForMe = (currentlyBidding && isBidder) || (!currentlyBidding && isActivePlayer);
 
+  const possiblePoints = results ? Object.keys(results) : [];
+  
+  const pointsWon = possiblePoints.reduce((accum, key) => {
+    if (results[key] == player.id) {
+      return [...accum, key]
+    }
+    return accum
+  }, []);
+  const resultsEntries = pointsWon.map((point) => {
+    return (
+      <div>
+        <b>{point}</b>
+      </div>
+    );
+  });;
 
   const border = waitingForMe ? "3px solid blue" : "1px solid grey";
   const playerStyles = {
-    display: "inline-block",
-    padding: 15,
+    display: "flex-inline",
+    alignSelf: "flex-start",
+    alignItems: "center",
+    padding: 10,
     margin: 5,
     border: border,
     borderRadius: "5px",
+    minWidth: "130px",
+    maxWidth: "200px",
     height: "100%",
   };
 
@@ -47,7 +67,8 @@ function Player(props) {
       </p>
       {player.team && (<p> {teamName} </p>)}
       {<Bid bid={bid} isDealer={isDealer} currentlyBidding={currentlyBidding} isBidder={isBidder}/>}
-      {card && <Card card={card} />}
+      {card && <Card card={card} small={true}/>}
+      {results && resultsEntries}
     </div>
   );
 }

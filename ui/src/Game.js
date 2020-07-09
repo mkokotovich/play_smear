@@ -9,7 +9,7 @@ import DeclaringTrump from './DeclaringTrump';
 import Trick from './Trick';
 import HandResults from './HandResults';
 import GameResults from './GameResults';
-import Settings from './Settings';
+import HUD from './HUD';
 import getErrorString from './utils';
 
 import './Game.css';
@@ -179,7 +179,7 @@ function Game(props) {
       <div className="Loading" align="center">
         { loading && <Spin size="large" />}
       </div>
-      <Settings {...allProps} />
+      <HUD {...allProps} />
       { gameDisplay }
     </div>
   );

@@ -91,7 +91,7 @@ function Trick(props) {
   const handIsFinished = Boolean(game.current_hand.results);
   const myTurn = game.current_trick.active_player === myPlayer;
   return (
-    <div style={{display: "flex"}}>
+    <div>
       <PlayerDisplay {...props} />
       { !trickIsFinished && <CardDisplay cards={game.current_hand.cards} /> }
       { myTurn && cardSelection }
