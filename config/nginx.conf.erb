@@ -1,5 +1,5 @@
 daemon off;
-worker_processes <%= ENV['NGINX_WORKERS'] %>;
+worker_processes <%= ENV['NGINX_WORKERS'] || 4 %>;
 pid /app/nginx.pid;
 error_log stderr;
 
