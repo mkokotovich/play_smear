@@ -14,7 +14,6 @@ import random
 import uuid
 from datetime import datetime
 import requests
-from pymongo import MongoClient
 
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
@@ -39,8 +38,6 @@ global g_engines
 global g_cleanup_thread
 global g_cleanup_queue
 global g_game_timeout
-global g_mongo_client
-global g_mongo_db
 
 g_game_id = 0
 g_game_id_lock = threading.Lock()
@@ -49,8 +46,6 @@ g_engines = {}
 g_cleanup_queue = Queue.Queue()
 g_cleanup_thread = None
 g_game_timeout = 36000
-g_mongo_client = None
-g_mongo_db = "smear"
 
 ALL_COMPUTER_NAMES = [
         "Francis",
@@ -90,18 +85,6 @@ class User():
         return self.email
 
 
-@login_manager.user_loader
-def load_user(email):  
-    try:
-        user = g_mongo_client[g_mongo_db].players.find_one({"email": email})
-    except Exception as ex:
-        print "Error: unable to connect to mongo service looking for {}: {}".format(email, str(ex))
-        user = None
-    if not user:
-        return None
-    return User(user["email"])
-
-
 # Validate a user's login. TODO, support https and passwords and such.
 # Allows us to access logged in user via current_user
 # Input (json data from post):
@@ -110,30 +93,8 @@ def load_user(email):
 #  success - boolean - true if successfully logged in
 @app.route("/api/user/login/", methods=["POST"])
 def user_login():
-    global g_mongo_client
-    params = get_params_or_abort(request)
-    email = get_value_from_params(params, "email", abort_if_absent=False)
-
-    # If mongo hasn't been initialized (or failed last time) try again
-    if g_mongo_client is None:
-        g_mongo_client = initialize_mongo()
-
-    # Verify user exists and has correct credentials
-    try:
-        user = g_mongo_client[g_mongo_db].players.find_one({"email": email})
-    except Exception as ex:
-        print "Error: unable to connect to mongo service looking for {}: {}".format(email, str(ex))
-        g_mongo_client = None
-        return generate_error(0, "Error connecting to database, unable to log in user")
-    if not user:
-        insert_result = g_mongo_client[g_mongo_db].players.insert_one({"email": email})
-        if not insert_result.acknowledged:
-            return generate_error(0, "Problem logging in")
-    login_user(User(email), remember=True)
-
-    data = {}
-    data["success"] = True
-    return generate_return_string(data)
+    # mongo is dead
+    return generate_return_string({})
 
 
 # Logs a user out
@@ -239,26 +200,6 @@ def cleanup_thread_function(engine_queue, game_timeout):
                     if engine is not None:
                         engine.finish_game()
                         remove_engine(game.game_id)
-
-
-def initialize_mongo():
-    global g_mongo_db
-
-    mongo_client = None
-    mongo_default_hostname = "localhost"
-    mongo_default_port = "27017"
-    mongo_default_database = "smear"
-
-    if "MONGODB_URI" in os.environ:
-        uri = os.environ["MONGODB_URI"]
-        mongo_client = MongoClient(uri)
-        g_mongo_db = uri.split('/')[-1]
-        app.logger.debug("Using {} for mongodb database server, database: {}".format(uri.split('@')[-1].split('/')[0], g_mongo_db))
-    else:
-        mongo_client = MongoClient("{}:{}".format(mongo_default_hostname, mongo_default_port))
-        g_mongo_db = mongo_default_database
-        app.logger.debug("Using {}:{} for mongodb database server, database: {}".format(mongo_default_hostname, mongo_default_port, g_mongo_db))
-    return mongo_client
 
 
 def initialize(cleanup_thread, cleanup_queue, game_timeout):
@@ -556,7 +497,6 @@ def rejoin_game():
 #  game_id    - String  - Id of the game to be used in future API calls
 @app.route("/api/game/create/", methods=["POST"])
 def create_game():
-    global g_mongo_client
     # Read input
     params = get_params_or_abort(request)
     numPlayerInput = get_value_from_params(params, "numPlayers")
@@ -611,12 +551,6 @@ def create_game():
         graph_prefix = uuid.uuid4().hex
         static_dir = os.path.dirname(os.path.realpath(__file__)) + "/static"
         engine.set_graph_details(static_dir, graph_prefix)
-
-    # Add details for MongoDB instance, if available
-    if g_mongo_client is None:
-        g_mongo_client = initialize_mongo()
-    if g_mongo_client:
-        engine.set_game_stats_database_details(client=g_mongo_client, database=g_mongo_db)
 
     # Create new game
     engine.create_new_game(num_players=numPlayers, num_human_players=numHumanPlayers, score_to_play_to=pointsToPlayTo, num_teams=numTeams)
