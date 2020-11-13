@@ -18,8 +18,8 @@ import requests
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pysmear")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/pydealer")
-from pysmear import smear_engine_api
-from pysmear import smear_exceptions
+from pysmear.pysmear import smear_engine_api
+from pysmear.pysmear import smear_exceptions
 from dbqueries.bid_stats import BidStats
 from dbqueries.game_stats import GameStats
 from dbqueries.daily_status import DailyStatus
