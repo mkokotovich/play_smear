@@ -9,6 +9,7 @@ from django.utils.functional import cached_property
 from rest_framework.exceptions import ValidationError
 
 from apps.smear.cards import Card, Deck, SUIT_CHOICES
+from apps.smear.computer_logic import computer_bid, computer_play_card
 
 
 LOG = logging.getLogger(__name__)
@@ -215,18 +216,15 @@ class Player(models.Model):
         return [Card(representation=rep) for rep in self.cards_in_hand]
 
     def create_bid(self, hand):
-        # TODO: bidding logic
-        bid_value = 0 if hand.high_bid else 2
-        trump_value = Card(representation=self.cards_in_hand[0]).suit
+        bid_value, trump_value = computer_bid(self, hand)
 
-        LOG.info(f"{self} has {self.cards_in_hand}, bidding {bid_value} in {trump_value}")
+        LOG.info(f"{self} has {self.cards_in_hand}, bidding {bid_value}{' in ' + trump_value if bid_value else ''}")
         return Bid.create_bid_for_player(bid_value, trump_value, self, self.game.current_hand)
 
     def play_card(self, trick):
-        # TODO: playing logic
-        card = next((card for card in self.get_cards() if not trick.is_card_invalid_to_play(card, self)), None)
-        assert card is not None, f'unable to find a card for {self}, {self.cards_in_hand} are all invalid'
+        card = computer_play_card(self, trick)
 
+        LOG.info(f"{self} has {self.cards_in_hand}, playing {card}")
         return card
 
     def card_played(self, card):
