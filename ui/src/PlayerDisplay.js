@@ -24,7 +24,8 @@ function Player(props) {
   const bid = bids.find(bid => bid.player === player.id);
   const play = plays.find(play => play.player === player.id);
   const card = play ? play.card : undefined;
-  const teamName = teams ? teams.find(team => team.id === player.team).name : "";
+  const team = teams.find(team => team.id === player.team);
+  const teamName = team?.name || "";
   const isDealer = dealer === player.id;
   const isBidder = bidder === player.id;
   const isActivePlayer = active_player === player.id;

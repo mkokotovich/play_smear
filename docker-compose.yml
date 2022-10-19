@@ -3,8 +3,8 @@ services:
   api:
     build:
         context: ./
-        dockerfile: docker/api/Dockerfile
-    command: python manage.py runserver 0.0.0.0:8008
+        dockerfile: Dockerfile
+    command: python manage.py runserver --nostatic 0.0.0.0:8008
     depends_on:
       - postgres
     volumes:
@@ -12,20 +12,12 @@ services:
     ports:
       - "8008:8008"
     environment:
-      - DATABASE_URL=postgres://postgres@postgres:5432/playsmear
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/playsmear
       - ENVIRON=local
       - DJANGO_SETTINGS_MODULE=api.settings.local
-#  ui:
-#    build:
-#        context: ./
-#        dockerfile: docker/ui/Dockerfile
-#    command: yarn start
-#    volumes:
-#      - .:/usr/src/app
-#    ports:
-#      - "3000:3000"
   postgres:
-    image: postgres:9.6.2-alpine
+    image: postgres:13
     environment:
       POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: playsmear

@@ -189,8 +189,9 @@ class Player(models.Model):
         return f"{self.name} ({self.id})"
 
     def __init__(self, *args, **kwargs):
-        name = kwargs.pop('name', self._get_name_from_user(kwargs.get('user', None)))
-        super().__init__(name=name, *args, **kwargs)
+        super().__init__(*args, **kwargs)
+        if not self.name:
+            self.name = self._get_name_from_user(kwargs.get("user", None))
 
     def _get_name_from_user(self, user):
         if not user:

@@ -13,7 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.conf.urls import url, include
+from django.urls import re_path, include
 from rest_framework_jwt.views import obtain_jwt_token
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
@@ -32,8 +32,8 @@ def up(request, format=None):
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-    url(r'^up/$', up),
-    url(r'^api/auth/', obtain_jwt_token),
-    url(r'^api/users/', include('apps.user.urls')),
-    url(r'^api/smear/', include('apps.smear.urls')),
+    re_path(r'^up/$', up),
+    re_path(r'^api/auth/', obtain_jwt_token),
+    re_path(r'^api/users/', include('apps.user.urls')),
+    re_path(r'^api/smear/', include('apps.smear.urls')),
 ]

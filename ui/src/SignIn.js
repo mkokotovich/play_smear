@@ -4,6 +4,7 @@ import { Link, withRouter } from 'react-router-dom';
 import axios from 'axios';
 import decode from 'jwt-decode';
 import { signIn, signOut } from './auth_utils';
+import { UserOutlined } from '@ant-design/icons';
 
 import SignInForm from './SignInForm'
 
@@ -27,7 +28,7 @@ function SignOut(props) {
   return (
     <React.Fragment>
       <Dropdown overlay={menu} placement="bottomRight">
-        <Button type="default" icon="user">
+        <Button type="default" icon={ <UserOutlined /> }>
           {props.email}
         </Button>
       </Dropdown>
