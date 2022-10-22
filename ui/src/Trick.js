@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { withRouter } from 'react-router-dom';
-import { Radio, Row, Button, Modal } from 'antd';
+import { Radio, Button, Modal } from 'antd';
 import axios from 'axios';
 
 import PlayerDisplay from './PlayerDisplay';
@@ -13,6 +13,7 @@ const RadioGroup = Radio.Group;
 
 
 function CardSelection(props) {
+  // eslint-disable-next-line
   const {cards, cardSelected, setCardSelected, submitSpecificCard} = props;
 
   function onChangeCardSelected(e) {
@@ -57,12 +58,13 @@ function Trick(props) {
     });
   }
 
+  // eslint-disable-next-line
   function submitCard() {
     return submitSpecificCard(cardSelected);
   }
 
   function nextTrick() {
-    if (game.current_trick.num == 6) {
+    if (game.current_trick.num === 6) {
       setTrickAcknowledged(true);
     } else {
       reloadGame(true, true, true);

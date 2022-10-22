@@ -3,6 +3,7 @@ import { withRouter } from 'react-router-dom';
 import { Button } from 'antd';
 
 function HandResults(props) {
+  // eslint-disable-next-line no-unused-vars
   const {game, loading, reloadGame} = props;
 
   function nextHand() {

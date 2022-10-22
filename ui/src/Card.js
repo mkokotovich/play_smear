@@ -22,7 +22,7 @@ function Card(props) {
   };
   return (
     <div style={divStyle}>
-      <img style={cardStyle} src={cardFile} />
+      <img alt={cardFile} style={cardStyle} src={cardFile} />
     </div>
   );
 }

@@ -394,12 +394,14 @@ function WaitingRoom(props) {
     setBench(newBench);
 
     initialPlayerAssignment(newBench, setBench, teams, props.game.players);
+    // eslint-disable-next-line
   }, [props.game.players]);
   
   // If in a multiplayer game, always refresh the game to check for changes
   // Otherwise we don't need to
   useEffect(() => {
     props.reloadGame(false, !props.game.single_player);
+    // eslint-disable-next-line
   }, [props.game.single_player]);
 
   function onDragEnd(result) {

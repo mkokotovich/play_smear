@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { withRouter } from 'react-router-dom';
 import Card from './Card';
 import Bid from './Bid';
@@ -34,7 +34,7 @@ function Player(props) {
   const possiblePoints = results ? Object.keys(results) : [];
   
   const pointsWon = possiblePoints.reduce((accum, key) => {
-    if (results[key] == player.id) {
+    if (results[key] === player.id) {
       return [...accum, key]
     }
     return accum

@@ -7,7 +7,7 @@ import WaitingRoom from './WaitingRoom';
 import Bidding from './Bidding';
 import DeclaringTrump from './DeclaringTrump';
 import Trick from './Trick';
-import HandResults from './HandResults';
+//import HandResults from './HandResults';
 import GameResults from './GameResults';
 import HUD from './HUD';
 import getErrorString from './utils';
@@ -33,8 +33,8 @@ function loadGame(gameID, handNum, trickNum, setLoading, setGame) {
   // teams: [{id: 18, name: "Team 2"}, {id: 17, name: "Team 1"}]
   // updated_at: "2020-04-28T15:57:45.979031Z"
   // }
-  const handParam = handNum != 0 && handNum != undefined ? {'hand_num': handNum} : {};
-  const trickParam = trickNum != 0 && trickNum != undefined ? {'trick_num': trickNum} : {};
+  const handParam = handNum !== 0 && handNum !== undefined ? {'hand_num': handNum} : {};
+  const trickParam = trickNum !== 0 && trickNum !== undefined ? {'trick_num': trickNum} : {};
   const queryParams = {
     ...handParam,
     ...trickParam
@@ -58,8 +58,8 @@ function loadGame(gameID, handNum, trickNum, setLoading, setGame) {
 }
 
 function reloadGameStatus(gameID, handNum, trickNum, setLoading, updateGame) {
-  const handParam = handNum != 0 && handNum != undefined ? {'hand_num': handNum} : {};
-  const trickParam = trickNum != 0 && trickNum != undefined ? {'trick_num': trickNum} : {};
+  const handParam = handNum !== 0 && handNum !== undefined ? {'hand_num': handNum} : {};
+  const trickParam = trickNum !== 0 && trickNum !== undefined ? {'trick_num': trickNum} : {};
   const queryParams = {
     ...handParam,
     ...trickParam
@@ -139,7 +139,7 @@ function Game(props) {
       const myPlayer = game?.players.find(player => player.user === signedInUser.id);
       const autoPilotEnabled = myPlayer?.is_computer;
       const myTurnTrick = game?.current_trick?.active_player === myPlayer.id;
-      const myTurnBidding = (game?.current_hand?.bidder === myPlayer.id) && (game?.state === "bidding" || game?.state == "declaring_trump");
+      const myTurnBidding = (game?.current_hand?.bidder === myPlayer.id) && (game?.state === "bidding" || game?.state === "declaring_trump");
       const myTurn = myTurnTrick || myTurnBidding;
       const trickOver = Boolean(game?.current_trick?.taker);
       const gameOver = game?.state === "game_over";

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+// import React, { useState, useEffect } from 'react';
 import { withRouter } from 'react-router-dom';
-import Card from './Card';
+// import Card from './Card';
 
 function TrumpHint(props) {
   const {trump} = props;

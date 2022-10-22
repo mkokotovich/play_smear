@@ -1,11 +1,12 @@
 import React from 'react';
 import { withRouter } from 'react-router-dom';
-import { Button } from 'antd';
+// import { Button } from 'antd';
 
 import PlayerDisplay from './PlayerDisplay';
 import CardDisplay from './CardDisplay';
 
 function GameResults(props) {
+  // eslint-disable-next-line no-unused-vars
   const {game, loading, reloadGame} = props;
 
   return (

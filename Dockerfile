@@ -17,7 +17,6 @@ RUN yarn build
 
 FROM python:3.10-slim-buster
 
-ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 WORKDIR /usr/src/app
@@ -33,4 +32,4 @@ RUN python manage.py collectstatic --noinput --clear
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", ":8000", "--workers", "2", "api.wsgi"]
+CMD ["gunicorn", "api.wsgi", "-c", "gunicorn.conf.py"]
