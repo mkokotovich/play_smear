@@ -215,6 +215,12 @@ class Player(models.Model):
     def get_cards(self):
         return [Card(representation=rep) for rep in self.cards_in_hand]
 
+    def get_trump(self, trump):
+        all_cards = [Card(representation=rep) for rep in self.cards_in_hand]
+        trump_cards = [card for card in all_cards if card.is_trump(trump)]
+        ordered_cards = sorted(trump_cards, key=lambda c: c.trump_rank(trump), reverse=True)
+        return ordered_cards
+
     def create_bid(self, hand):
         bid_value, trump_value = computer_bid(self, hand)
 

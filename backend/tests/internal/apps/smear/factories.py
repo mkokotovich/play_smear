@@ -1,7 +1,7 @@
 import factory
 
 
-class GameFactory(factory.DjangoModelFactory):
+class GameFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'smear.Game'
     owner = factory.SubFactory('tests.internal.apps.user.factories.UserFactory')
@@ -14,17 +14,18 @@ class GameFactory(factory.DjangoModelFactory):
     single_player = factory.Faker("boolean")
 
 
-class TeamFactory(factory.DjangoModelFactory):
+class TeamFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'smear.Team'
     game = factory.SubFactory('tests.internal.apps.smear.factories.GameFactory')
     name = factory.Faker("name")
 
 
-class HandFactory(factory.DjangoModelFactory):
+class HandFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'smear.Hand'
     game = factory.SubFactory('tests.internal.apps.smear.factories.GameFactory')
+    num = 1
 
     @factory.post_generation
     def high_bid(self, create, extracted, **kwargs):
@@ -38,7 +39,7 @@ class HandFactory(factory.DjangoModelFactory):
             self.high_bid = BidFactory(hand=self)
 
 
-class PlayerFactory(factory.DjangoModelFactory):
+class PlayerFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'smear.Player'
     user = factory.SubFactory('tests.internal.apps.user.factories.UserFactory')
@@ -49,7 +50,7 @@ class GameFactoryWithPlayer(GameFactory):
     membership = factory.RelatedFactory(PlayerFactory, 'game')
 
 
-class BidFactory(factory.DjangoModelFactory):
+class BidFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'smear.Bid'
     hand = factory.SubFactory('tests.internal.apps.smear.factories.HandFactory')

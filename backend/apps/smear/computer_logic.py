@@ -1,10 +1,13 @@
-from apps.smear.cards import Card
+import logging
+
+from apps.smear.cards import SUITS
+
+
+LOG = logging.getLogger(__name__)
 
 
 def computer_bid(player, hand):
-    # TODO: bidding logic
-    bid_value = 0 if hand.high_bid else 2
-    trump_value = Card(representation=player.cards_in_hand[0]).suit
+    bid_value, trump_value = calculate_bid(player, hand)
 
     return bid_value, trump_value
 
@@ -17,266 +20,216 @@ def computer_play_card(player, trick):
     return card
 
 
+def calculate_bid(player, hand, aggression_factor=0.2):
+    bid = 0
+    bid_trump = None
+
+    LOG.debug(f"calculating bid for player {player} with hand {hand}")
+    for suit in SUITS:
+        tmp_bid = 0
+        tmp_bid += expected_points_from_high(player, hand, suit)
+        tmp_bid += expected_points_from_low(player, hand, suit)
+        tmp_bid += expected_points_from_game(player, hand, suit)
+        tmp_bid += expected_points_from_jack_and_jick(player, hand, suit)
+
+        LOG.debug(f"{player} suit {suit} would result in bid of {tmp_bid}")
+        if tmp_bid > bid:
+            bid, bid_trump = tmp_bid, suit
+
+    # Determine whether to round up or down
+    round_up_or_down = 0
+    fractional_part = bid - int(bid)
+    round_up_or_down = 1 if aggression_factor + fractional_part >= 1 else 0
+    # int() always rounds down
+    rounded_bid = int(bid) + round_up_or_down
+
+    is_dealer = player.id == hand.dealer_id
+    if rounded_bid < 2:
+        if not hand.high_bid and is_dealer and rounded_bid == 1:
+            # Go for it, otherwise we get set
+            LOG.debug("Forced to bid two in order to avoid an automatic set")
+            rounded_bid = 2
+        else:
+            rounded_bid = 0
+
+    return rounded_bid, bid_trump
+
+
+def choose(n, k):
+    """
+    A fast way to calculate binomial coefficients by Andrew Dalke (contrib).
+    """
+    if 0 <= k <= n:
+        ntok = 1
+        ktok = 1
+        for t in range(1, min(k, n - k) + 1):
+            ntok *= n
+            ktok *= t
+            n -= 1
+        return ntok // ktok
+    else:
+        return 0
+
+
+def calculate_percent_that_no_one_else_was_dealt_a_card(cards_per_hand, num_players, possible_cards):
+    # subtract cards_per_hand to account for the cards in my hand
+    remaining_cards_in_deck = 52 - cards_per_hand
+    percent_that_no_one_else_was_dealt_a_card = 1.0
+
+    # percent_that_no_one_else_was_dealt_a_card = (
+    #   percent_that_player1_was_not_dealt_a_card *
+    #   percent_that_player2_was_not_dealt_a_card *
+    #   percent_that_player3_was_not_dealt_a_card *
+    #   ...
+    # )
+    for i in range(0, num_players - 1):
+        if (remaining_cards_in_deck - possible_cards) < cards_per_hand:
+            percent_that_no_one_else_was_dealt_a_card = 0
+            break
+        percent_that_no_one_else_was_dealt_a_card *= (
+            choose(remaining_cards_in_deck - possible_cards, cards_per_hand) / float(choose(remaining_cards_in_deck, cards_per_hand))
+        )
+        remaining_cards_in_deck -= cards_per_hand
+
+    return percent_that_no_one_else_was_dealt_a_card
+
+
+def expected_points_from_high(player, hand, suit):
+    exp_points = 0
+
+    cards = player.get_trump(suit)
+    if not cards:
+        return 0
+
+    # (14 - high_rank) because there are 14 trumps
+    high_rank = cards[0].trump_rank(suit)
+    other_possible_highs = 14 - high_rank
+
+    percent_that_no_one_else_has_high = calculate_percent_that_no_one_else_was_dealt_a_card(
+        len(player.cards_in_hand),
+        hand.game.num_players,
+        other_possible_highs,
+    )
+
+    exp_points = 1 * percent_that_no_one_else_has_high
+    if exp_points < 0.3:
+        exp_points = 0
+    LOG.debug(f"{player} calculates {exp_points:.2f} expected points from high for {suit}")
+
+    return exp_points
+
+
+def expected_points_from_low(player, hand, suit):
+    exp_points = 0
+
+    cards = player.get_trump(suit)
+    if not cards:
+        return 0
+
+    # (low_rank - 1) because the lowest is 2
+    low_rank = cards[-1].trump_rank(suit)
+    other_possible_lows = low_rank - 1
+
+    percent_that_no_one_else_has_low = calculate_percent_that_no_one_else_was_dealt_a_card(
+        len(player.cards_in_hand),
+        hand.game.num_players,
+        other_possible_lows,
+    )
+
+    exp_points = 1 * percent_that_no_one_else_has_low
+    if exp_points < 0.3:
+        exp_points = 0
+    LOG.debug(f"{player} calculates {exp_points:.2f} expected points from low for {suit}")
+
+    return exp_points
+
+
+def expected_points_from_game(player, hand, suit):
+    exp_points = 0.0
+
+    my_trump = player.get_trump(suit)
+    my_cards = player.get_cards()
+
+    for card in my_cards:
+        if card.is_trump(suit) and card.value == "10":
+            # 10 of trump is valuable, especially if you have many trump
+            if len(my_trump) > 2:
+                exp_points += 0.6
+            else:
+                exp_points += 0.3
+        elif card.is_trump(suit):
+            # All trump cards will help some
+            exp_points += 0.1 if card.trump_rank(suit) < 5 else 0.2
+        elif card.value in ("ace", "king"):
+            # High face cards are worth some
+            exp_points += 0.20
+        elif card.value in ("queen", "jack"):
+            # lower face cards are worth a little less
+            exp_points += 0.15
+
+    if exp_points > 1:
+        exp_points = 1
+    elif exp_points < 0.3:
+        exp_points = 0
+    LOG.debug(f"{player} calculates {exp_points:.2f} expected points from game for {suit}")
+
+    return exp_points
+
+
+def expected_total_trump(num_players):
+    return {
+        2: 3.5,
+        3: 5,
+        4: 6.5,
+        5: 8,
+        6: 9.5,
+        7: 11,
+        8: 12.5,
+    }.get(num_players, 0)
+
+
+def expected_points_from_jack_and_jick(player, hand, suit):
+    exp_points = 0
+    exp_my_points = 0
+    exp_taken_points = 0
+
+    my_trump = player.get_trump(suit)
+    num_jacks_and_jicks = len([card for card in my_trump if card.value == "jack"])
+    num_non_jacks = len(my_trump) - num_jacks_and_jicks
+    num_my_AKQ = len([card for card in my_trump if card.value in ("ace", "king", "queen")])
+    num_expected_trump = expected_total_trump(hand.game.num_players)
+    num_expected_remaining_trump = num_expected_trump - len(my_trump)
+    buffer_required = num_expected_remaining_trump  * 0.6
+    expected_jacks_and_jicks = 2 * (6 * hand.game.num_players) / 52
+
+    if num_jacks_and_jicks:
+        # How many points will I get from my own Jacks and Jicks
+        percentage_someone_takes = (3 - num_my_AKQ) / 3 * (buffer_required - num_non_jacks) / buffer_required
+        percentage_someone_takes = 0 if percentage_someone_takes < 0 else percentage_someone_takes
+
+        exp_my_points = num_jacks_and_jicks * (1 - percentage_someone_takes)
+
+    if num_my_AKQ and num_jacks_and_jicks < 2:
+        # How many points will I get from taking other Jacks and Jicks
+        available_jacks_and_jicks = expected_jacks_and_jicks - num_jacks_and_jicks
+        available_jacks_and_jicks = 0 if available_jacks_and_jicks < 0 else available_jacks_and_jicks
+        take_factor = 0
+        if num_my_AKQ == 1:
+            take_factor = 0.1
+        elif num_my_AKQ == 2:
+            take_factor = 0.75
+        elif num_my_AKQ == 3:
+            take_factor = 1
+
+        exp_taken_points = available_jacks_and_jicks * take_factor
+
+    exp_points = exp_my_points + exp_taken_points
+    LOG.debug(f"{player} calculates {exp_points:.2f} expected points ({exp_my_points:.2f} + {exp_taken_points:.2f}) from jacks_and_jicks for {suit}")
+    return exp_points
+
+
 # TODO: Rework all of this to fit our new game format
 """
-class BasicBidding(SmearBiddingLogic):
-    def __init__(self, debug=False):
-        super(BasicBidding, self).__init__(debug)
-        self.trump = ""
-        self.bid = 0
-
-    def expected_points_from_high(self, num_players, my_hand, suit):
-        exp_points = 0
-        my_trump = utils.get_trump_indices(suit, my_hand)
-        if len(my_trump) == 0:
-            return 0
-        high_trump = my_hand[my_trump[-1]]
-        high_rank = 0
-        if high_trump.suit == suit:
-            high_rank = POKER_RANKS["values"][high_trump.value]
-            if high_rank > 9:
-                # Add one to account for jick
-                high_rank += 1
-        else:
-            # jick
-            high_rank = 10
-        other_possible_highs = 14 - high_rank
-        remaining_cards_in_deck = 52 - len(my_hand)
-        percent_that_no_one_else_has_high = 1.0
-        for i in range(0, num_players-1):
-            if (remaining_cards_in_deck - other_possible_highs) < len(my_hand):
-                percent_that_no_one_else_has_high = 0
-                break
-            percent_that_no_one_else_has_high *= self.choose(remaining_cards_in_deck - other_possible_highs, len(my_hand))/float(self.choose(remaining_cards_in_deck, len(my_hand)))
-            remaining_cards_in_deck -= len(my_hand)
-        exp_points = 1 * percent_that_no_one_else_has_high
-        if self.debug:
-            print "{} exp points high: {}".format(suit, exp_points)
-
-        return exp_points
-
-
-    def expected_points_from_low(self, num_players, my_hand, suit):
-        exp_points = 0
-        my_trump = utils.get_trump_indices(suit, my_hand)
-        if len(my_trump) == 0:
-            return 0
-        low_trump = my_hand[my_trump[0]]
-        low_rank = 0
-        if low_trump.suit == suit:
-            low_rank = POKER_RANKS["values"][low_trump.value]
-            if low_rank > 9:
-                # Add one to account for jick
-                low_rank += 1
-        else:
-            # jick
-            low_rank = 10
-        other_possible_lows = low_rank - 1
-        remaining_cards_in_deck = 52 - len(my_hand)
-        percent_that_no_one_else_has_low = 1.0
-        for i in range(0, num_players-1):
-            if (remaining_cards_in_deck - other_possible_lows) < len(my_hand):
-                percent_that_no_one_else_has_low = 0
-                break
-            percent_that_no_one_else_has_low *= self.choose(remaining_cards_in_deck - other_possible_lows, len(my_hand))/float(self.choose(remaining_cards_in_deck, len(my_hand)))
-            remaining_cards_in_deck -= len(my_hand)
-        exp_points = 1 * percent_that_no_one_else_has_low
-        if self.debug:
-            print "{} exp points low: {}".format(suit, exp_points)
-
-        return exp_points
-
-
-    # TODO - improve
-    def expected_points_from_game(self, num_players, my_hand, suit):
-        exp_points = 0
-        my_trump = utils.get_trump_indices(suit, my_hand)
-        if len(my_trump) == 0:
-            return 0
-        exp_points = 0.2 * len(my_trump)
-        if self.debug:
-            print "{} exp points game: {}".format(suit, exp_points)
-        return exp_points
-
-
-    # TODO - improve
-    def expected_points_from_jack_and_jick(self, num_players, my_hand, suit):
-        exp_points = 0
-        jacks_and_jicks = 0
-        my_trump = utils.get_trump_indices(suit, my_hand)
-        if len(my_trump) == 0:
-            return 0
-        for idx in my_trump:
-            if my_hand[idx].value == "Jack":
-                jacks_and_jicks += 1
-        exp_points = jacks_and_jicks*0.75
-        if self.debug:
-            print "{} exp points jack jick: {}".format(suit, exp_points)
-        return exp_points
-
-    def calculate_bid(self, current_hand, my_hand, force_two=False):
-        bid = 0
-        bid_trump = None
-
-        if self.debug:
-            print "Hand: {}".format(" ".join(x.abbrev for x in my_hand))
-        for suit in self.suits:
-            tmp_bid = 0
-            tmp_bid += self.expected_points_from_high(current_hand.num_players, my_hand, suit)
-            tmp_bid += self.expected_points_from_low(current_hand.num_players, my_hand, suit)
-            tmp_bid += self.expected_points_from_game(current_hand.num_players, my_hand, suit)
-            tmp_bid += self.expected_points_from_jack_and_jick(current_hand.num_players, my_hand, suit)
-            if self.debug:
-                print "{} tmp_bid: {}".format(suit, tmp_bid)
-            if tmp_bid > bid:
-                bid, bid_trump = tmp_bid, suit
-
-        if bid < 2:
-            if current_hand.bid < 2 and force_two and bid > 0.3:
-                # Go for it, otherwise we get set
-                if self.debug:
-                    print "Forced to bid two in order to avoid an automatic set"
-                bid = 2
-            else:
-                bid = 0
-
-        self.bid = int(math.floor(bid))
-
-        if self.bid <= current_hand.bid:
-            # We have to bid greater than current bid
-            self.bid = 0
-        self.trump = bid_trump
-
-
-    def declare_bid(self):
-        return self.bid
-
-
-    def declare_trump(self):
-        return self.trump
-
-
-class BetterBidding(BasicBidding):
-    def __init__(self, debug=False):
-        super(BetterBidding, self).__init__(debug)
-        self.trump = ""
-        self.bid = 0
-
-    def expected_points_from_high(self, num_players, my_hand, suit):
-        exp_points = super(BetterBidding, self).expected_points_from_high(num_players, my_hand, suit)
-        if exp_points < 0.3:
-            exp_points = 0
-        return exp_points
-
-
-    def expected_points_from_low(self, num_players, my_hand, suit):
-        exp_points = super(BetterBidding, self).expected_points_from_low(num_players, my_hand, suit)
-        if exp_points < 0.3:
-            exp_points = 0
-        return exp_points
-
-
-    def expected_points_from_game(self, num_players, my_hand, suit):
-        exp_points = 0.0
-        my_trump = utils.get_trump_indices(suit, my_hand)
-        for index in range(0, len(my_hand)):
-            if index in my_trump:
-                if my_hand[index].value == '10':
-                    # 10 of trump is valuable for game
-                    if len(my_trump) > 2:
-                        exp_points += 0.6
-                    else:
-                        exp_points += 0.3
-                else:
-                    # All trump cards will help some
-                    exp_points += 0.20
-            else:
-                if my_hand[index].value in "Ace King":
-                    # Face cards are worth some
-                    exp_points += 0.20
-                elif my_hand[index].value in "Queen Jack":
-                    # Face cards are worth some
-                    exp_points += 0.15
-
-        if exp_points > 1:
-            exp_points = 1
-
-        if self.debug:
-            print "{} exp points game: {}".format(suit, exp_points)
-        return exp_points
-
-
-    def expected_points_from_jack_and_jick(self, num_players, my_hand, suit):
-        exp_points = 0
-        jacks_and_jicks = 0
-        my_trump = utils.get_trump_indices(suit, my_hand)
-        for idx in my_trump:
-            if my_hand[idx].value == "Jack":
-                jacks_and_jicks += 1
-
-        if jacks_and_jicks:
-            non_jacks = len(my_trump) - jacks_and_jicks
-            multiplier = 0.0
-            if non_jacks == 0:
-                multiplier = 0
-            elif non_jacks == 1:
-                multiplier = 0.5
-            elif non_jacks == 2:
-                multiplier = 0.75
-            elif non_jacks >= 3:
-                multiplier = 1.0
-            exp_points = jacks_and_jicks * multiplier
-
-        if self.debug:
-            print "{} exp points jack jick: {}".format(suit, exp_points)
-        return exp_points
-
-    def calculate_bid(self, current_hand, my_hand, force_two=False):
-        bid = 0
-        bid_trump = None
-
-        if self.debug:
-            print "Hand: {}".format(" ".join(x.abbrev for x in my_hand))
-        for suit in self.suits:
-            tmp_bid = 0
-            tmp_bid += self.expected_points_from_high(current_hand.num_players, my_hand, suit)
-            tmp_bid += self.expected_points_from_low(current_hand.num_players, my_hand, suit)
-            tmp_bid += self.expected_points_from_game(current_hand.num_players, my_hand, suit)
-            tmp_bid += self.expected_points_from_jack_and_jick(current_hand.num_players, my_hand, suit)
-            if self.debug:
-                print "{} tmp_bid: {}".format(suit, tmp_bid)
-            if tmp_bid > bid:
-                bid, bid_trump = tmp_bid, suit
-
-        if bid < 2:
-            if current_hand.bid < 2 and force_two and bid > 1:
-                # Go for it, otherwise we get set
-                if self.debug:
-                    print "Forced to bid two in order to avoid an automatic set"
-                bid = 2
-            else:
-                bid = 0
-
-        # Fractional part:
-        round_up_or_down = 0
-        fraction = bid - int(bid)
-        if fraction >= 1.0:
-            round_up_or_down = 1
-
-        self.bid = int(bid) + round_up_or_down
-
-        if self.bid <= current_hand.bid:
-            # We have to bid greater than current bid
-            self.bid = 0
-        self.trump = bid_trump
-
-
-    def declare_bid(self):
-        return self.bid
-
-
-    def declare_trump(self):
-        return self.trump
 
 
 class CautiousTaker(SmearPlayingLogic):

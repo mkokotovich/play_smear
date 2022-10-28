@@ -65,6 +65,29 @@ class Card():
 
         return rank
 
+    def trump_rank(self, trump):
+        rank = {
+            '2': 1,
+            '3': 2,
+            '4': 3,
+            '5': 4,
+            '6': 5,
+            '7': 6,
+            '8': 7,
+            '9': 8,
+            '10': 9,
+            'jack': None,
+            'queen': 12,
+            'king': 13,
+            'ace': 14,
+        }.get(self.value)
+
+        # Differentiate between jack and jick
+        if not rank:
+            rank = 11 if self.suit == trump else 10
+
+        return rank
+
     def __init__(self, representation=None, value=None, suit=None):
         value, suit = self._representation_to_value_and_suit(representation) if representation else (value, suit)
         if not value or not suit:
