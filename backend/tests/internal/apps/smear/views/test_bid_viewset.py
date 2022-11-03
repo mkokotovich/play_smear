@@ -41,7 +41,7 @@ def test_bid_viewset_create_fails_if_not_current_bidder(authed_client, is_bidder
     team2 = TeamFactory(game=game)
     PlayerFactory(user=owner_user, game=game, team=team1)
     PlayerFactory(user=regular_user, game=game, team=team2)
-    game.start()
+    game.start_game()
     owner_client = authed_client(owner_user)
     regular_client = authed_client(regular_user)
     bid_data = {

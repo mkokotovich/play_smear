@@ -147,6 +147,13 @@ class Card():
         if self.suit == CLUBS or self.suit == SPADES:
             return suit == CLUBS or suit == SPADES
 
+    def is_suit(self, suit, trump):
+        if self.suit == suit:
+            return True
+        if trump == suit and self.value == "jack" and self._same_color(suit):
+            return True
+        return False
+
     def is_trump(self, trump):
         if self.suit == trump:
             return True
@@ -207,6 +214,17 @@ class Card():
             'king': 3,
             'ace': 4,
         }.get(self.value, 0)
+
+    @staticmethod
+    def jick_suit(trump):
+        if trump == HEARTS:
+            return DIAMONDS
+        if trump == DIAMONDS:
+            return HEARTS
+        if trump == CLUBS:
+            return SPADES
+        if trump == SPADES:
+            return CLUBS
 
 
 class Deck():

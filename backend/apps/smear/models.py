@@ -9,7 +9,6 @@ from django.utils.functional import cached_property
 from rest_framework.exceptions import ValidationError
 
 from apps.smear.cards import Card, Deck, SUIT_CHOICES
-from apps.smear.computer_logic import computer_bid, computer_play_card
 
 
 LOG = logging.getLogger(__name__)
@@ -222,12 +221,18 @@ class Player(models.Model):
         return ordered_cards
 
     def create_bid(self, hand):
+        # avoid circular imports
+        from apps.smear.computer_logic import computer_bid
+
         bid_value, trump_value = computer_bid(self, hand)
 
         LOG.info(f"{self} has {self.cards_in_hand}, bidding {bid_value}{' in ' + trump_value if bid_value else ''}")
         return Bid.create_bid_for_player(bid_value, trump_value, self, self.game.current_hand)
 
     def play_card(self, trick):
+        # avoid circular imports
+        from apps.smear.computer_logic import computer_play_card
+
         card = computer_play_card(self, trick)
 
         LOG.info(f"{self} has {self.cards_in_hand}, playing {card}")
@@ -266,6 +271,16 @@ class Hand(models.Model):
     high_bid = models.OneToOneField('smear.Bid', related_name='hand_with_high_bid', on_delete=models.SET_NULL, null=True, blank=True)
     trump = models.CharField(max_length=16, blank=True, default="", choices=SUIT_CHOICES)
 
+    # Used by card-counting logic. jicks are included in the trump suit
+    # The values in the list are the string of the player.id
+    # {
+    #   "spades": ["123", "533", "1"],
+    #   "clubs": ["123"],
+    #   "diamonds": [],
+    #   "hearts": ["32"],
+    # }
+    players_out_of_suits = models.JSONField(default=dict)
+
     # These values are updated as players win the cards, but game is
     # awarded at the end of the game
     winner_high = models.ForeignKey(Player, related_name="games_winner_high", on_delete=models.CASCADE, null=True, blank=True)
@@ -280,6 +295,10 @@ class Hand(models.Model):
 
     def __str__(self):
         return f"Hand {self.id} (dealer: {self.dealer}) (bidder: {self.bidder}) (high_bid: {self.high_bid}) (trump: {self.trump})"
+
+    @property
+    def current_trick(self):
+        return self.tricks.last()
 
     def start_hand(self, dealer):
         LOG.info(f"Starting hand with dealer: {dealer}")
@@ -333,6 +352,15 @@ class Hand(models.Model):
         self._finalize_bidding()
 
     def _finalize_bidding(self):
+        if not self.high_bid or self.high_bid.bid < 2:
+            # No one bid, set the dealer
+            self.bidder = self.dealer
+            game_is_over = self._finalize_hand(no_bid=True)
+            new_state = Game.GAME_OVER if game_is_over else Game.NEW_HAND
+            self.save()
+            self.game.set_state(new_state)
+            self.game.advance_game()
+
         self.bidder = self.high_bid.player
         self.save()
         self.game.set_state(Game.DECLARING_TRUMP)
@@ -346,9 +374,9 @@ class Hand(models.Model):
         current_low = None
         current_low_winner = None
         for player in self.game.player_set.all():
-            trump_cards = [card for card in player.get_cards() if card.suit == self.trump]
-            lowest_trump = min(trump_cards, key=lambda x: x.rank()) if trump_cards else None
-            new_low = current_low if (lowest_trump is None or (current_low and current_low.rank() < lowest_trump.rank())) else lowest_trump
+            trump_cards = player.get_trump(self.trump)
+            lowest_trump = min(trump_cards, key=lambda x: x.trump_rank(self.trump)) if trump_cards else None
+            new_low = current_low if (lowest_trump is None or (current_low and current_low.trump_rank(self.trump) < lowest_trump.trump_rank(self.trump))) else lowest_trump
             if new_low != current_low and new_low is not None:
                 current_low = new_low
                 current_low_winner = player
@@ -359,9 +387,9 @@ class Hand(models.Model):
         current_high = None
         current_high_winner = None
         for player in self.game.player_set.all():
-            trump_cards = [card for card in player.get_cards() if card.suit == self.trump]
-            highest_trump = max(trump_cards, key=lambda x: x.rank()) if trump_cards else None
-            new_high = current_high if (highest_trump is None or (current_high and current_high.rank() > highest_trump.rank())) else highest_trump
+            trump_cards = player.get_trump(self.trump)
+            highest_trump = max(trump_cards, key=lambda x: x.trump_rank(self.trump)) if trump_cards else None
+            new_high = current_high if (highest_trump is None or (current_high and current_high.trump_rank(self.trump) > highest_trump.trump_rank(self.trump))) else highest_trump
             if new_high != current_high and new_high is not None:
                 current_high = new_high
                 current_high_winner = player
@@ -477,7 +505,14 @@ class Hand(models.Model):
         for contestant in contestants:
             contestant.refresh_from_db(fields=['score'])
 
-    def _finalize_hand(self):
+    def _finalize_hand(self, no_bid=False):
+        if no_bid:
+            # TODO fix this
+            LOG.info("No bids, dealer is set 2")
+            self.dealer.decrement_score(2)
+            self._refresh_all_scores()
+            return self._declare_winner_if_game_is_over()
+
         self.award_game()
         self.save()
         LOG.info(
@@ -505,6 +540,37 @@ class Hand(models.Model):
         self._refresh_all_scores()
 
         return self._declare_winner_if_game_is_over()
+
+    def update_if_out_of_cards(self, player, card_played):
+        all_plays = Play.objects.filter(trick__hand=self)
+        all_cards_played = [Card(representation=play.card) for play in all_plays]
+
+        suit_played = self.trump if card_played.is_trump(self.trump) else card_played.suit
+        if card_played.is_trump(self.trump):
+            if len([card for card in all_cards_played if card.is_trump(self.trump)]) == 14:
+                # If all trump have been played, everyone is out
+                self.players_out_of_suits[suit_played] = [str(p.id) for p in self.game.players.all()]
+        else:
+            # Only 12 cards exist in the jick suit (jick counts as trump)
+            expected_cards = 12 if suit_played == Card.jick_suit(self.trump) else 13
+            if len([card for card in all_cards_played if not card.is_trump(self.trump) and card.suit == suit_played]) == expected_cards:
+                # If all cards of this suit have been played, everyone is out
+                self.players_out_of_suits[suit_played] = [str(p.id) for p in self.game.players.all()]
+
+        # Update if the player is out of the suit
+        lead_card = Card(representation=self.current_trick.get_lead_play().card)
+        player_is_out = None
+        if lead_card.is_trump(self.trump):
+            if not card_played.is_trump(self.trump):
+                player_is_out = self.trump
+        else:
+            if not card_played.is_trump(self.trump) and card_played.suit != lead_card.suit:
+                # If player is trumping in, can't tell if he/she is out of lead_suit
+                # So if it isn't trump, and isn't the lead_suit, must be out of lead_suit
+                player_is_out = lead_card.suit
+        existing_outs = self.players_out_of_suits.get(suit_played, [])
+        new_outs = existing_outs if str(player.id) in existing_outs else [*existing_outs, str(player.id)]
+        self.players_out_of_suits[player_is_out] = new_outs
 
 
 class Bid(models.Model):
@@ -612,6 +678,10 @@ class Trick(models.Model):
         # Let the player know to remove card from hand
         player.card_played(card)
 
+        # Update card counting logic
+        self.hand.update_if_out_of_cards(player, card)
+        self.hand.save()
+
         return self.plays.count() == self.hand.game.num_players
 
     def submit_play(self, play):
@@ -646,7 +716,7 @@ class Trick(models.Model):
 
         self._finalize_trick()
 
-    def _find_winning_play(self):
+    def find_winning_play(self):
         plays = list(self.plays.all())
         current_high = plays[0]
         for play in plays[1:]:
@@ -655,7 +725,7 @@ class Trick(models.Model):
         return current_high
 
     def _award_cards_to_taker(self):
-        winning_play = self._find_winning_play()
+        winning_play = self.find_winning_play()
         LOG.info(f"Winning play was {winning_play}")
         self.taker = winning_play.player
         cards = self.get_cards()

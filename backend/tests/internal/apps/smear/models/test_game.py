@@ -14,11 +14,11 @@ def test_Game_start_fails_if_not_enough_players():
     [Player.objects.create(game=game, user=UserFactory()) for i in range(0, num_players - 1)]
 
     with pytest.raises(ValidationError):
-        game.start()
+        game.start_game()
 
 
 @pytest.mark.django_db()
-def test_Game_start(mocker):
+def test_Game_start_game(mocker):
     num_players = 6
     game = GameFactory(num_players=num_players)
     players = [Player.objects.create(game=game, user=UserFactory(), seat=i) for i in range(0, num_players)]
@@ -28,9 +28,9 @@ def test_Game_start(mocker):
     mock_hand = mocker.Mock()
     mock_hand_class.objects.create.return_value = mock_hand
 
-    game.start()
+    game.start_game()
 
-    assert game.state == Game.BIDDING
+    assert game.state == Game.NEW_HAND
     assert mock_set_seats.mock_calls == [
         mocker.call(),
     ]

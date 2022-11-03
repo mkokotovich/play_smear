@@ -4,13 +4,12 @@ services:
     build:
         context: ./
         dockerfile: Dockerfile
-    command: python manage.py runserver --nostatic 0.0.0.0:8008
     depends_on:
       - postgres
     volumes:
       - ./backend:/usr/src/app
     ports:
-      - "8008:8008"
+      - "8000:8000"
     environment:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/playsmear
       - ENVIRON=local

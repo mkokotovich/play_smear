@@ -152,6 +152,7 @@ STATIC_ROOT = os.path.join(PROJECT_ROOT, 'staticfiles')
 MEDIA_URL = None
 STATIC_URL = '/'
 WHITENOISE_INDEX_FILE = True
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Extra places for collectstatic to find static files.
 STATICFILES_DIRS = (
