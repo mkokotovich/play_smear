@@ -13,7 +13,7 @@ def card_has_been_played(hand, card):
     return Play.objects.filter(trick__hand=hand, card=card.representation).exists()
 
 
-def highest_card_still_out(hand, suit, ignore_this_card=None):
+def highest_card_still_out(hand, suit):
     all_plays = Play.objects.filter(trick__hand=hand)
     all_cards_played = [Card(representation=play.card) for play in all_plays]
     cards_played_from_suit = [card for card in all_cards_played if card.is_suit(suit, hand.trump)]
@@ -30,7 +30,8 @@ def highest_card_still_out(hand, suit, ignore_this_card=None):
 def jack_or_jick_still_out(hand):
     jack_rep = Card(value="jack", suit=hand.trump).representation
     jick_rep = Card(value="jack", suit=Card.jick_suit(hand.trump)).representation
-    return Play.objects.filter(Q(card=jack_rep) | Q(card=jick_rep), trick__hand=hand).exists()
+    jboys_played = Play.objects.filter(Q(card=jack_rep) | Q(card=jick_rep), trick__hand=hand).count()
+    return jboys_played < 2
 
 
 def is_teammate_taking_trick(hand, player):
@@ -116,13 +117,13 @@ def could_be_defeated(hand, player, card):
             # If we don't have the highest remaining trump, but we have a trump or
             # the highest card left of its suit, then we need everyone after
             # us to be out of trump
-            if str(next_player.id) in hand.players_out_of_suits[hand.trump]:
+            if str(next_player.id) in hand.players_out_of_suits.get(hand.trump, []):
                 LOG.debug(f"could_be_defeated {card} continuing because {next_player} is out of trump")
                 continue
         else:
             # If we don't have the highest of the suit and we don't have trump, we need
             # everyone after us to be out of trump and that suit
-            if str(next_player.id) in hand.players_out_of_suits[hand.trump] and str(next_player.id) in hand.players_out_of_suits[card.suit]:
+            if str(next_player.id) in hand.players_out_of_suits.get(hand.trump, []) and str(next_player.id) in hand.players_out_of_suits.get(card.suit, []):
                 LOG.debug(f"could_be_defeated {card} continuing because {next_player} is out of trump and {card.suit}")
                 continue
         # If we made it through the if/else's, that means this player could have cards that can take ours

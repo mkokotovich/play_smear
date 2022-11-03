@@ -3,3 +3,16 @@
 
 Play the card game smear online:
 http://www.playsmear.com
+
+# Local Development
+
+```
+docker compose build
+docker compose up
+```
+
+The UI and the API are both served from `http://localhost:8000`
+
+# Deployment
+
+`flyctl deploy`

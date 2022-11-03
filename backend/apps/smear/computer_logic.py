@@ -325,6 +325,151 @@ def take_jack_or_jick_if_possible(hand, player):
     return card
 
 
+def take_jack_or_jick_if_high_cards_are_out(hand, player):
+    card = None
+    highest_trump = card_counting.highest_card_still_out(hand, hand.trump)
+    if not highest_trump or highest_trump.value not in ("ace", "king", "queen", "jack"):
+        return None
+    jboys = [card for card in player.get_trump(hand.trump) if card.value == "jack"]
+    for jboy in jboys:
+        if card_counting.safe_to_play(hand, player, jboy):
+            if jboy.is_jack() and highest_trump.value in ("ace", "king", "queen"):
+                # If I have a Jack, play if there are still A K Q out
+                card = jboy
+                break
+            elif jboy.is_jick() and (highest_trump.value in ("ace", "king", "queen") or highest_trump.is_jack()):
+                # If I have a Jick, play if there are still A K Q Jack out
+                card = jboy
+                break
+    if card:
+        LOG.debug(f"take_jack_or_jick_if_high_cards_are_out chooses {card}")
+    return card
+
+
+def take_ten_if_possible(hand, player):
+    card = None
+    ten_card = None
+    cards_played = [Card(representation=play.card) for play in hand.current_trick.plays.all()]
+    ten_card = next((card for card in cards_played if card.value == "10"), None)
+
+    if ten_card:
+        if card_counting.is_teammate_taking_trick(hand, player):
+            return None
+
+        legal_plays = [card for card in player.get_cards() if not hand.current_trick.is_card_invalid_to_play(card, player)]
+        # Sorted from least to most
+        legal_trump = sorted([card for card in legal_plays if card.is_trump(hand.trump)], key=lambda c: c.trump_rank(hand.trump))
+        legal_offsuit = sorted([card for card in legal_plays if not card.is_trump(hand.trump)], key=lambda c: c.rank())
+
+        current_winning_play = hand.current_trick.find_winning_play()
+        current_winning_card = Card(representation=current_winning_play.card)
+
+        # First check to see if I can safely take it with a non-trump
+        for taker in legal_offsuit:
+            if current_winning_card.is_less_than(taker, hand.trump) and card_counting.safe_to_play(hand, player, taker):
+                card = taker
+                break
+        # Then check to see if I can safely take it with a jack or jick or 10
+        if not card:
+            for taker in legal_trump:
+                if (taker.value == "jack" or taker.value == "10") and card_counting.safe_to_play(hand, player, taker):
+                    card = taker
+                    break
+        # Then check to see if I can take it with a low trump
+        if not card:
+            for taker in legal_trump:
+                if taker.value not in ("ace", "king", "queen", "jack", "10") and current_winning_card.is_less_than(taker, hand.trump):
+                    card = taker
+                    break
+        # Then see if there are any jacks/jicks left still, and if not if I can take it with an AKQ
+        if not card:
+            if not card_counting.jack_or_jick_still_out(hand):
+                card = get_A_K_Q_of_trump(player, hand.trump)
+
+    if card:
+        LOG.debug(f"take_10_if_possible chooses {card}")
+    return card
+
+
+def give_teammate_ten_if_possible(hand, player):
+    card = None
+    if card_counting.is_teammate_taking_trick(hand, player):
+        legal_10s = [card for card in player.get_cards() if card.value == "10" and not hand.current_trick.is_card_invalid_to_play(card, player)]
+        non_trump_10 = next((card for card in legal_10s if not card.is_trump(hand.trump)), None)
+        if non_trump_10:
+            card = non_trump_10
+        else:
+            card = legal_10s[0] if legal_10s else None
+
+    if card:
+        LOG.debug(f"give_teammate_ten_if_possible chooses {card}")
+    return card
+
+
+def take_home_ten_safely(hand, player):
+    card = None
+    ten_card = None
+    legal_10s = [card for card in player.get_cards() if card.value == "10" and not hand.current_trick.is_card_invalid_to_play(card, player)]
+    non_trump_10 = next((card for card in legal_10s if not card.is_trump(hand.trump)), None)
+    if non_trump_10:
+        ten_card = non_trump_10
+    else:
+        ten_card = legal_10s[0] if legal_10s else None
+
+    if ten_card and card_counting.safe_to_play(hand, player, ten_card):
+        card = ten_trump
+
+    if card:
+        LOG.debug(f"take_home_ten_safely chooses {card}")
+    return card
+
+
+def take_with_off_suit(hand, player):
+    card = None
+    if card_counting.is_teammate_taking_trick(hand, player):
+        return None
+
+    # smallest to largest
+    legal_offsuit = sorted(
+        [card for card in player.get_cards() if not card.is_trump(hand.trump) and not hand.current_trick.is_card_invalid_to_play(card, player)],
+        key=lambda c: c.rank()
+    )
+    current_winning_play = hand.current_trick.find_winning_play()
+    current_winning_card = Card(representation=current_winning_play.card)
+
+    for taker in legal_offsuit:
+        if current_winning_card.is_less_than(taker, hand.trump) and card_counting.safe_to_play(hand, player, taker):
+            card = taker
+            break
+    if card:
+        LOG.debug(f"take_with_off_suit chooses {card}")
+    return card
+
+
+def take_with_low_trump_if_game_points(hand, player):
+    card = None
+    my_trump = player.get_trump(hand.trump, smallest_to_largest=True)
+    small_trump = [card for card in my_trump if card.value not in ("ace", "king", "queen", "jack", "10")]
+    if len(small_trump) < 2:
+        return None
+
+    cards_played = [Card(representation=play.card) for play in hand.current_trick.plays.all()]
+    game_points = sum(card.game_points for card in cards_played)
+    # Only take 2 or more game points
+    if game_points < 2:
+        return None
+
+    current_winning_play = hand.current_trick.find_winning_play()
+    current_winning_card = Card(representation=current_winning_play.card)
+    for taker in small_trump:
+        if current_winning_card.is_less_than(taker, hand.trump):
+            card = taker
+            break
+    if card:
+        LOG.debug(f"take_with_low_trump_if_game_points chooses {card}")
+    return card
+
+
 def choose_card(player, trick):
     is_bidder = trick.hand.dealer_id == player.id
     trump = trick.hand.trump
@@ -357,29 +502,31 @@ def choose_card(player, trick):
         # If I can take a Jack or Jick, take it
         if not card:
             card = take_jack_or_jick_if_possible(trick.hand, player)
+        # If there are high trump still out but I can safely take home my jack or jick, play it
+        if not card:
+            card = take_jack_or_jick_if_high_cards_are_out(trick.hand, player)
+        # If I can take a 10, take it
+        if not card:
+            card = take_ten_if_possible(trick.hand, player)
+        # Give my teammate a 10, if possible
+        if not card:
+            card = give_teammate_ten_if_possible(trick.hand, player)
+        # If I can safely take home a ten, take it
+        if not card:
+            card = take_home_ten_safely(trick.hand, player)
+        # If I can take the trick with a non-trump, take it
+        if not card:
+            card = take_with_off_suit(trick.hand, player)
+        # If there is a face card and I have two or more low trump, take it
+        if not card:
+            card = take_with_low_trump_if_game_points(trick.hand, player)
+
         # TODO start here
         if not card:
             card = next((card for card in player.get_cards() if not trick.is_card_invalid_to_play(card, player)), None)
+            LOG.debug(f"TODO not implemented chooses {card}")
 
         """
-        # If there are high trump still out but I can safely take home my jack or jick, play it
-        if idx is None:
-            idx = self.take_jack_or_jick_if_high_cards_are_out(my_hand, current_hand.current_trick, card_counting_info)
-        # If I can take a 10, take it
-        if idx is None:
-            idx = self.take_ten_if_possible(my_hand, current_hand.current_trick, card_counting_info)
-        # Give my teammate a 10, if possible
-        if idx is None:
-            idx = self.give_teammate_ten_if_possible(my_hand, current_hand.current_trick, card_counting_info)
-        # If I can safely take home a ten, take it
-        if idx is None:
-            idx = self.take_home_ten_safely(my_hand, current_hand.current_trick, card_counting_info)
-        # If I can take the trick with a non-trump, take it
-        if idx is None:
-            idx = self.take_with_off_suit(my_hand, current_hand.current_trick, card_counting_info)
-        # If there is a face card and I have two or more low trump, take it
-        if idx is None:
-            idx = self.take_with_low_trump_if_game_points(my_hand, current_hand.current_trick, card_counting_info)
         # Play a loser
         if idx is None:
             idx = self.get_a_loser(my_hand, current_hand.current_trick)
@@ -431,119 +578,6 @@ class CautiousTaker(SmearPlayingLogic):
             idx = 0
         if idx is not None and self.debug:
             print "get_any_card chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def take_ten_if_possible(self, my_hand, current_trick, card_counting_info):
-        idx = None
-        ten_card = None
-        for card in current_trick.cards:
-            if card.value == "10":
-                # Ten found
-                ten_card = card
-                break
-        if ten_card is not None:
-            indices = utils.get_legal_play_indices(current_trick.lead_suit, current_trick.trump, my_hand)
-            # First check to see if I can safely take it with a non-trump
-            if idx is None:
-                for index in indices:
-                    if utils.is_trump(my_hand[index], current_trick.trump):
-                        continue
-                    if utils.is_new_card_higher(current_trick.current_winning_card, my_hand[index], current_trick.trump) and card_counting_info.safe_to_play(self.player_id, my_hand[index], current_trick, self.teams):
-                        idx = index
-                        break
-            # Then check to see if I can safely take it with a jack or jick
-            if idx is None:
-                indices = utils.get_trump_indices(current_trick.trump, my_hand)
-                for index in indices:
-                    if my_hand[index].value == "Jack" and card_counting_info.safe_to_play(self.player_id, my_hand[index], current_trick, self.teams):
-                        idx = index
-                        break
-            # Then check to see if I can take it with a low trump (including 10)
-            if idx is None:
-                indices = utils.get_trump_indices(current_trick.trump, my_hand)
-                for index in indices:
-                    if my_hand[index].value not in "Ace King Queen Jack" and utils.is_new_card_higher(current_trick.current_winning_card, my_hand[index], current_trick.trump):
-                        idx = index
-                        break
-            # Then see if there are any jacks or jicks left still, and if not if I can take it with an AKQ
-            if idx is None:
-                if not card_counting_info.jack_or_jick_still_out():
-                    idx = self.get_A_K_Q_of_trump(my_hand, current_trick.trump)
-        if idx is not None and self.debug:
-            print "take_10_if_possible chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def take_jack_or_jick_if_high_cards_are_out(self, my_hand, current_trick, card_counting_info):
-        idx = None
-        highest_card = card_counting_info.highest_card_still_out(current_trick.trump, is_trump=True)
-        if highest_card == None:
-            return None
-        indices = utils.get_trump_indices(current_trick.trump, my_hand)
-        for index in indices:
-            if my_hand[index].value == "Jack" and card_counting_info.safe_to_play(self.player_id, my_hand[index], current_trick, self.teams):
-                if my_hand[index].suit == current_trick.trump and highest_card.value in "Ace King Queen":
-                    # If I have a Jack, play if there are still A K Q out
-                    idx = index
-                    break
-                elif my_hand[index].suit != current_trick.trump and (highest_card.value in "Ace King Queen" or ( highest_card.value == "Jack" and highest_card.suit == current_trick.trump)):
-                    # If I have a Jick, play if there are still A K Q Jack out
-                    idx = index
-                    break
-        if idx is not None and self.debug:
-            print "take_jack_or_jick_if_high_cards_are_out chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def take_home_ten_safely(self, my_hand, current_trick, card_counting_info):
-        idx = None
-        ten_trump = None
-        indices = utils.get_legal_play_indices(current_trick.lead_suit, current_trick.trump, my_hand)
-        for index in indices:
-            if my_hand[index].value == "10" and utils.is_trump(my_hand[index], current_trick.trump):
-                # Save for later, try other 10s first
-                ten_trump = index
-                continue
-            if my_hand[index].value == "10" and card_counting_info.safe_to_play(self.player_id, my_hand[index], current_trick, self.teams):
-                idx = index
-                break
-        if idx is None and ten_trump is not None and card_counting_info.safe_to_play(self.player_id, my_hand[ten_trump], current_trick, self.teams):
-            idx = ten_trump
-
-        if idx is not None and self.debug:
-            print "take_home_ten_safely chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def take_with_off_suit(self, my_hand, current_trick, card_counting_info):
-        idx = None
-        indices = utils.get_legal_play_indices(current_trick.lead_suit, current_trick.trump, my_hand)
-        for index in indices:
-            if utils.is_trump(my_hand[index], current_trick.trump):
-                # Skip all trump
-                continue
-            if utils.is_new_card_higher(current_trick.current_winning_card, my_hand[index], current_trick.trump) and card_counting_info.safe_to_play(self.player_id, my_hand[index], current_trick, self.teams):
-                # Find the lowest card that can win the trick
-                idx = index
-                break
-        if idx is not None and self.debug:
-            print "take_with_off_suit chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def take_with_low_trump_if_game_points(self, my_hand, current_trick, card_counting_info):
-        idx = None
-        indices = utils.get_trump_indices(current_trick.trump, my_hand)
-        game_points = utils.calculate_game_score(current_trick.cards)
-        # Only take 3 or more game points
-        if len(indices) > 1 and game_points > 3:
-            for index in indices:
-                if my_hand[index].value not in "Ace King Queen Jack 10" and utils.is_new_card_higher(current_trick.current_winning_card, my_hand[index], current_trick.trump):
-                    idx = index
-                    break
-        if idx is not None and self.debug:
-            print "take_with_low_trump_if_game_points chooses {}".format(my_hand[idx])
         return idx
 
 
@@ -604,21 +638,6 @@ class CautiousTaker(SmearPlayingLogic):
             idx = indices[0]
         if idx is not None and self.debug:
             print "get_the_least_worst_card_to_lose chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def give_teammate_ten_if_possible(self, my_hand, current_trick, card_counting_info):
-        idx = None
-        if self.teams == None or self.teams == []:
-            return None
-        if card_counting_info.is_teammate_taking_trick(self.player_id, current_trick, self.teams):
-            indices = utils.get_legal_play_indices(current_trick.lead_suit, current_trick.trump, my_hand)
-            for index in indices:
-                if my_hand[index].value == "10":
-                    idx = index
-                    break
-        if idx is not None and self.debug:
-            print "give_teammate_ten_if_possible chooses {}".format(my_hand[idx])
         return idx
 
 
