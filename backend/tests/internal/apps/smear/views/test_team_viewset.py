@@ -15,26 +15,26 @@ def test_team_viewset_list(authed_client):
     PlayerFactory(user=owner_user, game=game, team=team)
     TeamFactory()
 
-    url = reverse('teams-list', kwargs={'game_id': game.id})
+    url = reverse("teams-list", kwargs={"game_id": game.id})
     client = authed_client(owner_user)
 
     response = client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
     response_json = response.json()
-    results = sorted(response_json.pop('results'), key=lambda team: team['id'])
-    expected_results = sorted([TeamSummarySerializer(team).data], key=lambda team: team['id'])
+    results = sorted(response_json.pop("results"), key=lambda team: team["id"])
+    expected_results = sorted([TeamSummarySerializer(team).data], key=lambda team: team["id"])
     assert response_json == {
-        'count': 1,
-        'next': None,
-        'previous': None,
+        "count": 1,
+        "next": None,
+        "previous": None,
     }
     assert expected_results == results
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('owner', [True, False])
-@pytest.mark.parametrize('on_team', [True, False])
+@pytest.mark.parametrize("owner", [True, False])
+@pytest.mark.parametrize("on_team", [True, False])
 def test_team_viewset_rename(authed_client, owner, on_team):
     owner_user = UserFactory()
     regular_user = UserFactory()
@@ -56,10 +56,10 @@ def test_team_viewset_rename(authed_client, owner, on_team):
         else:
             team = team1
 
-    url = reverse('teams-detail', kwargs={'game_id': game.id, 'pk': team.id})
+    url = reverse("teams-detail", kwargs={"game_id": game.id, "pk": team.id})
 
     client = owner_client if owner else regular_client
-    response = client.patch(url, json={'name': 'cool new name'})
+    response = client.patch(url, json={"name": "cool new name"})
 
     assert response.status_code == status.HTTP_200_OK if owner or on_team else status.HTTP_403_FORBIDDEN
     if owner or on_team:

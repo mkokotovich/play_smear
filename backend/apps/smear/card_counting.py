@@ -61,7 +61,10 @@ def update_if_out_of_cards(hand, player, card_played):
     else:
         # Only 12 cards exist in the jick suit (jick counts as trump)
         expected_cards = 12 if suit_played == Card.jick_suit(hand.trump) else 13
-        if len(card for card in all_cards_played if not card.is_trump(hand.trump) and card.suit == suit_played) == expected_cards:
+        if (
+            len(card for card in all_cards_played if not card.is_trump(hand.trump) and card.suit == suit_played)
+            == expected_cards
+        ):
             # If all cards of this suit have been played, everyone is out
             hand.players_out_of_suits[suit_played] = [str(p.id) for p in hand.game.players.all()]
 
@@ -86,7 +89,9 @@ def safe_to_play(hand, player, card):
     # Before checking anything, make sure we can beat the current winning card
     # (or the current winning card belongs to a teammate)
     current_winning_play = hand.current_trick.find_winning_play()
-    if not Card(representation=current_winning_play.card).is_less_than(card, hand.trump) and not is_teammate_taking_trick(hand, player):
+    if not Card(representation=current_winning_play.card).is_less_than(
+        card, hand.trump
+    ) and not is_teammate_taking_trick(hand, player):
         LOG.debug(f"safe_to_play {card} would be defeated by the current winning play")
         return False
 
@@ -111,7 +116,9 @@ def could_be_defeated(hand, player, card, already_played=False):
         current_player = next_player
 
         if is_highest_left_of_same_suit and card.is_trump(hand.trump):
-            LOG.debug(f"could_be_defeated {card} breaking because it is highest remaining trump (excluding cards already played this hand)")
+            LOG.debug(
+                f"could_be_defeated {card} breaking because it is highest remaining trump (excluding cards already played this hand)"
+            )
             break
         elif player.team == next_player.team:
             # This is a teammate
@@ -127,7 +134,9 @@ def could_be_defeated(hand, player, card, already_played=False):
         else:
             # If we don't have the highest of the suit and we don't have trump, we need
             # everyone after us to be out of trump and that suit
-            if str(next_player.id) in hand.players_out_of_suits.get(hand.trump, []) and str(next_player.id) in hand.players_out_of_suits.get(card.suit, []):
+            if str(next_player.id) in hand.players_out_of_suits.get(hand.trump, []) and str(
+                next_player.id
+            ) in hand.players_out_of_suits.get(card.suit, []):
                 LOG.debug(f"could_be_defeated {card} continuing because {next_player} is out of trump and {card.suit}")
                 continue
         # If we made it through the if/else's, that means this player could have cards that can take ours

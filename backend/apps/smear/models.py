@@ -18,7 +18,7 @@ class Game(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-    owner = models.ForeignKey('auth.User', related_name='games', on_delete=models.CASCADE, null=True)
+    owner = models.ForeignKey("auth.User", related_name="games", on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=256, blank=True, default="")
     num_players = models.IntegerField()
     num_teams = models.IntegerField()
@@ -26,9 +26,11 @@ class Game(models.Model):
     passcode_required = models.BooleanField(blank=True, default=False)
     passcode = models.CharField(max_length=256, blank=True, default="")
     single_player = models.BooleanField(blank=False, default=True)
-    players = models.ManyToManyField('auth.User', through='Player')
+    players = models.ManyToManyField("auth.User", through="Player")
     state = models.CharField(max_length=1024, blank=True, default="")
-    next_dealer = models.ForeignKey('Player', related_name='games_next_dealer', on_delete=models.CASCADE, null=True, blank=True)
+    next_dealer = models.ForeignKey(
+        "Player", related_name="games_next_dealer", on_delete=models.CASCADE, null=True, blank=True
+    )
 
     # Available states
     STARTING = "starting"
@@ -44,7 +46,7 @@ class Game(models.Model):
         self.save()
 
     class Meta:
-        ordering = ('created_at',)
+        ordering = ("created_at",)
 
     def __str__(self):
         return f"{self.name} ({self.id})"
@@ -76,11 +78,7 @@ class Game(models.Model):
         shuffle(computers)
         for computer in computers:
             if not self.players.filter(id=computer.id).exists():
-                computer_player = Player.objects.create(
-                    game=self,
-                    user=computer,
-                    is_computer=True
-                )
+                computer_player = Player.objects.create(game=self, user=computer, is_computer=True)
                 LOG.info(f"Added computer {computer} to {self}")
                 return computer_player
 
@@ -103,7 +101,9 @@ class Game(models.Model):
 
     def start_game(self):
         if self.players.count() != self.num_players:
-            raise ValidationError(f"Unable to start game, game requires {self.num_players} players, but {self.players.count()} have joined")
+            raise ValidationError(
+                f"Unable to start game, game requires {self.num_players} players, but {self.players.count()} have joined"
+            )
 
         self.set_seats()
         self.next_dealer = self.set_plays_after()
@@ -130,10 +130,12 @@ class Game(models.Model):
                 total_players += 1
 
         if total_players != self.num_players:
-            raise ValidationError(f"Unable to start game, only {total_players} were assigned to teams, but {self.num_players} are playing")
+            raise ValidationError(
+                f"Unable to start game, only {total_players} were assigned to teams, but {self.num_players} are playing"
+            )
 
     def set_plays_after(self):
-        players = list(self.player_set.all().order_by('seat'))
+        players = list(self.player_set.all().order_by("seat"))
         prev_player = players[-1]
         for player in players:
             player.plays_after = prev_player
@@ -154,7 +156,7 @@ class Game(models.Model):
 
 
 class Team(models.Model):
-    game = models.ForeignKey(Game, related_name='teams', on_delete=models.CASCADE)
+    game = models.ForeignKey(Game, related_name="teams", on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
     score = models.IntegerField(blank=True, default=0)
     winner = models.BooleanField(blank=True, default=False)
@@ -168,20 +170,19 @@ class Player(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     score = models.IntegerField(blank=True, default=0)
     winner = models.BooleanField(blank=True, default=False)
 
     is_computer = models.BooleanField(blank=True, default=False)
     name = models.CharField(max_length=1024)
-    team = models.ForeignKey(Team, related_name='members', on_delete=models.CASCADE, null=True, blank=True)
+    team = models.ForeignKey(Team, related_name="members", on_delete=models.CASCADE, null=True, blank=True)
     seat = models.IntegerField(blank=True, null=True)
-    plays_after = models.OneToOneField('smear.Player', related_name='plays_before', on_delete=models.SET_NULL, null=True, blank=True)
-
-    cards_in_hand = ArrayField(
-        models.CharField(max_length=2),
-        default=list
+    plays_after = models.OneToOneField(
+        "smear.Player", related_name="plays_before", on_delete=models.SET_NULL, null=True, blank=True
     )
+
+    cards_in_hand = ArrayField(models.CharField(max_length=2), default=list)
     current_hand_game_points_won = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
@@ -194,10 +195,10 @@ class Player(models.Model):
 
     def _get_name_from_user(self, user):
         if not user:
-            return 'Unknown'
+            return "Unknown"
         name = user.first_name + f"{' ' + user.last_name[:1] if user.last_name else ''}"
         if not name:
-            name = user.username.split('@')[0]
+            name = user.username.split("@")[0]
         return name
 
     def reset_for_new_hand(self):
@@ -244,18 +245,18 @@ class Player(models.Model):
 
     def increment_score(self):
         if self.team:
-            self.team.score = F('score') + 1
+            self.team.score = F("score") + 1
             self.team.save()
         else:
-            self.score = F('score') + 1
+            self.score = F("score") + 1
             self.save()
 
     def decrement_score(self, amount):
         if self.team:
-            self.team.score = F('score') - amount
+            self.team.score = F("score") - amount
             self.team.save()
         else:
-            self.score = F('score') - amount
+            self.score = F("score") - amount
             self.save()
 
 
@@ -265,10 +266,12 @@ class Hand(models.Model):
     # num is the number hand in the game, starting at 1
     num = models.IntegerField()
 
-    game = models.ForeignKey(Game, related_name='hands', on_delete=models.CASCADE, null=True)
+    game = models.ForeignKey(Game, related_name="hands", on_delete=models.CASCADE, null=True)
     dealer = models.ForeignKey(Player, on_delete=models.CASCADE, null=True, blank=True)
-    bidder = models.ForeignKey(Player, related_name='hands_was_bidder', on_delete=models.CASCADE, null=True, blank=True)
-    high_bid = models.OneToOneField('smear.Bid', related_name='hand_with_high_bid', on_delete=models.SET_NULL, null=True, blank=True)
+    bidder = models.ForeignKey(Player, related_name="hands_was_bidder", on_delete=models.CASCADE, null=True, blank=True)
+    high_bid = models.OneToOneField(
+        "smear.Bid", related_name="hand_with_high_bid", on_delete=models.SET_NULL, null=True, blank=True
+    )
     trump = models.CharField(max_length=16, blank=True, default="", choices=SUIT_CHOICES)
 
     # Used by card-counting logic. jicks are included in the trump suit
@@ -283,17 +286,27 @@ class Hand(models.Model):
 
     # These values are updated as players win the cards, but game is
     # awarded at the end of the game
-    winner_high = models.ForeignKey(Player, related_name="games_winner_high", on_delete=models.CASCADE, null=True, blank=True)
-    winner_low = models.ForeignKey(Player, related_name="games_winner_low", on_delete=models.CASCADE, null=True, blank=True)
-    winner_jack = models.ForeignKey(Player, related_name="games_winner_jack", on_delete=models.CASCADE, null=True, blank=True)
-    winner_jick = models.ForeignKey(Player, related_name="games_winner_jick", on_delete=models.CASCADE, null=True, blank=True)
-    winner_game = models.ForeignKey(Player, related_name="games_winner_game", on_delete=models.CASCADE, null=True, blank=True)
+    winner_high = models.ForeignKey(
+        Player, related_name="games_winner_high", on_delete=models.CASCADE, null=True, blank=True
+    )
+    winner_low = models.ForeignKey(
+        Player, related_name="games_winner_low", on_delete=models.CASCADE, null=True, blank=True
+    )
+    winner_jack = models.ForeignKey(
+        Player, related_name="games_winner_jack", on_delete=models.CASCADE, null=True, blank=True
+    )
+    winner_jick = models.ForeignKey(
+        Player, related_name="games_winner_jick", on_delete=models.CASCADE, null=True, blank=True
+    )
+    winner_game = models.ForeignKey(
+        Player, related_name="games_winner_game", on_delete=models.CASCADE, null=True, blank=True
+    )
 
     finished = models.BooleanField(blank=True, default=False)
 
     class Meta:
-        ordering = ['num']
-        unique_together = (('game', 'num'),)
+        ordering = ["num"]
+        unique_together = (("game", "num"),)
 
     def __str__(self):
         return f"Hand {self.id} (dealer: {self.dealer}) (bidder: {self.bidder}) (high_bid: {self.high_bid}) (trump: {self.trump})"
@@ -326,7 +339,9 @@ class Hand(models.Model):
         self.high_bid = self.high_bid if (self.high_bid and self.high_bid.bid >= new_bid.bid) else new_bid
         finished_bidding = self.bidder == self.dealer
         self.bidder = self.game.next_player(self.bidder)
-        LOG.info(f"Submitted bid {new_bid}, high bid is now {self.high_bid}, bidder is now {self.bidder}, finished_bidding is {finished_bidding}")
+        LOG.info(
+            f"Submitted bid {new_bid}, high bid is now {self.high_bid}, bidder is now {self.bidder}, finished_bidding is {finished_bidding}"
+        )
         self.save()
         return finished_bidding
 
@@ -378,9 +393,14 @@ class Hand(models.Model):
         for player in self.game.player_set.all():
             trump_cards = player.get_trump(self.trump)
             lowest_trump = min(trump_cards, key=lambda x: x.trump_rank(self.trump)) if trump_cards else None
-            new_low = current_low if (
-                lowest_trump is None or (current_low and current_low.trump_rank(self.trump) < lowest_trump.trump_rank(self.trump))
-            ) else lowest_trump
+            new_low = (
+                current_low
+                if (
+                    lowest_trump is None
+                    or (current_low and current_low.trump_rank(self.trump) < lowest_trump.trump_rank(self.trump))
+                )
+                else lowest_trump
+            )
             if new_low != current_low and new_low is not None:
                 current_low = new_low
                 current_low_winner = player
@@ -393,9 +413,14 @@ class Hand(models.Model):
         for player in self.game.player_set.all():
             trump_cards = player.get_trump(self.trump)
             highest_trump = max(trump_cards, key=lambda x: x.trump_rank(self.trump)) if trump_cards else None
-            new_high = current_high if (
-                highest_trump is None or (current_high and current_high.trump_rank(self.trump) > highest_trump.trump_rank(self.trump))
-            ) else highest_trump
+            new_high = (
+                current_high
+                if (
+                    highest_trump is None
+                    or (current_high and current_high.trump_rank(self.trump) > highest_trump.trump_rank(self.trump))
+                )
+                else highest_trump
+            )
             if new_high != current_high and new_high is not None:
                 current_high = new_high
                 current_high_winner = player
@@ -521,9 +546,7 @@ class Hand(models.Model):
 
     def _calculate_if_bid_was_won(self):
         teammate_ids = (
-            [self.bidder.id]
-            if self.bidder.team is None else
-            self.bidder.team.members.values_list('id', flat=True)
+            [self.bidder.id] if self.bidder.team is None else self.bidder.team.members.values_list("id", flat=True)
         )
 
         bidders_points = 0
@@ -539,13 +562,15 @@ class Hand(models.Model):
             bidders_points += 1
 
         bid_won = bidders_points >= self.high_bid.bid
-        LOG.info(f"{self.bidder} bid {self.high_bid.bid} and got {bidders_points}: {'was not' if bid_won else 'was'} set")
+        LOG.info(
+            f"{self.bidder} bid {self.high_bid.bid} and got {bidders_points}: {'was not' if bid_won else 'was'} set"
+        )
         return bid_won, teammate_ids
 
     def _refresh_all_scores(self):
         contestants = self.game.teams.all() if self.game.teams.exists() else self.game.player_set.all()
         for contestant in contestants:
-            contestant.refresh_from_db(fields=['score'])
+            contestant.refresh_from_db(fields=["score"])
 
     def _finalize_hand(self, no_bid=False):
         if no_bid:
@@ -596,7 +621,10 @@ class Hand(models.Model):
         else:
             # Only 12 cards exist in the jick suit (jick counts as trump)
             expected_cards = 12 if suit_played == Card.jick_suit(self.trump) else 13
-            if len([card for card in all_cards_played if not card.is_trump(self.trump) and card.suit == suit_played]) == expected_cards:
+            if (
+                len([card for card in all_cards_played if not card.is_trump(self.trump) and card.suit == suit_played])
+                == expected_cards
+            ):
                 # If all cards of this suit have been played, everyone is out
                 self.players_out_of_suits[suit_played] = [str(p.id) for p in self.game.players.all()]
 
@@ -620,8 +648,8 @@ class Bid(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    hand = models.ForeignKey(Hand, related_name='bids', on_delete=models.CASCADE, null=True)
-    player = models.ForeignKey(Player, related_name='bids', on_delete=models.CASCADE, null=True)
+    hand = models.ForeignKey(Hand, related_name="bids", on_delete=models.CASCADE, null=True)
+    player = models.ForeignKey(Player, related_name="bids", on_delete=models.CASCADE, null=True)
     bid = models.IntegerField()
     trump = models.CharField(max_length=16, blank=True, default="", choices=SUIT_CHOICES)
 
@@ -637,12 +665,12 @@ class Play(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    trick = models.ForeignKey('Trick', related_name='plays', on_delete=models.CASCADE, null=True)
-    player = models.ForeignKey(Player, related_name='plays', on_delete=models.CASCADE, null=True)
+    trick = models.ForeignKey("Trick", related_name="plays", on_delete=models.CASCADE, null=True)
+    player = models.ForeignKey(Player, related_name="plays", on_delete=models.CASCADE, null=True)
     card = models.CharField(max_length=2)
 
     class Meta:
-        ordering = ['id']
+        ordering = ["id"]
 
     def __str__(self):
         return f"{self.card} (by {self.player})"
@@ -658,13 +686,13 @@ class Trick(models.Model):
     # num is the number trick of the hand (e.g. 1, 2, 3, 4, 5, and then 6)
     num = models.IntegerField()
 
-    hand = models.ForeignKey(Hand, related_name='tricks', on_delete=models.CASCADE, null=True)
-    active_player = models.ForeignKey(Player, related_name='tricks_playing', on_delete=models.CASCADE, null=True)
-    taker = models.ForeignKey(Player, related_name='tricks_taken', on_delete=models.CASCADE, null=True)
+    hand = models.ForeignKey(Hand, related_name="tricks", on_delete=models.CASCADE, null=True)
+    active_player = models.ForeignKey(Player, related_name="tricks_playing", on_delete=models.CASCADE, null=True)
+    taker = models.ForeignKey(Player, related_name="tricks_taken", on_delete=models.CASCADE, null=True)
 
     class Meta:
-        unique_together = (('hand', 'num'),)
-        ordering = ['num']
+        unique_together = (("hand", "num"),)
+        ordering = ["num"]
 
     def __str__(self):
         return f"{', '.join(self.plays.all())} ({self.id})"
@@ -706,7 +734,9 @@ class Trick(models.Model):
         error_msg = self.is_card_invalid_to_play(card, player)
         if error_msg:
             LOG.error(f"{player} tried to play {card}")
-            raise ValidationError(f"Unable to play {card.pretty if card else 'None'} ({error_msg}), please choose another card")
+            raise ValidationError(
+                f"Unable to play {card.pretty if card else 'None'} ({error_msg}), please choose another card"
+            )
 
         LOG.info(f"{player} played {card}")
         self.active_player = self.hand.game.next_player(self.active_player)
@@ -746,8 +776,7 @@ class Trick(models.Model):
         self.save()
 
     def advance_trick(self, trick_finished_arg=False):
-        """Advances any computers playing
-        """
+        """Advances any computers playing"""
         trick_finished = trick_finished_arg
         while not trick_finished:
             if self.active_player.is_computer:
@@ -776,7 +805,7 @@ class Trick(models.Model):
 
         # Give games points to taker
         game_points = sum(card.game_points for card in cards)
-        self.taker.current_hand_game_points_won = F('current_hand_game_points_won') + game_points
+        self.taker.current_hand_game_points_won = F("current_hand_game_points_won") + game_points
         self.taker.save()
 
         # Award Jack or Jick, if taken

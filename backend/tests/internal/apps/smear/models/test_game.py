@@ -21,8 +21,8 @@ def test_Game_start_game(mocker):
     num_players = 6
     game = GameFactory(num_players=num_players)
     [Player.objects.create(game=game, user=UserFactory(), seat=i) for i in range(0, num_players)]
-    mock_set_seats = mocker.patch.object(game, 'set_seats')
-    mock_advance_game = mocker.patch.object(game, 'advance_game')
+    mock_set_seats = mocker.patch.object(game, "set_seats")
+    mock_advance_game = mocker.patch.object(game, "advance_game")
 
     game.start_game()
 
@@ -36,8 +36,8 @@ def test_Game_start_game(mocker):
 
 
 @pytest.mark.django_db()
-@pytest.mark.parametrize('num_players', [2, 4, 6, 8])
-@pytest.mark.parametrize('num_teams', [0, 2, 3, 4])
+@pytest.mark.parametrize("num_players", [2, 4, 6, 8])
+@pytest.mark.parametrize("num_teams", [0, 2, 3, 4])
 def test_Game_set_seats(mocker, num_teams, num_players):
     if num_teams != 0 and num_players % num_teams != 0:
         pytest.skip(f"Uneven number of player ({num_players}) for teams ({num_teams})")
@@ -61,7 +61,7 @@ def test_Game_set_seats(mocker, num_teams, num_players):
             assert db_player.seat == team_num + player_num * num_teams
 
     if num_teams == 0:
-        game_players = Player.objects.filter(game=game).order_by('seat')
+        game_players = Player.objects.filter(game=game).order_by("seat")
         for player_num, db_player in enumerate(game_players):
             assert db_player in players
             assert db_player.game == game
@@ -69,8 +69,8 @@ def test_Game_set_seats(mocker, num_teams, num_players):
 
 
 @pytest.mark.django_db()
-@pytest.mark.parametrize('num_players', [2, 4, 6, 8])
-@pytest.mark.parametrize('num_teams', [2, 3, 4])
+@pytest.mark.parametrize("num_players", [2, 4, 6, 8])
+@pytest.mark.parametrize("num_teams", [2, 3, 4])
 def test_Game_autofill_teams(mocker, num_teams, num_players):
     if num_teams != 0 and num_players % num_teams != 0:
         pytest.skip(f"Uneven number of player ({num_players}) for teams ({num_teams})")

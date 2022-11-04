@@ -4,37 +4,37 @@ import random
 
 LOG = logging.getLogger(__name__)
 
-SPADES = 'spades'
-HEARTS = 'hearts'
-CLUBS = 'clubs'
-DIAMONDS = 'diamonds'
+SPADES = "spades"
+HEARTS = "hearts"
+CLUBS = "clubs"
+DIAMONDS = "diamonds"
 SUITS = [SPADES, HEARTS, CLUBS, DIAMONDS]
 SUIT_CHOICES = ((suit, suit) for suit in SUITS)
 
 
-class Card():
+class Card:
     def _representation_to_value_and_suit(self, representation):
         value = {
-            '2': '2',
-            '3': '3',
-            '4': '4',
-            '5': '5',
-            '6': '6',
-            '7': '7',
-            '8': '8',
-            '9': '9',
-            '0': '10',
-            'J': 'jack',
-            'Q': 'queen',
-            'K': 'king',
-            'A': 'ace',
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "7",
+            "8": "8",
+            "9": "9",
+            "0": "10",
+            "J": "jack",
+            "Q": "queen",
+            "K": "king",
+            "A": "ace",
         }.get(representation[0:1], None)
 
         suit = {
-            'S': SPADES,
-            'H': HEARTS,
-            'C': CLUBS,
-            'D': DIAMONDS,
+            "S": SPADES,
+            "H": HEARTS,
+            "C": CLUBS,
+            "D": DIAMONDS,
         }.get(representation[1:2], None)
 
         if not value or not suit:
@@ -44,19 +44,19 @@ class Card():
 
     def rank(self):
         rank = {
-            '2': 1,
-            '3': 2,
-            '4': 3,
-            '5': 4,
-            '6': 5,
-            '7': 6,
-            '8': 7,
-            '9': 8,
-            '10': 9,
-            'jack': 10,
-            'queen': 11,
-            'king': 12,
-            'ace': 13,
+            "2": 1,
+            "3": 2,
+            "4": 3,
+            "5": 4,
+            "6": 5,
+            "7": 6,
+            "8": 7,
+            "9": 8,
+            "10": 9,
+            "jack": 10,
+            "queen": 11,
+            "king": 12,
+            "ace": 13,
         }.get(self.value, None)
 
         if not rank:
@@ -66,19 +66,19 @@ class Card():
 
     def trump_rank(self, trump):
         rank = {
-            '2': 1,
-            '3': 2,
-            '4': 3,
-            '5': 4,
-            '6': 5,
-            '7': 6,
-            '8': 7,
-            '9': 8,
-            '10': 9,
-            'jack': None,
-            'queen': 12,
-            'king': 13,
-            'ace': 14,
+            "2": 1,
+            "3": 2,
+            "4": 3,
+            "5": 4,
+            "6": 5,
+            "7": 6,
+            "8": 7,
+            "9": 8,
+            "10": 9,
+            "jack": None,
+            "queen": 12,
+            "king": 13,
+            "ace": 14,
         }.get(self.value)
 
         # Differentiate between jack and jick
@@ -113,26 +113,26 @@ class Card():
 
     def to_representation(self):
         value = {
-            '2': '2',
-            '3': '3',
-            '4': '4',
-            '5': '5',
-            '6': '6',
-            '7': '7',
-            '8': '8',
-            '9': '9',
-            '10': '0',
-            'jack': 'J',
-            'queen': 'Q',
-            'king': 'K',
-            'ace': 'A',
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "7",
+            "8": "8",
+            "9": "9",
+            "10": "0",
+            "jack": "J",
+            "queen": "Q",
+            "king": "K",
+            "ace": "A",
         }.get(self.value, None)
 
         suit = {
-            SPADES: 'S',
-            HEARTS: 'H',
-            CLUBS: 'C',
-            DIAMONDS: 'D',
+            SPADES: "S",
+            HEARTS: "H",
+            CLUBS: "C",
+            DIAMONDS: "D",
         }.get(self.suit, None)
 
         if not value or not suit:
@@ -157,16 +157,16 @@ class Card():
         if self.suit == trump:
             return True
 
-        if self.value == 'jack':
+        if self.value == "jack":
             return self._same_color(trump)
 
         return False
 
     def is_jick(self, trump):
-        return self.value == 'jack' and self.suit != trump and self._same_color(trump)
+        return self.value == "jack" and self.suit != trump and self._same_color(trump)
 
     def is_jack(self, trump):
-        return self.value == 'jack' and self.suit == trump
+        return self.value == "jack" and self.suit == trump
 
     def is_less_than(self, other, trump):
         less_than = False
@@ -207,11 +207,11 @@ class Card():
     @property
     def game_points(self):
         return {
-            '10': 10,
-            'jack': 1,
-            'queen': 2,
-            'king': 3,
-            'ace': 4,
+            "10": 10,
+            "jack": 1,
+            "queen": 2,
+            "king": 3,
+            "ace": 4,
         }.get(self.value, 0)
 
     @staticmethod
@@ -226,24 +226,23 @@ class Card():
             return CLUBS
 
 
-class Deck():
+class Deck:
     ALL_CARDS = [
         Card(value=value, suit=suit)
-        for value in
-        [
-            '2',
-            '3',
-            '4',
-            '5',
-            '6',
-            '7',
-            '8',
-            '9',
-            '10',
-            'jack',
-            'queen',
-            'king',
-            'ace',
+        for value in [
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "jack",
+            "queen",
+            "king",
+            "ace",
         ]
         for suit in SUITS
     ]

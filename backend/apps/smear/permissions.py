@@ -8,7 +8,7 @@ class IsPlayerInGame(permissions.IsAuthenticated):
         if view.detail is True:
             # Allow this case to go to has_object_permissions
             return True
-        game_id = view.kwargs.get('game_id', None)
+        game_id = view.kwargs.get("game_id", None)
         if not game_id:
             return False
         return Player.objects.filter(game_id=game_id, user_id=request.user.id).exists()
@@ -30,7 +30,7 @@ class IsGameOwnerPermission(permissions.IsAuthenticated):
         if view.detail is True:
             # Allow this case to go to has_object_permissions
             return True
-        game_id = view.kwargs.get('game_id', None)
+        game_id = view.kwargs.get("game_id", None)
         if not game_id:
             return False
         game = Game.objects.get(pk=game_id)
@@ -55,7 +55,9 @@ class IsPlayerOnTeam(permissions.IsAuthenticated):
 
     def has_object_permission(self, request, view, obj):
         team = obj
-        return Player.objects.filter(team_id=team.id, user_id=request.user.id).exists() or team.game.owner == request.user
+        return (
+            Player.objects.filter(team_id=team.id, user_id=request.user.id).exists() or team.game.owner == request.user
+        )
 
 
 class IsBidOwnerPermission(permissions.IsAuthenticated):

@@ -7,12 +7,12 @@ from tests.internal.apps.smear.factories import PlayerFactory
 
 
 @pytest.mark.parametrize(
-    'expected_name,user',
+    "expected_name,user",
     [
-        ('Unknown', None),
-        ('Bob M', User(username="bob_mcbob@gmail.com", first_name="Bob", last_name="McBob")),
-        ('bob_mcbob', User(username="bob_mcbob@gmail.com", first_name="", last_name="")),
-    ]
+        ("Unknown", None),
+        ("Bob M", User(username="bob_mcbob@gmail.com", first_name="Bob", last_name="McBob")),
+        ("bob_mcbob", User(username="bob_mcbob@gmail.com", first_name="", last_name="")),
+    ],
 )
 def test_get_name_from_user(expected_name, user):
     player = Player()

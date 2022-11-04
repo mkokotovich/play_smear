@@ -5,7 +5,7 @@ from sendgrid.helpers.mail import Content, Email, Mail
 
 
 def send_password_reset_email(to, reset_token):
-    sg = sendgrid.SendGridAPIClient(apikey=os.environ.get('SENDGRID_API_KEY'))
+    sg = sendgrid.SendGridAPIClient(apikey=os.environ.get("SENDGRID_API_KEY"))
     from_email = Email("mkokotovich@gmail.com")
     subject = "Password Reset for playsmeartest.herokuapp.com"
     to_email = Email(to)

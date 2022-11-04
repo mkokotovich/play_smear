@@ -12,13 +12,13 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'first_name', 'last_name', 'password')
+        fields = ("id", "username", "first_name", "last_name", "password")
 
 
 class UserSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username')
+        fields = ("id", "username")
 
 
 class ChangePasswordSerializer(serializers.Serializer):

@@ -3,7 +3,7 @@ import os
 import pytest
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def environ():
     env = os.getenv("ENVIRON", None)
     assert env is not None, "ENVIRON is not set"
@@ -24,7 +24,7 @@ def smear_host(environ):
     return smear_host
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def state():
     """Sets up a state dict that tests can use to pass data to each other.
 

@@ -5,7 +5,7 @@ class _NotNull:
         return other is not None
 
     def __repr__(self):
-        return '<NotNull>'
+        return "<NotNull>"
 
 
 NotNull = _NotNull()

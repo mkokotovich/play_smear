@@ -29,83 +29,81 @@ DEBUG = True
 ALLOWED_HOSTS = ["api", "localhost", "0.0.0.0", "playsmear.fly.dev", "test.playsmear.com", "playsmear.com"]
 
 REST_FRAMEWORK = {
-    'DEFAULT_FILTER_BACKENDS': (
-        'django_filters.rest_framework.DjangoFilterBackend',
+    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_jwt.authentication.JSONWebTokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
     ),
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ),
-    'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',
+    "EXCEPTION_HANDLER": "api.exceptions.custom_exception_handler",
 }
 
 JWT_AUTH = {
-    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
-    'JWT_EXPIRATION_DELTA': timedelta(hours=24),
-    'JWT_RESPONSE_PAYLOAD_HANDLER': 'api.jwt.jwt_response_payload_handler',
+    "JWT_AUTH_HEADER_PREFIX": "Bearer",
+    "JWT_EXPIRATION_DELTA": timedelta(hours=24),
+    "JWT_RESPONSE_PAYLOAD_HANDLER": "api.jwt.jwt_response_payload_handler",
 }
 
 # Application definition
 
 INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
-    'apps.smear.apps.SmearConfig',
-    'apps.user.apps.UserConfig',
-    'rest_framework',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django_filters',
-    'rest_framework_jwt',
+    "apps.smear.apps.SmearConfig",
+    "apps.user.apps.UserConfig",
+    "rest_framework",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django_filters",
+    "rest_framework_jwt",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'api.urls'
+ROOT_URLCONF = "api.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'api.wsgi.application'
+WSGI_APPLICATION = "api.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'playsmear',
-        'USER': 'postgres',
-        'PASSWORD': '',
-        'HOST': 'postgres',
-        'PORT': '5432',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "playsmear",
+        "USER": "postgres",
+        "PASSWORD": "",
+        "HOST": "postgres",
+        "PORT": "5432",
     }
 }
 
@@ -115,16 +113,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -132,9 +130,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -148,60 +146,60 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
-STATIC_ROOT = os.path.join(PROJECT_ROOT, 'staticfiles')
+STATIC_ROOT = os.path.join(PROJECT_ROOT, "staticfiles")
 MEDIA_URL = None
-STATIC_URL = '/'
+STATIC_URL = "/"
 WHITENOISE_INDEX_FILE = True
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Extra places for collectstatic to find static files.
 STATICFILES_DIRS = (
-    os.path.join(PROJECT_ROOT, 'static'),
+    os.path.join(PROJECT_ROOT, "static"),
     "/static/www",
 )
 
 
 def skip_status_requests(record):
-    return not ('GET /api/smear/v1/games/' in record.msg and '/status/ HTTP' in record.msg)
+    return not ("GET /api/smear/v1/games/" in record.msg and "/status/ HTTP" in record.msg)
 
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'default': {
-            'format': '{levelname} {asctime} {name} {lineno} {funcName} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": "{levelname} {asctime} {name} {lineno} {funcName} {message}",
+            "style": "{",
         },
     },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'default',
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "default",
         },
     },
-    'filters': {
-        'skip_status_requests': {
-            '()': 'django.utils.log.CallbackFilter',
-            'callback': skip_status_requests,
+    "filters": {
+        "skip_status_requests": {
+            "()": "django.utils.log.CallbackFilter",
+            "callback": skip_status_requests,
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
         },
-        'django.server': {
-            'filters': ['skip_status_requests'],
-            'propagate': False,
+        "django.server": {
+            "filters": ["skip_status_requests"],
+            "propagate": False,
         },
-        'faker': {
-            'level': 'ERROR',
+        "faker": {
+            "level": "ERROR",
         },
     },
-    'root': {
-        'level': 'DEBUG',
-        'handlers': ['console'],
-    }
+    "root": {
+        "level": "DEBUG",
+        "handlers": ["console"],
+    },
 }

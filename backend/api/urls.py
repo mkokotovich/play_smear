@@ -20,20 +20,18 @@ from rest_framework.response import Response
 from rest_framework_jwt.views import obtain_jwt_token
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 @renderer_classes((JSONRenderer,))
 def up(request, format=None):
-    data = {
-        "status": "happy"
-    }
+    data = {"status": "happy"}
     return Response(data)
 
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-    re_path(r'^up/$', up),
-    re_path(r'^api/auth/', obtain_jwt_token),
-    re_path(r'^api/users/', include('apps.user.urls')),
-    re_path(r'^api/smear/', include('apps.smear.urls')),
+    re_path(r"^up/$", up),
+    re_path(r"^api/auth/", obtain_jwt_token),
+    re_path(r"^api/users/", include("apps.user.urls")),
+    re_path(r"^api/smear/", include("apps.smear.urls")),
 ]

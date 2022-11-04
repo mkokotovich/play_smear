@@ -88,9 +88,9 @@ def calculate_percent_that_no_one_else_was_dealt_a_card(cards_per_hand, num_play
         if (remaining_cards_in_deck - possible_cards) < cards_per_hand:
             percent_that_no_one_else_was_dealt_a_card = 0
             break
-        percent_that_no_one_else_was_dealt_a_card *= (
-            choose(remaining_cards_in_deck - possible_cards, cards_per_hand) / float(choose(remaining_cards_in_deck, cards_per_hand))
-        )
+        percent_that_no_one_else_was_dealt_a_card *= choose(
+            remaining_cards_in_deck - possible_cards, cards_per_hand
+        ) / float(choose(remaining_cards_in_deck, cards_per_hand))
         remaining_cards_in_deck -= cards_per_hand
 
     return percent_that_no_one_else_was_dealt_a_card
@@ -226,7 +226,9 @@ def expected_points_from_jack_and_jick(player, hand, suit):
         exp_taken_points = available_jacks_and_jicks * take_factor
 
     exp_points = exp_my_points + exp_taken_points
-    LOG.debug(f"{player} calculates {exp_points:.2f} expected points ({exp_my_points:.2f} + {exp_taken_points:.2f}) from jacks_and_jicks for {suit}")
+    LOG.debug(
+        f"{player} calculates {exp_points:.2f} expected points ({exp_my_points:.2f} + {exp_taken_points:.2f}) from jacks_and_jicks for {suit}"
+    )
     return exp_points
 
 
@@ -261,7 +263,9 @@ def get_lowest_spare_trump_to_lead(player, trump):
 
 def get_A_K_Q_J_of_off_suit(player, trump):
     my_cards = player.get_cards()
-    off_suit_AKQJ = [card for card in my_cards if card.value in ("ace", "king", "queen", "jack") and not card.is_trump(trump)]
+    off_suit_AKQJ = [
+        card for card in my_cards if card.value in ("ace", "king", "queen", "jack") and not card.is_trump(trump)
+    ]
     off_suit_AKQJ_sorted = sorted(off_suit_AKQJ, key=lambda c: c.rank(), reverse=True)
     highest_card = off_suit_AKQJ_sorted[0] if off_suit_AKQJ_sorted else None
 
@@ -272,7 +276,11 @@ def get_A_K_Q_J_of_off_suit(player, trump):
 
 def get_below_10_of_off_suit(player, trump):
     my_cards = player.get_cards()
-    off_suit_lows = [card for card in my_cards if card.value not in ("ace", "king", "queen", "jack", "10") and not card.is_trump(trump)]
+    off_suit_lows = [
+        card
+        for card in my_cards
+        if card.value not in ("ace", "king", "queen", "jack", "10") and not card.is_trump(trump)
+    ]
     # high to low
     off_suit_lows_sorted = sorted(off_suit_lows, key=lambda c: c.rank(), reverse=True)
     highest_card = off_suit_lows_sorted[0] if off_suit_lows_sorted else None
@@ -346,7 +354,9 @@ def take_jack_or_jick_if_high_cards_are_out(hand, player):
                 # If I have a Jack, play if there are still A K Q out
                 card = jboy
                 break
-            elif jboy.is_jick(hand.trump) and (highest_trump.value in ("ace", "king", "queen") or highest_trump.is_jack(hand.trump)):
+            elif jboy.is_jick(hand.trump) and (
+                highest_trump.value in ("ace", "king", "queen") or highest_trump.is_jack(hand.trump)
+            ):
                 # If I have a Jick, play if there are still A K Q Jack out
                 card = jboy
                 break
@@ -365,9 +375,13 @@ def take_ten_if_possible(hand, player):
         if card_counting.is_teammate_taking_trick(hand, player):
             return None
 
-        legal_plays = [card for card in player.get_cards() if not hand.current_trick.is_card_invalid_to_play(card, player)]
+        legal_plays = [
+            card for card in player.get_cards() if not hand.current_trick.is_card_invalid_to_play(card, player)
+        ]
         # Sorted from least to most
-        legal_trump = sorted([card for card in legal_plays if card.is_trump(hand.trump)], key=lambda c: c.trump_rank(hand.trump))
+        legal_trump = sorted(
+            [card for card in legal_plays if card.is_trump(hand.trump)], key=lambda c: c.trump_rank(hand.trump)
+        )
         legal_offsuit = sorted([card for card in legal_plays if not card.is_trump(hand.trump)], key=lambda c: c.rank())
 
         current_winning_play = hand.current_trick.find_winning_play()
@@ -387,7 +401,9 @@ def take_ten_if_possible(hand, player):
         # Then check to see if I can take it with a low trump
         if not card:
             for taker in legal_trump:
-                if taker.value not in ("ace", "king", "queen", "jack", "10") and current_winning_card.is_less_than(taker, hand.trump):
+                if taker.value not in ("ace", "king", "queen", "jack", "10") and current_winning_card.is_less_than(
+                    taker, hand.trump
+                ):
                     card = taker
                     break
         # Then see if there are any jacks/jicks left still, and if not if I can take it with an AKQ
@@ -403,7 +419,11 @@ def take_ten_if_possible(hand, player):
 def give_teammate_ten_if_possible(hand, player):
     card = None
     if card_counting.is_teammate_taking_trick(hand, player):
-        legal_10s = [card for card in player.get_cards() if card.value == "10" and not hand.current_trick.is_card_invalid_to_play(card, player)]
+        legal_10s = [
+            card
+            for card in player.get_cards()
+            if card.value == "10" and not hand.current_trick.is_card_invalid_to_play(card, player)
+        ]
         non_trump_10 = next((card for card in legal_10s if not card.is_trump(hand.trump)), None)
         if non_trump_10:
             card = non_trump_10
@@ -418,7 +438,11 @@ def give_teammate_ten_if_possible(hand, player):
 def take_home_ten_safely(hand, player):
     card = None
     ten_card = None
-    legal_10s = [card for card in player.get_cards() if card.value == "10" and not hand.current_trick.is_card_invalid_to_play(card, player)]
+    legal_10s = [
+        card
+        for card in player.get_cards()
+        if card.value == "10" and not hand.current_trick.is_card_invalid_to_play(card, player)
+    ]
     non_trump_10 = next((card for card in legal_10s if not card.is_trump(hand.trump)), None)
     if non_trump_10:
         ten_card = non_trump_10
@@ -440,8 +464,12 @@ def take_with_off_suit(hand, player):
 
     # smallest to largest
     legal_offsuit = sorted(
-        [card for card in player.get_cards() if not card.is_trump(hand.trump) and not hand.current_trick.is_card_invalid_to_play(card, player)],
-        key=lambda c: c.rank()
+        [
+            card
+            for card in player.get_cards()
+            if not card.is_trump(hand.trump) and not hand.current_trick.is_card_invalid_to_play(card, player)
+        ],
+        key=lambda c: c.rank(),
     )
     current_winning_play = hand.current_trick.find_winning_play()
     current_winning_card = Card(representation=current_winning_play.card)
@@ -483,13 +511,15 @@ def get_a_loser(hand, player):
     card = None
     legal_losers = sorted(
         [
-            card for card in player.get_cards()
+            card
+            for card in player.get_cards()
             if (
                 not card.is_trump(hand.trump)
                 and not hand.current_trick.is_card_invalid_to_play(card, player)
                 and card.value not in ("ace", "king", "queen", "jack", "10")
             )
-        ], key=lambda c: c.rank()
+        ],
+        key=lambda c: c.rank(),
     )
     card = legal_losers[0] if legal_losers else None
 
@@ -502,13 +532,15 @@ def get_least_valuable_face_card(hand, player):
     card = None
     legal_face_cards = sorted(
         [
-            card for card in player.get_cards()
+            card
+            for card in player.get_cards()
             if (
                 not card.is_trump(hand.trump)
                 and not hand.current_trick.is_card_invalid_to_play(card, player)
                 and card.value in ("ace", "king", "queen", "jack")
             )
-        ], key=lambda c: c.rank()
+        ],
+        key=lambda c: c.rank(),
     )
     least_valuable = legal_face_cards[0] if legal_face_cards else None
 
@@ -545,7 +577,10 @@ def get_least_valuable_trump(hand, player):
 
 def get_the_least_worst_card_to_lose(hand, player):
     card = None
-    legal_cards = sorted([card for card in player.get_cards() if not hand.current_trick.is_card_invalid_to_play(card, player)], key=lambda c: c.rank())
+    legal_cards = sorted(
+        [card for card in player.get_cards() if not hand.current_trick.is_card_invalid_to_play(card, player)],
+        key=lambda c: c.rank(),
+    )
 
     non_10 = next((card for card in legal_cards if card.value != "10"), None)
     lowest_card = legal_cards[0] if legal_cards else None

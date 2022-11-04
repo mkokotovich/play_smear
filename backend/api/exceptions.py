@@ -29,58 +29,59 @@ def custom_exception_handler(exc, context):
 
     # Protect against bad error handling leading to bad error messages, wrap in try
     try:
-        response_data = {
-            "status": "error",
-            "error": {}
-        }
+        response_data = {"status": "error", "error": {}}
 
         if response is not None:
             # Add the HTTP status code to the response_data
-            response_data['error']['error_code'] = response.status_code
+            response_data["error"]["error_code"] = response.status_code
 
             if response.status_code >= 500:
                 # log all exceptions above 500 as warnings
-                LOG.error('Exception handling request for %s: %s. STATUS CODE: %s',
-                          context['request'].method,
-                          context['request'].path,
-                          response.status_code,
-                          exc_info=True)
+                LOG.error(
+                    "Exception handling request for %s: %s. STATUS CODE: %s",
+                    context["request"].method,
+                    context["request"].path,
+                    response.status_code,
+                    exc_info=True,
+                )
             elif response.status_code >= 400:
                 # log all 4XX errors as info, as invalid requests aren't errors in the server
-                LOG.info('Exception handling request for %s: %s. STATUS CODE: %s',
-                         context['request'].method,
-                         context['request'].path,
-                         response.status_code,
-                         exc_info=True)
+                LOG.info(
+                    "Exception handling request for %s: %s. STATUS CODE: %s",
+                    context["request"].method,
+                    context["request"].path,
+                    response.status_code,
+                    exc_info=True,
+                )
 
         # Errors from Django
         if isinstance(exc, HttpResponse):
-            response_data['error']['error'] = exc.reason_phrase
-            response_data['error']['error_description'] = str(exc)
+            response_data["error"]["error"] = exc.reason_phrase
+            response_data["error"]["error_description"] = str(exc)
 
         # Http404 errors come from Django and need to be treated differently
         elif isinstance(exc, Http404):
-            response_data['error']['error'] = 'Error, not found'
-            response_data['error']['error_description'] = f"Could not find resource at {context['request'].path}"
+            response_data["error"]["error"] = "Error, not found"
+            response_data["error"]["error_description"] = f"Could not find resource at {context['request'].path}"
 
         # Validation Errors will have a different format
         elif isinstance(exc, SerializerValidationError):
-            response_data['error']['error'] = 'Validation Error'
-            response_data['error']['error_description'] = 'Unable to validate input'
-            response_data['error']['validation_errors'] = {
-                'error_description': 'Unable to validate input',
-                'meta': exc.detail
+            response_data["error"]["error"] = "Validation Error"
+            response_data["error"]["error_description"] = "Unable to validate input"
+            response_data["error"]["validation_errors"] = {
+                "error_description": "Unable to validate input",
+                "meta": exc.detail,
             }
 
         # All errors from DRF should have a get_codes method
         elif hasattr(exc, "get_codes"):
-            response_data['error']['error'] = exc.get_codes()
-            response_data['error']['error_description'] = exc.detail
+            response_data["error"]["error"] = exc.get_codes()
+            response_data["error"]["error_description"] = exc.detail
 
         # All remaining errors we should handle as best as we can
         else:
-            response_data['error']['error'] = str(exc.__class__.__name__)
-            response_data['error']['error_description'] = str(exc)
+            response_data["error"]["error"] = str(exc.__class__.__name__)
+            response_data["error"]["error_description"] = str(exc)
 
         # Only adds stack trace if DEBUG == True
         add_stack_trace_to_response(response_data)

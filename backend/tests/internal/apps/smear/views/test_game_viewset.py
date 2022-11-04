@@ -10,25 +10,25 @@ from tests.internal.apps.user.factories import UserFactory
 @pytest.mark.django_db
 def test_game_viewset_list(authed_client):
     games = [GameFactory() for i in range(3)]
-    url = reverse('games-list')
+    url = reverse("games-list")
     client = authed_client(games[0].owner)
 
     response = client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
     response_json = response.json()
-    results = sorted(response_json.pop('results'), key=lambda game: game['id'])
-    expected_results = sorted([GameSerializer(game).data for game in games], key=lambda game: game['id'])
+    results = sorted(response_json.pop("results"), key=lambda game: game["id"])
+    expected_results = sorted([GameSerializer(game).data for game in games], key=lambda game: game["id"])
     assert response_json == {
-        'count': 3,
-        'next': None,
-        'previous': None,
+        "count": 3,
+        "next": None,
+        "previous": None,
     }
     assert expected_results == results
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('owner', [True, False])
+@pytest.mark.parametrize("owner", [True, False])
 def test_game_viewset_start(authed_client, owner):
     owner_user = UserFactory()
     regular_user = UserFactory()
