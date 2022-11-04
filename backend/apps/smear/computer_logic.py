@@ -427,7 +427,7 @@ def take_home_ten_safely(hand, player):
         ten_card = legal_10s[0] if legal_10s else None
 
     if ten_card and card_counting.safe_to_play(hand, player, ten_card):
-        card = ten_trump
+        card = ten_card
 
     if card:
         LOG.debug(f"take_home_ten_safely chooses {card}")
@@ -488,7 +488,7 @@ def get_a_loser(hand, player):
             if (
                 not card.is_trump(hand.trump)
                 and not hand.current_trick.is_card_invalid_to_play(card, player)
-                and not card.value in ("ace", "king", "queen", "jack", "10")
+                and card.value not in ("ace", "king", "queen", "jack", "10")
             )
         ], key=lambda c: c.rank()
     )
