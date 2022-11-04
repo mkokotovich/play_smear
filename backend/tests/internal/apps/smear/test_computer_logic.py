@@ -1,6 +1,7 @@
 import pytest
 
 from apps.smear.computer_logic import calculate_bid, choose_card
+from apps.smear.models import Play
 from tests.internal.apps.smear.factories import HandFactory, PlayerFactory, TrickFactory
 
 
@@ -177,3 +178,58 @@ def test_choose_card_lead_play_choose_anything(mocker):
     card = choose_card(mock_player, mock_trick)
 
     assert card.representation == "0S"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("jick_out", (True, False))
+def test_choose_card_lead_jack_or_jick_if_they_are_high_trump_and_can_take_something_valuable_with_jack(
+    mocker, jick_out
+):
+    card_reps = ["JS", "0S", "3H", "4H"]
+
+    mock_trick = TrickFactory(
+        hand__trump="spades",
+        num=2,
+    )
+    earlier_trick = TrickFactory(hand=mock_trick.hand, num=1)
+
+    Play.objects.create(trick=earlier_trick, card="AS")
+    Play.objects.create(trick=earlier_trick, card="KS")
+    Play.objects.create(trick=earlier_trick, card="QS")
+    if not jick_out:
+        Play.objects.create(trick=earlier_trick, card="JC")
+
+    mock_player = PlayerFactory(game=mock_trick.hand.game, cards_in_hand=card_reps)
+    mock_trick.active_player = mock_player
+
+    card = choose_card(mock_player, mock_trick)
+
+    assert card.representation == ("JS" if jick_out else "4H")
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("jack_out", (True, False))
+def test_choose_card_lead_jack_or_jick_if_they_are_high_trump_and_can_take_something_valuable_with_jick(
+    mocker, jack_out
+):
+    card_reps = ["JC", "2H", "3H", "4H"]
+
+    mock_trick = TrickFactory(
+        hand__trump="spades",
+        num=2,
+    )
+    earlier_trick = TrickFactory(hand=mock_trick.hand, num=1)
+
+    Play.objects.create(trick=earlier_trick, card="AS")
+    Play.objects.create(trick=earlier_trick, card="KS")
+    Play.objects.create(trick=earlier_trick, card="QS")
+    if not jack_out:
+        Play.objects.create(trick=earlier_trick, card="JS")
+
+    mock_player = PlayerFactory(game=mock_trick.hand.game, cards_in_hand=card_reps)
+    mock_trick.active_player = mock_player
+
+    card = choose_card(mock_player, mock_trick)
+
+    # if jack is out, it could take our jick
+    assert card.representation == ("4H" if jack_out else "JC")

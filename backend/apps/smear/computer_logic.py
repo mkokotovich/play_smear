@@ -342,6 +342,33 @@ def take_jack_or_jick_if_possible(hand, player):
     return card
 
 
+def lead_jack_or_jick_if_they_are_high_trump_and_can_take_something_valuable(hand, player):
+    card = None
+    highest_trump = card_counting.highest_card_still_out(hand, hand.trump)
+    if not highest_trump or highest_trump.value != "jack":
+        return None
+
+    my_trump = player.get_trump(hand.trump)
+
+    jick = Card(value="jack", suit=Card.jick_suit(hand.trump))
+    ten = Card(value="10", suit=hand.trump)
+    jick_still_out = (not card_counting.card_has_been_played(hand, jick)) and jick not in my_trump
+    ten_still_out = (not card_counting.card_has_been_played(hand, ten)) and ten not in my_trump
+
+    potentials = [card for card in my_trump if card.value == "jack"]
+    for lead in potentials:
+        if lead.is_jack(hand.trump) and highest_trump == lead and (jick_still_out or ten_still_out):
+            card = lead
+            break
+        if lead.is_jick(hand.trump) and highest_trump == lead and ten_still_out:
+            card = lead
+            break
+
+    if card:
+        LOG.debug(f"lead_jack_or_jick_if_they_are_high_trump_and_can_take_something_valuable chooses {card}")
+    return card
+
+
 def take_jack_or_jick_if_high_cards_are_out(hand, player):
     card = None
     highest_trump = card_counting.highest_card_still_out(hand, hand.trump)
@@ -601,6 +628,8 @@ def choose_card(player, trick):
         if not card and is_bidder and len(player.cards_in_hand) == 6:
             # If bidder and I didn't have AKQ, and this is first trick, play lowest trump
             card = get_lowest_trump(player, trump)
+        if not card:
+            card = lead_jack_or_jick_if_they_are_high_trump_and_can_take_something_valuable(trick.hand, player)
         if not card and is_bidder and len(player.cards_in_hand) == 5:
             # If bidder and this is second trick, and I didn't have AKQ, play another trump if I have one to spare
             card = get_lowest_spare_trump_to_lead(player, trump)
