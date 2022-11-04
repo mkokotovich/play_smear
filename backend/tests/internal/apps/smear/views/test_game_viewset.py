@@ -5,6 +5,7 @@ from rest_framework.reverse import reverse
 from apps.smear.serializers import GameSerializer
 from tests.internal.apps.smear.factories import GameFactory, PlayerFactory
 from tests.internal.apps.user.factories import UserFactory
+from tests.utils import NotNull
 
 
 @pytest.mark.django_db
@@ -43,3 +44,59 @@ def test_game_viewset_start(authed_client, owner):
     response = client.post(url)
 
     assert response.status_code == status.HTTP_200_OK if owner else status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+def test_game_viewset_status(authed_client, django_assert_num_queries, mocker):
+    owner_user = UserFactory()
+    game = GameFactory(owner=owner_user, num_players=4, num_teams=2)
+    game.create_initial_teams()
+    p1 = PlayerFactory(user=owner_user, game=game, is_computer=False)
+    PlayerFactory(game=game, is_computer=True)
+    PlayerFactory(game=game, is_computer=True)
+    PlayerFactory(game=game, is_computer=True)
+    game.autofill_teams()
+    client = authed_client(owner_user)
+    game.start_game()
+
+    url = f"{reverse('games-detail', kwargs={'pk': game.id})}status/"
+
+    with django_assert_num_queries(9):
+        response = client.get(url)
+
+    assert response.status_code == status.HTTP_200_OK
+    p1.refresh_from_db()
+    assert response.json() == {
+        "current_hand": {
+            "bidder": game.current_hand.bidder.id,
+            "bids": NotNull,
+            "cards": p1.cards_in_hand,
+            "dealer": game.current_hand.dealer.id,
+            "high_bid": mocker.ANY,
+            "id": game.current_hand.id,
+            "num": game.current_hand.num,
+            "results": None,
+            "trump": "",
+        },
+        "state": "bidding",
+    }
+
+
+@pytest.mark.django_db
+def test_game_viewset_create(authed_client, django_assert_num_queries):
+    owner_user = UserFactory()
+    client = authed_client(owner_user)
+
+    url = reverse("games-list")
+    new_game_data = {
+        "name": "test",
+        "num_players": 6,
+        "num_teams": 3,
+        "score_to_play_to": 11,
+        "single_player": True,
+    }
+
+    with django_assert_num_queries(12):
+        response = client.post(url, data=new_game_data)
+
+    assert response.status_code == status.HTTP_201_CREATED

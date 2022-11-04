@@ -30,6 +30,5 @@ def test_accept_dealt_cards():
     cards = deck.deal(3)
     player.accept_dealt_cards(cards)
 
-    player.refresh_from_db()
     assert player.cards_in_hand == [card.to_representation() for card in cards]
     assert player.get_cards() == cards

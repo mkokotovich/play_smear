@@ -40,10 +40,11 @@ class Game(models.Model):
     PLAYING_TRICK = "playing_trick"
     GAME_OVER = "game_over"
 
-    def set_state(self, new_state):
+    def set_state(self, new_state, save=True):
         # For now just set state. At some point we might invalidate cache
         self.state = new_state
-        self.save()
+        if save:
+            self.save()
 
     class Meta:
         ordering = ("created_at",)
@@ -67,8 +68,29 @@ class Game(models.Model):
         return player.plays_before
 
     def create_initial_teams(self):
+        teams = []
         for i in range(0, self.num_teams):
-            Team.objects.create(game=self, name=f"Team {i+1}")
+            teams.append(Team(game=self, name=f"Team {i+1}"))
+        Team.objects.bulk_create(teams)
+
+    def add_computer_players(self, count):
+        if self.player_set.count() + count > self.num_players:
+            raise ValidationError(f"Unable to add {count} computers, game already contains {self.num_players} players")
+
+        computers_to_add = []
+        computers_already_in_game = self.players.values_list("id", flat=True)
+        computers = list(
+            User.objects.filter(username__startswith="mkokotovich+computer",).exclude(
+                id__in=computers_already_in_game,
+            )
+        )
+        shuffle(computers)
+        for computer in computers[:count]:
+            computer_player = Player(game=self, user=computer, is_computer=True)
+            computers_to_add.append(computer_player)
+        computers_added = Player.objects.bulk_create(computers_to_add)
+        computer_strs = [str(comp) for comp in computers_added]
+        LOG.info(f"Added computers {', '.join(computer_strs)} to {self}")
 
     def add_computer_player(self):
         if self.players.count() >= self.num_players:
@@ -85,18 +107,18 @@ class Game(models.Model):
     def autofill_teams(self):
         if self.num_teams == 0:
             return
-        teams = self.teams.all()
+        teams = list(self.teams.all())
         players = list(self.player_set.all())
         shuffle(players)
 
         for player_num, player in enumerate(players):
             team_num = player_num % self.num_teams
             player.team = teams[team_num]
-            player.save()
             LOG.info(f"Autofilling teams for game {self}. Added {player} to team {teams[team_num]}")
+        Player.objects.bulk_update(players, ["team"])
 
     def reset_teams(self):
-        for team in self.teams.all():
+        for team in list(self.teams.all()):
             team.members.clear()
 
     def start_game(self):
@@ -109,38 +131,40 @@ class Game(models.Model):
         self.next_dealer = self.set_plays_after()
         LOG.info(f"Starting game {self} with players {', '.join([str(p) for p in self.player_set.all()])}")
 
-        self.set_state(Game.NEW_HAND)
+        self.set_state(Game.NEW_HAND, save=False)
         self.advance_game()
 
     def set_seats(self):
         # Assign players to their seats
         total_players = 0
+        players_to_save = []
         for team_num, team in enumerate(self.teams.all()):
             for player_num, player in enumerate(team.members.all()):
                 player.seat = team_num + (self.num_teams * player_num)
                 LOG.info(f"Added {player.name} from game {self.name} and team {team.name} to seat {player.seat}")
-                player.save()
+                players_to_save.append(player)
                 total_players += 1
 
         if not self.teams.exists():
             for player_num, player in enumerate(self.player_set.all()):
                 player.seat = player_num
                 LOG.info(f"Added {player.name} from game {self.name} to seat {player.seat}")
-                player.save()
+                players_to_save.append(player)
                 total_players += 1
 
         if total_players != self.num_players:
             raise ValidationError(
                 f"Unable to start game, only {total_players} were assigned to teams, but {self.num_players} are playing"
             )
+        Player.objects.bulk_update(players_to_save, ["seat"])
 
     def set_plays_after(self):
         players = list(self.player_set.all().order_by("seat"))
         prev_player = players[-1]
         for player in players:
             player.plays_after = prev_player
-            player.save()
             prev_player = player
+        Player.objects.bulk_update(players, ["plays_after"])
         return players[0]
 
     def advance_game(self):
@@ -148,7 +172,7 @@ class Game(models.Model):
             hand = Hand.objects.create(game=self, num=self.hands.count() + 1)
             hand.start_hand(dealer=self.next_dealer)
             self.next_dealer = self.next_player(self.next_dealer)
-            self.set_state(Game.BIDDING)
+            self.set_state(Game.BIDDING, save=False)
             self.save()
             self.current_hand.advance_bidding()
         elif self.state == Game.BIDDING:
@@ -204,12 +228,10 @@ class Player(models.Model):
     def reset_for_new_hand(self):
         self.cards_in_hand = []
         self.current_hand_game_points_won = 0
-        self.save()
 
     def accept_dealt_cards(self, cards):
         representations = [card.to_representation() for card in cards]
         self.cards_in_hand.extend(representations)
-        self.save()
 
     def get_cards(self):
         return [Card(representation=rep) for rep in self.cards_in_hand]
@@ -329,6 +351,7 @@ class Hand(models.Model):
             player.accept_dealt_cards(deck.deal(3))
         for player in players:
             player.accept_dealt_cards(deck.deal(3))
+        Player.objects.bulk_update(players, ["cards_in_hand", "current_hand_game_points_won"])
 
         self.save()
 
@@ -538,7 +561,8 @@ class Hand(models.Model):
 
             for winner in winners:
                 winner.winner = True
-                winner.save()
+            contestant_class = Team if teams else Player
+            contestant_class.objects.bulk_update(winners, ["winner"])
 
             LOG.info(f"Game Over! Winners are {winners} with a score of {high_score}")
 
@@ -773,7 +797,6 @@ class Trick(models.Model):
     def start_trick(self, player_who_leads):
         LOG.info(f"Starting trick with {player_who_leads} leading")
         self.active_player = player_who_leads
-        self.save()
 
     def advance_trick(self, trick_finished_arg=False):
         """Advances any computers playing"""

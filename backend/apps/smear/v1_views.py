@@ -1,6 +1,7 @@
 import logging
 
 from django.db import transaction
+from django.db.models import prefetch_related_objects
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
@@ -82,8 +83,8 @@ class GameViewSet(viewsets.ModelViewSet):
         instance.create_initial_teams()
 
         if instance.single_player:
-            while instance.players.count() < instance.num_players:
-                instance.add_computer_player()
+            num_computers = instance.num_players - instance.player_set.count()
+            instance.add_computer_players(num_computers)
 
         instance.state = Game.STARTING
 
@@ -100,7 +101,7 @@ class GameViewSet(viewsets.ModelViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if game.players.count() >= game.num_players:
+        if game.player_set.count() >= game.num_players:
             raise ValidationError(f"Unable to join game, already contains {game.num_players} players")
         if game.passcode_required and game.passcode != serializer.data.get("passcode", None):
             raise ValidationError("Unable to join game, passcode is required and was incorrect")
@@ -245,6 +246,7 @@ class TeamViewSet(viewsets.ModelViewSet):
     )
     def all(self, request, game_id=None):
         game = get_object_or_404(Game, pk=game_id)
+        prefetch_related_objects([game], "players", "teams")
 
         if request.method == "POST":
             LOG.info(f"Autofilling teams for game {game}")
@@ -288,7 +290,8 @@ class BidViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         game_id = self.kwargs.get("game_id")
         hand_id = self.kwargs.get("hand_id")
-        return Bid.objects.filter(hand__game_id=game_id, hand_id=hand_id).select_related("hand__game").order_by("-id")
+        qs = Bid.objects.filter(hand__game_id=game_id, hand_id=hand_id).order_by("-id")
+        return qs.select_related("player").prefetch_related("hand__game__players")
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -346,7 +349,8 @@ class PlayViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         trick_id = self.kwargs.get("trick_id")
-        return Play.objects.filter(trick_id=trick_id).select_related("trick__hand__game").order_by("-id")
+        qs = Play.objects.filter(trick_id=trick_id).order_by("-id")
+        return qs.select_related("player", "trick__hand__game", "trick__active_player").prefetch_related("trick__plays")
 
     @transaction.atomic
     def perform_create(self, serializer):

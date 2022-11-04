@@ -108,3 +108,21 @@ def test_Game_play_through_whole_game(mocker, repeat):
     game.start_game()
 
     assert game.state == Game.GAME_OVER
+
+
+@pytest.mark.django_db()
+@pytest.mark.skip("queries change based on cards and bids, enable this for debugging")
+def test_Game_start_game_queries(mocker, django_assert_num_queries):
+    num_players = 6
+    num_teams = 3
+    game = GameFactory(num_players=num_players, num_teams=num_teams, score_to_play_to=5)
+    game.create_initial_teams()
+    PlayerFactory(game=game, is_computer=False)
+    PlayerFactory.create_batch(num_players - 1, game=game, is_computer=True)
+
+    with django_assert_num_queries(0):
+        game.autofill_teams()
+        game.state = Game.STARTING
+        game.start_game()
+
+    assert game.state == Game.GAME_OVER
