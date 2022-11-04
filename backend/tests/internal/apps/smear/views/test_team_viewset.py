@@ -10,16 +10,21 @@ from tests.internal.apps.user.factories import UserFactory
 
 @pytest.mark.django_db
 def test_team_viewset_list(authed_client):
-    teams = [TeamFactory() for i in range(3)]
-    url = reverse('teams-list', kwargs={'game_id': teams[0].game.id})
-    client = authed_client(teams[0].game.owner)
+    owner_user = UserFactory()
+    game = GameFactory(owner=owner_user, num_players=2, num_teams=2)
+    team = TeamFactory(game=game)
+    PlayerFactory(user=owner_user, game=game, team=team)
+    TeamFactory()
+
+    url = reverse('teams-list', kwargs={'game_id': game.id})
+    client = authed_client(owner_user)
 
     response = client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
     response_json = response.json()
     results = sorted(response_json.pop('results'), key=lambda team: team['id'])
-    expected_results = sorted([TeamSummarySerializer(teams[0]).data], key=lambda team: team['id'])
+    expected_results = sorted([TeamSummarySerializer(team).data], key=lambda team: team['id'])
     assert response_json == {
         'count': 1,
         'next': None,

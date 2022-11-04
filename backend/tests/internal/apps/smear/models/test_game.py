@@ -21,12 +21,9 @@ def test_Game_start_fails_if_not_enough_players():
 def test_Game_start_game(mocker):
     num_players = 6
     game = GameFactory(num_players=num_players)
-    players = [Player.objects.create(game=game, user=UserFactory(), seat=i) for i in range(0, num_players)]
+    [Player.objects.create(game=game, user=UserFactory(), seat=i) for i in range(0, num_players)]
     mock_set_seats = mocker.patch.object(game, 'set_seats')
     mock_advance_game = mocker.patch.object(game, 'advance_game')
-    mock_hand_class = mocker.patch('apps.smear.models.Hand')
-    mock_hand = mocker.Mock()
-    mock_hand_class.objects.create.return_value = mock_hand
 
     game.start_game()
 
@@ -36,12 +33,6 @@ def test_Game_start_game(mocker):
     ]
     assert mock_advance_game.mock_calls == [
         mocker.call(),
-    ]
-
-    assert mocker.call(game=game) in mock_hand_class.objects.create.mock_calls
-
-    assert mock_hand.start.mock_calls == [
-        mocker.call(dealer=players[0])
     ]
 
 

@@ -10,7 +10,7 @@ def get_token(smear_host, user):
 
     response = requests.post(url, json=body)
 
-    assert response.status_code == 200, response.text
+    assert response.status_code == 201, response.text
     assert response.json()['user'] == {
         'id': user['id'],
         'username': user['username'],

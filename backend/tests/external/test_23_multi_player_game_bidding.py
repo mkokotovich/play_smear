@@ -20,7 +20,7 @@ def test_mp_game_submit_bids_for_both_human_players(smear_host, state):
     second_bidder_token = state['user']['token'] if state['user']['id'] != bidder_user_id else state['user2']['token']
 
     bid_data = {
-        'bid': 3,
+        'bid': 5,
     }
     response = requests.post(url, json=bid_data, headers=create_headers(first_bidder_token))
     assert response.status_code == 201, response.text

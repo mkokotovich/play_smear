@@ -16,7 +16,7 @@ def smear_host(environ):
 
     if smear_host is None and environ:
         smear_host = {
-            "local": "http://localhost:8008",
+            "local": "http://localhost:8000",
             "prod": "https://playsmeartest.herokuapp.com",
         }[environ]
 

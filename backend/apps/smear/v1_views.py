@@ -205,8 +205,10 @@ class TeamViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'destroy', 'update']:
             self.permission_classes = [IsGameOwnerPermission]
-        elif self.action in ['list', 'retrieve', 'partial_update']:
+        elif self.action in ['partial_update']:
             self.permission_classes = [IsPlayerOnTeam]
+        elif self.action in ['list', 'retrieve']:
+            self.permission_classes = [IsPlayerInGame]
 
         return super().get_permissions()
 

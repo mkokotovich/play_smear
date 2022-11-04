@@ -195,6 +195,9 @@ LOGGING = {
             'filters': ['skip_status_requests'],
             'propagate': False,
         },
+        'faker':{
+            'level': 'ERROR',
+        },
     },
     'root': {
         'level': 'DEBUG',

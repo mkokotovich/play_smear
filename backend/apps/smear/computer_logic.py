@@ -309,21 +309,27 @@ def take_jack_or_jick_if_possible(hand, player):
     jboys = [card for card in cards_played if card.is_trump(hand.trump) and card.value == "jack"]
     only_jick = len(jboys) == 1 and jboys[0].is_jick(hand.trump)
 
+    if not jboys:
+        return None
+
+    if card_counting.is_teammate_taking_trick(hand, player):
+        return None
+
     current_winning_play = hand.current_trick.find_winning_play()
     current_winning_card = Card(representation=current_winning_play.card)
 
-    if jboys:
-        # First check to see if I can play AKQ
-        card = get_A_K_Q_of_trump(player, hand.trump)
-        if card and not current_winning_card.is_less_than(card, hand.trump):
-            # If our AKQ can't beat the current winning card, don't select it
-            card = None
-        elif not card and only_jick:
-            # If no AKQ, check to see if I have a Jack that can safely take the Jick
-            my_trump = player.get_trump(hand.trump)
-            jack = next((card for card in my_trump if card.value == "jack"), None)
-            if jack and card_counting.safe_to_play(hand, player, jack):
-                card = jack
+    # First check to see if I can play AKQ
+    card = get_A_K_Q_of_trump(player, hand.trump)
+    if card and not current_winning_card.is_less_than(card, hand.trump):
+        # If our AKQ can't beat the current winning card, don't select it
+        card = None
+    elif not card and only_jick:
+        # If no AKQ, check to see if I have a Jack that can safely take the Jick
+        my_trump = player.get_trump(hand.trump)
+        jack = next((card for card in my_trump if card.value == "jack"), None)
+        if jack and card_counting.safe_to_play(hand, player, jack):
+            card = jack
+
     if card:
         LOG.debug("take_jack_or_jick_if_possible chooses {card}")
     return card
@@ -505,7 +511,19 @@ def get_least_valuable_face_card(hand, player):
             )
         ], key=lambda c: c.rank()
     )
-    card = legal_face_cards[0] if legal_face_cards else None
+    least_valuable = legal_face_cards[0] if legal_face_cards else None
+
+    # However, check to see if any of the face cards could take the
+    # trick currently (even if it isn't a guarantee)
+    current_winning_play = hand.current_trick.find_winning_play()
+    current_winning_card = Card(representation=current_winning_play.card)
+    face_card_taker = None
+    for taker in legal_face_cards:
+        if current_winning_card.is_less_than(taker, hand.trump):
+            face_card_taker = taker
+            break
+
+    card = face_card_taker or least_valuable
 
     if card:
         LOG.debug(f"get_least_valuable_face_card chooses {card}")

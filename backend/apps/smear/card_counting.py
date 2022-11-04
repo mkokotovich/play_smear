@@ -13,9 +13,12 @@ def card_has_been_played(hand, card):
     return Play.objects.filter(trick__hand=hand, card=card.representation).exists()
 
 
-def highest_card_still_out(hand, suit):
+def highest_card_still_out(hand, suit, ignore_card=None):
     all_plays = Play.objects.filter(trick__hand=hand)
     all_cards_played = [Card(representation=play.card) for play in all_plays]
+    if ignore_card:
+        all_cards_played = [card for card in all_cards_played if card != ignore_card]
+
     cards_played_from_suit = [card for card in all_cards_played if card.is_suit(suit, hand.trump)]
     cards_played_rep = [card.representation for card in cards_played_from_suit]
 
@@ -44,7 +47,7 @@ def is_teammate_taking_trick(hand, player):
 
     # Pretend that we are playing that card, if we would take the trick then
     # our teammate is taking the trick
-    return not could_be_defeated(hand, player, Card(representation=current_winning_play.card))
+    return not could_be_defeated(hand, player, Card(representation=current_winning_play.card), already_played=True)
 
 
 def update_if_out_of_cards(hand, player, card_played):
@@ -91,14 +94,16 @@ def safe_to_play(hand, player, card):
     return not could_be_defeated(hand, player, card)
 
 
-def could_be_defeated(hand, player, card):
+def could_be_defeated(hand, player, card, already_played=False):
     # Check to see if it is the highest remaining card of that suit
     suit_to_check = hand.trump if card.is_trump(hand.trump) else card.suit
-    highest_card_left_of_same_suit = highest_card_still_out(hand, suit_to_check)
+    ignore_card = card if already_played else None
+    highest_card_left_of_same_suit = highest_card_still_out(hand, suit_to_check, ignore_card=ignore_card)
     is_highest_left_of_same_suit = card.representation == highest_card_left_of_same_suit.representation
 
     plays_so_far = hand.current_trick.plays.count()
-    remaining_plays = hand.game.num_players - plays_so_far
+    # subtract one to account for me
+    remaining_plays = hand.game.num_players - plays_so_far - 1
     current_player = player
 
     while remaining_plays != 0:
@@ -130,4 +135,4 @@ def could_be_defeated(hand, player, card):
         LOG.debug(f"could_be_defeated {card} True: A remaining player could take our card")
         return True
     LOG.debug(f"could_be_defeated {card} can not be defeated by any remaining plays")
-    return True
+    return False

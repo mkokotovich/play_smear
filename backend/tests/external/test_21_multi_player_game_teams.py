@@ -19,6 +19,8 @@ def add_player_to_team(smear_host, user, game, team, player):
     assert response_json == {
         'id': team['id'],
         'name': team['name'],
+        'score': 0,
+        'winner': False,
     }
 
     return response.json()
@@ -88,6 +90,8 @@ def test_mp_game_team_rename(smear_host, state):
     assert response.json() == {
         'id': user2_team['id'],
         'name': 'coolname',
+        'score': 0,
+        'winner': False,
     }
 
 

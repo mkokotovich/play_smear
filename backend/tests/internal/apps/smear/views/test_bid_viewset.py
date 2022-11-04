@@ -49,7 +49,9 @@ def test_bid_viewset_create_fails_if_not_current_bidder(authed_client, is_bidder
     }
     url = reverse('bids-list', kwargs={'game_id': game.id, 'hand_id': game.hands.last().id})
 
-    client = owner_client if is_bidder else regular_client
+    bidder_client = owner_client if game.current_hand.bidder.user == owner_user else regular_client
+    non_bidder_client = owner_client if game.current_hand.bidder.user != owner_user else regular_client
+    client = bidder_client if is_bidder else non_bidder_client
     response = client.post(url, format="json", data=bid_data)
 
     if is_bidder:
@@ -57,6 +59,7 @@ def test_bid_viewset_create_fails_if_not_current_bidder(authed_client, is_bidder
         assert response.json() == {
             'id': NotNull,
             'bid': bid_data['bid'],
+            'player': NotNull,
         }
     else:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
