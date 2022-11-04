@@ -290,6 +290,8 @@ class Hand(models.Model):
     winner_jick = models.ForeignKey(Player, related_name="games_winner_jick", on_delete=models.CASCADE, null=True, blank=True)
     winner_game = models.ForeignKey(Player, related_name="games_winner_game", on_delete=models.CASCADE, null=True, blank=True)
 
+    finished = models.BooleanField(blank=True, default=False)
+
     class Meta:
         ordering = ['num']
         unique_together = (('game', 'num'),)
@@ -356,11 +358,11 @@ class Hand(models.Model):
         if not self.high_bid or self.high_bid.bid < 2:
             # No one bid, set the dealer
             self.bidder = self.dealer
-            game_is_over = self._finalize_hand(no_bid=True)
-            new_state = Game.GAME_OVER if game_is_over else Game.NEW_HAND
+            self._finalize_hand(no_bid=True)
+            self.game.set_state(Game.NEW_HAND)
             self.save()
-            self.game.set_state(new_state)
             self.game.advance_game()
+            return
 
         self.bidder = self.high_bid.player
         self.save()
@@ -441,10 +443,46 @@ class Hand(models.Model):
         return False
 
     def award_game(self):
-        # TODO - award game point
-        # Take into account teams
-        self.winner_game = self.bidder
-        LOG.info(f"Awarding game to {self.winner_game}")
+        """Awards game
+
+        When teams are playing, game points are summed for the whole team together
+        However, self.winner_game must be a Player, so we just give it to the player
+        on the team with the most points. The entire team gets the game point, though
+        """
+        teams = self.game.num_teams != 0
+        high_game_score = 0
+        high_game_player = []
+
+        if teams:
+            for team in self.game.teams.all():
+                team_score = 0
+                high_score = 0
+                high_member = None
+                for member in team.members.all():
+                    team_score += member.current_hand_game_points_won
+                    if member.current_hand_game_points_won > high_score:
+                        high_member = member
+                if team_score > high_game_score:
+                    high_game_player = [high_member]
+                    high_game_score = team_score
+                elif team_score == high_game_score:
+                    # It's a tie!
+                    high_game_player.append(high_member)
+        else:
+            for player in self.game.player_set.all():
+                if player.current_hand_game_points_won > high_game_score:
+                    high_game_player = [player]
+                    high_game_score = player.current_hand_game_points_won
+                elif player.current_hand_game_points_won == high_game_score:
+                    # It's a tie!
+                    high_game_player.append(player)
+
+        if len(high_game_player) > 1:
+            LOG.info(f"Unable to award game, {high_game_player} all tied with {high_game_score} game points")
+            self.winner_game = None
+        else:
+            self.winner_game = high_game_player[0]
+        LOG.info(f"Awarding game to {self.winner_game} with {high_game_score} game points")
 
     def _declare_winner_if_game_is_over(self):
         # This function deals with players or teams. We will use the generic
@@ -508,13 +546,14 @@ class Hand(models.Model):
 
     def _finalize_hand(self, no_bid=False):
         if no_bid:
-            # TODO fix this
             LOG.info("No bids, dealer is set 2")
             self.dealer.decrement_score(2)
+            self.finished = True
             self._refresh_all_scores()
-            return self._declare_winner_if_game_is_over()
+            return False
 
         self.award_game()
+        self.finished = True
         self.save()
         LOG.info(
             f"Hand is finished. High: {self.winner_high} "
@@ -632,7 +671,7 @@ class Trick(models.Model):
 
         # First check to make sure the player didn't pull a card out of their sleave
         if card not in cards:
-            return f"{card.pretty} is not one of the player's cards"
+            return f"{card.pretty if card else 'None'} is not one of the player's cards"
 
         lead_card = self.get_lead_play().card_obj if self.get_lead_play() else None
         # If this is the first card, it's valid
@@ -663,7 +702,8 @@ class Trick(models.Model):
 
         error_msg = self.is_card_invalid_to_play(card, player)
         if error_msg:
-            raise ValidationError(f"Unable to play {card.pretty} ({error_msg}), please choose another card")
+            LOG.error(f"{player} tried to play {card}")
+            raise ValidationError(f"Unable to play {card.pretty if card else 'None'} ({error_msg}), please choose another card")
 
         LOG.info(f"{player} played {card}")
         self.active_player = self.hand.game.next_player(self.active_player)

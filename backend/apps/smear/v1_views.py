@@ -59,7 +59,7 @@ class GameViewSet(viewsets.ModelViewSet):
             Game.objects.all()
         )
 
-        return base_queryset.order_by('-id')
+        return base_queryset.order_by('-id').prefetch_related("players", "teams", "hands__tricks__plays")
 
     @transaction.atomic
     def perform_create(self, serializer):

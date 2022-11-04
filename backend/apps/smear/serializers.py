@@ -96,14 +96,13 @@ class HandSummaryWithCardsSerializer(HandSummarySerializer):
         return player.cards_in_hand
 
     def get_results(self, hand):
-        # winner_game is the last to be awarded, so if that is set we can display
         return {
             'winner_high': hand.winner_high.id if hand.winner_high else None,
             'winner_low': hand.winner_low.id if hand.winner_low else None,
             'winner_jick': hand.winner_jick.id if hand.winner_jick else None,
             'winner_jack': hand.winner_jack.id if hand.winner_jack else None,
             'winner_game': hand.winner_game.id if hand.winner_game else None,
-        } if hand.winner_game else None
+        } if hand.finished else None
 
     class Meta:
         model = Hand

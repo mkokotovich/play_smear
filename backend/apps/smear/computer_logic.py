@@ -250,7 +250,10 @@ def get_lowest_trump(player, trump):
 def get_lowest_spare_trump_to_lead(player, trump):
     my_trump = player.get_trump(trump)
     all_spare_trump = [card for card in my_trump if card.value not in ("ace", "king", "queen", "jack", "10")]
-    spare_trump = all_spare_trump[-1] if all_spare_trump else None
+    jboys = [card for card in my_trump if card.value == "jack"]
+    # If we have any jacks/jicks, keep at least one spare trump to protect it
+    required_trump = 2 if jboys else 1
+    spare_trump = all_spare_trump[-1] if len(all_spare_trump) >= required_trump else None
 
     if spare_trump:
         LOG.debug(f"get_lowest_spare_trump_to_lead chooses {spare_trump}")
@@ -271,6 +274,7 @@ def get_A_K_Q_J_of_off_suit(player, trump):
 def get_below_10_of_off_suit(player, trump):
     my_cards = player.get_cards()
     off_suit_lows = [card for card in my_cards if card.value not in ("ace", "king", "queen", "jack", "10") and not card.is_trump(trump)]
+    # high to low
     off_suit_lows_sorted = sorted(off_suit_lows, key=lambda c: c.rank(), reverse=True)
     highest_card = off_suit_lows_sorted[0] if off_suit_lows_sorted else None
 
@@ -470,8 +474,73 @@ def take_with_low_trump_if_game_points(hand, player):
     return card
 
 
+def get_a_loser(hand, player):
+    card = None
+    legal_losers = sorted(
+        [
+            card for card in player.get_cards()
+            if (
+                not card.is_trump(hand.trump)
+                and not hand.current_trick.is_card_invalid_to_play(card, player)
+                and not card.value in ("ace", "king", "queen", "jack", "10")
+            )
+        ], key=lambda c: c.rank()
+    )
+    card = legal_losers[0] if legal_losers else None
+
+    if card:
+        LOG.debug(f"get_a_loser chooses {card}")
+    return card
+
+
+def get_least_valuable_face_card(hand, player):
+    card = None
+    legal_face_cards = sorted(
+        [
+            card for card in player.get_cards()
+            if (
+                not card.is_trump(hand.trump)
+                and not hand.current_trick.is_card_invalid_to_play(card, player)
+                and card.value in ("ace", "king", "queen", "jack")
+            )
+        ], key=lambda c: c.rank()
+    )
+    card = legal_face_cards[0] if legal_face_cards else None
+
+    if card:
+        LOG.debug(f"get_least_valuable_face_card chooses {card}")
+    return card
+
+
+def get_least_valuable_trump(hand, player):
+    card = None
+    my_trump = player.get_trump(hand.trump, smallest_to_largest=True)
+
+    # Try to skip 10s and Jacks if we can
+    non_10_jack = next((card for card in my_trump if card.value not in ("10", "jack")), None)
+    lowest_trump = my_trump[0] if my_trump else None
+    card = non_10_jack or lowest_trump
+
+    if card:
+        LOG.debug(f"get_least_valuable_trump chooses {card}")
+    return card
+
+
+def get_the_least_worst_card_to_lose(hand, player):
+    card = None
+    legal_cards = sorted([card for card in player.get_cards() if not hand.current_trick.is_card_invalid_to_play(card, player)], key=lambda c: c.rank())
+
+    non_10 = next((card for card in legal_cards if card.value != "10"), None)
+    lowest_card = legal_cards[0] if legal_cards else None
+    card = non_10 or lowest_card
+
+    if card:
+        LOG.debug(f"get_the_least_worst_card_to_lose chooses {card}")
+    return card
+
+
 def choose_card(player, trick):
-    is_bidder = trick.hand.dealer_id == player.id
+    is_bidder = trick.hand.bidder_id == player.id
     trump = trick.hand.trump
     # First player, leading the trick...
     if trick.get_lead_play() is None:
@@ -520,190 +589,17 @@ def choose_card(player, trick):
         # If there is a face card and I have two or more low trump, take it
         if not card:
             card = take_with_low_trump_if_game_points(trick.hand, player)
-
-        # TODO start here
-        if not card:
-            card = next((card for card in player.get_cards() if not trick.is_card_invalid_to_play(card, player)), None)
-            LOG.debug(f"TODO not implemented chooses {card}")
-
-        """
         # Play a loser
-        if idx is None:
-            idx = self.get_a_loser(my_hand, current_hand.current_trick)
+        if not card:
+            card = get_a_loser(trick.hand, player)
         # Play a face card to save trump and 10s
-        if idx is None:
-            idx = self.get_least_valuable_face_card(my_hand, current_hand.current_trick)
+        if not card:
+            card = get_least_valuable_face_card(trick.hand, player)
         # Play lowest trump
-        if idx is None:
-            idx = self.get_least_valuable_trump(my_hand, current_hand.current_trick.trump)
+        if not card:
+            card = get_least_valuable_trump(trick.hand, player)
         # At this point we likely only have 10s left
-        if idx == None:
-            idx = self.get_the_least_worst_card_to_lose(my_hand, current_hand.current_trick)
-        """
+        if not card:
+            card = get_the_least_worst_card_to_lose(trick.hand, player)
 
     return card
-
-# TODO: Rework all of this to fit our new game format
-"""
-
-
-class CautiousTaker(SmearPlayingLogic):
-
-
-
-    def get_below_10_of_off_suit(self, my_hand, trump):
-        idx = None
-        tmp_hand = pydealer.Stack(cards=my_hand.cards)
-        # Sorts lowest to highest
-        tmp_hand.sort(ranks=rank_values)
-        for card in tmp_hand:
-            if utils.is_trump(card, trump):
-                # Skip all trump
-                continue
-            elif card.value in "Ace King Queen Jack 10":
-                # If it is a A, K, Q, J, or 10, skip it
-                continue
-            else:
-                idx = my_hand.find(card.abbrev)[0]
-                break
-        if idx is not None and self.debug:
-            print "get_below_10_of_off_suit chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def get_any_card(self, my_hand):
-        # We should only be calling this if we can only play an off-suit 10
-        idx = None
-        if len(my_hand) > 0:
-            idx = 0
-        if idx is not None and self.debug:
-            print "get_any_card chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def get_a_loser(self, my_hand, current_trick):
-        idx = None
-        indices = utils.get_legal_play_indices(current_trick.lead_suit, current_trick.trump, my_hand)
-        for index in indices:
-            if utils.is_trump(my_hand[index], current_trick.trump):
-                continue
-            if my_hand[index].value not in "Ace King Queen Jack 10":
-                idx = index
-                break
-        if idx is not None and self.debug:
-            print "get_a_loser chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def get_least_valuable_face_card(self, my_hand, current_trick):
-        idx = None
-        indices = utils.get_legal_play_indices(current_trick.lead_suit, current_trick.trump, my_hand)
-        for index in indices:
-            if utils.is_trump(my_hand[index], current_trick.trump):
-                continue
-            if my_hand[index].value not in "10":
-                idx = index
-                break
-        if idx is not None and self.debug:
-            print "get_least_valuable_face_card chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def get_least_valuable_trump(self, my_hand, trump):
-        idx = None
-        indices = utils.get_trump_indices(trump, my_hand)
-        for index in indices:
-            if my_hand[index].value in "10 Jack":
-                # Try to skip 10s and Jacks if we can
-                continue
-            idx = index
-            break
-        if idx == None and len(indices) > 0:
-            idx = indices[0]
-        if idx is not None and self.debug:
-            print "get_least_valuable_trump chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def get_the_least_worst_card_to_lose(self, my_hand, current_trick):
-        idx = None
-        indices = utils.get_legal_play_indices(current_trick.lead_suit, current_trick.trump, my_hand)
-        for index in indices:
-            if my_hand[index].value == "10":
-                # Try to skip 10s if we can
-                continue
-            idx = index
-            break
-        if idx == None:
-            idx = indices[0]
-        if idx is not None and self.debug:
-            print "get_the_least_worst_card_to_lose chooses {}".format(my_hand[idx])
-        return idx
-
-
-    def choose_card(self, current_hand, card_counting_info, my_hand, teams, is_bidder):
-        self.teams = teams
-        idx = None
-        # First player, leading the trick...
-        if len(current_hand.current_trick.cards) == 0:
-            # Play A, K, Q of trump
-            idx = self.get_A_K_Q_of_trump(my_hand, current_hand.trump)
-            if idx is None and is_bidder and len(my_hand) == 6:
-                # (If bidder and I didn't have AKQ, and this is first trick, play lowest trump)
-                idx = self.get_lowest_trump(my_hand, current_hand.trump)
-            if idx is None and is_bidder and len(my_hand) == 5:
-                # If bidder and this is second trick, and I didn't have AKQ, play another trump if I have one to spare
-                idx = self.get_lowest_spare_trump_to_lead(my_hand, current_hand.current_trick)
-            # Play A, K, Q, J of other suits
-            if idx is None:
-                idx = self.get_A_K_Q_J_of_off_suit(my_hand, current_hand.trump)
-            # Play low of other suit
-            if idx is None:
-                idx = self.get_below_10_of_off_suit(my_hand, current_hand.trump)
-            # Play lowest trump
-            if idx is None:
-                idx = self.get_lowest_trump(my_hand, current_hand.trump)
-            # Play anything (should be just 10 off suit at this point)
-            if idx is None:
-                idx = self.get_any_card(my_hand)
-        else:
-            # Not the first player
-            # Give my teammate a jack or jick, if possible
-            idx = self.give_teammate_jack_or_jick_if_possible(my_hand, current_hand.current_trick, card_counting_info)
-            # If I can take a Jack or Jick, take it
-            if idx is None:
-                idx = self.take_jack_or_jick_if_possible(my_hand, current_hand.current_trick, card_counting_info)
-            # If there are high trump still out but I can safely take home my jack or jick, play it
-            if idx is None:
-                idx = self.take_jack_or_jick_if_high_cards_are_out(my_hand, current_hand.current_trick, card_counting_info)
-            # If I can take a 10, take it
-            if idx is None:
-                idx = self.take_ten_if_possible(my_hand, current_hand.current_trick, card_counting_info)
-            # Give my teammate a 10, if possible
-            if idx is None:
-                idx = self.give_teammate_ten_if_possible(my_hand, current_hand.current_trick, card_counting_info)
-            # If I can safely take home a ten, take it
-            if idx is None:
-                idx = self.take_home_ten_safely(my_hand, current_hand.current_trick, card_counting_info)
-            # If I can take the trick with a non-trump, take it
-            if idx is None:
-                idx = self.take_with_off_suit(my_hand, current_hand.current_trick, card_counting_info)
-            # If there is a face card and I have two or more low trump, take it
-            if idx is None:
-                idx = self.take_with_low_trump_if_game_points(my_hand, current_hand.current_trick, card_counting_info)
-            # Play a loser
-            if idx is None:
-                idx = self.get_a_loser(my_hand, current_hand.current_trick)
-            # Play a face card to save trump and 10s
-            if idx is None:
-                idx = self.get_least_valuable_face_card(my_hand, current_hand.current_trick)
-            # Play lowest trump
-            if idx is None:
-                idx = self.get_least_valuable_trump(my_hand, current_hand.current_trick.trump)
-            # At this point we likely only have 10s left
-            if idx == None:
-                idx = self.get_the_least_worst_card_to_lose(my_hand, current_hand.current_trick)
-
-        return idx
-
-"""

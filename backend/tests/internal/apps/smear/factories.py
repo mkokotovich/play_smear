@@ -39,6 +39,13 @@ class HandFactory(factory.django.DjangoModelFactory):
             self.high_bid = BidFactory(hand=self)
 
 
+class TrickFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'smear.Trick'
+    hand = factory.SubFactory('tests.internal.apps.smear.factories.HandFactory')
+    num = 1
+
+
 class PlayerFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'smear.Player'
