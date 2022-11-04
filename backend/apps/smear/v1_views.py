@@ -26,7 +26,13 @@ from apps.smear.serializers import (
     BidSerializer,
     PlaySerializer,
 )
-from apps.smear.permissions import IsPlayerInGame, IsGameOwnerPermission, IsPlayerOnTeam, IsBidOwnerPermission
+from apps.smear.permissions import (
+    IsPlayerInGame,
+    IsGameOwnerPermission,
+    IsPlayerOnTeam,
+    IsBidOwnerPermission,
+    IsPlayOwnerPermission,
+)
 
 
 LOG = logging.getLogger(__name__)
@@ -104,7 +110,7 @@ class GameViewSet(viewsets.ModelViewSet):
         if game.players.count() >= game.num_players:
             raise ValidationError(f"Unable to join game, already contains {game.num_players} players")
         if game.passcode_required and game.passcode != serializer.data.get('passcode', None):
-            raise ValidationError(f"Unable to join game, passcode is required and was incorrect")
+            raise ValidationError("Unable to join game, passcode is required and was incorrect")
 
         Player.objects.create(game=game, user=self.request.user)
         LOG.info(f"Added {self.request.user} to game {game}")

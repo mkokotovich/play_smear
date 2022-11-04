@@ -49,7 +49,7 @@ def test_is_teammate_taking_trick_ace_trump():
     p1 = PlayerFactory(user=game.owner, game=game, team=team1, seat=1)
     p2 = PlayerFactory(game=game, team=team2, seat=2)
     p3 = PlayerFactory(game=game, team=team1, seat=3)
-    p4 = PlayerFactory(game=game, team=team2, seat=4)
+    PlayerFactory(game=game, team=team2, seat=4)
     game.set_plays_after()
 
     trick = TrickFactory(hand__game=game, hand__trump="hearts")
@@ -90,7 +90,7 @@ def test_safe_to_play_with_jack_and_everyone_left_out_of_trump():
     p1 = PlayerFactory(user=game.owner, game=game, team=team1, seat=1)
     p2 = PlayerFactory(game=game, team=team2, seat=2)
     p3 = PlayerFactory(game=game, team=team1, seat=3)
-    p4 = PlayerFactory(game=game, team=team2, seat=4)
+    PlayerFactory(game=game, team=team2, seat=4)
     game.set_plays_after()
 
     trick = TrickFactory(hand__game=game, hand__trump="hearts")

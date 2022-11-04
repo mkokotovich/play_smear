@@ -1,6 +1,6 @@
 from rest_framework import permissions
 
-from apps.smear.models import Player, Game, Team, Bid
+from apps.smear.models import Player, Game, Team, Bid, Play
 
 
 class IsPlayerInGame(permissions.IsAuthenticated):

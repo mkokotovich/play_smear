@@ -3,7 +3,7 @@ import pytest
 from rest_framework.exceptions import ValidationError
 
 from apps.smear.models import Player, Game
-from tests.internal.apps.smear.factories import GameFactory
+from tests.internal.apps.smear.factories import GameFactory, PlayerFactory
 from tests.internal.apps.user.factories import UserFactory
 
 
@@ -91,3 +91,21 @@ def test_Game_autofill_teams(mocker, num_teams, num_players):
             assert db_player.game == game
             total_members += 1
     assert total_members == game.num_players
+
+
+# Set the "repeat" range() to a large number to test computer logic more thoroughly
+@pytest.mark.django_db()
+@pytest.mark.parametrize("repeat", range(1))
+def test_Game_play_through_whole_game(mocker, repeat):
+    num_players = 6
+    num_teams = 3
+    game = GameFactory(num_players=num_players, num_teams=num_teams, score_to_play_to=5)
+    game.create_initial_teams()
+    PlayerFactory.create_batch(num_players, game=game, is_computer=True)
+    game.autofill_teams()
+    game.state = Game.STARTING
+    game.save()
+
+    game.start_game()
+
+    assert game.state == Game.GAME_OVER

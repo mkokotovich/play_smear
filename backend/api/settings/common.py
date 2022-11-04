@@ -160,9 +160,10 @@ STATICFILES_DIRS = (
     "/static/www",
 )
 
+
 def skip_status_requests(record):
-    url = record.args[0] if record.args else ""
     return not ('GET /api/smear/v1/games/' in record.msg and '/status/ HTTP' in record.msg)
+
 
 LOGGING = {
     'version': 1,
@@ -191,11 +192,11 @@ LOGGING = {
             'handlers': ['console'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
-        'django.server':{
+        'django.server': {
             'filters': ['skip_status_requests'],
             'propagate': False,
         },
-        'faker':{
+        'faker': {
             'level': 'ERROR',
         },
     },

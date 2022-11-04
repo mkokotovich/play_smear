@@ -379,7 +379,9 @@ class Hand(models.Model):
         for player in self.game.player_set.all():
             trump_cards = player.get_trump(self.trump)
             lowest_trump = min(trump_cards, key=lambda x: x.trump_rank(self.trump)) if trump_cards else None
-            new_low = current_low if (lowest_trump is None or (current_low and current_low.trump_rank(self.trump) < lowest_trump.trump_rank(self.trump))) else lowest_trump
+            new_low = current_low if (
+                lowest_trump is None or (current_low and current_low.trump_rank(self.trump) < lowest_trump.trump_rank(self.trump))
+            ) else lowest_trump
             if new_low != current_low and new_low is not None:
                 current_low = new_low
                 current_low_winner = player
@@ -392,7 +394,9 @@ class Hand(models.Model):
         for player in self.game.player_set.all():
             trump_cards = player.get_trump(self.trump)
             highest_trump = max(trump_cards, key=lambda x: x.trump_rank(self.trump)) if trump_cards else None
-            new_high = current_high if (highest_trump is None or (current_high and current_high.trump_rank(self.trump) > highest_trump.trump_rank(self.trump))) else highest_trump
+            new_high = current_high if (
+                highest_trump is None or (current_high and current_high.trump_rank(self.trump) > highest_trump.trump_rank(self.trump))
+            ) else highest_trump
             if new_high != current_high and new_high is not None:
                 current_high = new_high
                 current_high_winner = player
