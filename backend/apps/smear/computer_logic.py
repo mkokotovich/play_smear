@@ -343,11 +343,11 @@ def take_jack_or_jick_if_high_cards_are_out(hand, player):
     jboys = [card for card in player.get_trump(hand.trump) if card.value == "jack"]
     for jboy in jboys:
         if card_counting.safe_to_play(hand, player, jboy):
-            if jboy.is_jack() and highest_trump.value in ("ace", "king", "queen"):
+            if jboy.is_jack(hand.trump) and highest_trump.value in ("ace", "king", "queen"):
                 # If I have a Jack, play if there are still A K Q out
                 card = jboy
                 break
-            elif jboy.is_jick() and (highest_trump.value in ("ace", "king", "queen") or highest_trump.is_jack()):
+            elif jboy.is_jick(hand.trump) and (highest_trump.value in ("ace", "king", "queen") or highest_trump.is_jack(hand.trump)):
                 # If I have a Jick, play if there are still A K Q Jack out
                 card = jboy
                 break
