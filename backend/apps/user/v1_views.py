@@ -1,21 +1,19 @@
-from rest_framework import viewsets
-from rest_framework.permissions import AllowAny
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 
+from apps.smear.pagination import SmearPagination
+from apps.user.email import send_password_reset_email
+from apps.user.permissions import IsOwnerPermission
 from apps.user.serializers import (
-    UserSerializer,
     ChangePasswordSerializer,
     GenerateResetSerializer,
-    ResetPasswordSerializer
+    ResetPasswordSerializer,
+    UserSerializer,
 )
-from apps.smear.pagination import SmearPagination
-from apps.user.permissions import IsOwnerPermission
-from apps.user.email import send_password_reset_email
 
 
 class UserViewSet(viewsets.ModelViewSet):

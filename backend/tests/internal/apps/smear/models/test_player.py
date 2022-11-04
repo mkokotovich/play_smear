@@ -1,9 +1,8 @@
 import pytest
-
 from django.contrib.auth.models import User
 
-from apps.smear.models import Player
 from apps.smear.cards import Deck
+from apps.smear.models import Player
 from tests.internal.apps.smear.factories import PlayerFactory
 
 

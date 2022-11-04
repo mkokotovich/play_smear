@@ -3,9 +3,8 @@ import logging
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from apps.smear.models import Game, Team, Player, Hand, Bid, Trick, Play
 from apps.smear.cards import SUITS, Card
-
+from apps.smear.models import Bid, Game, Hand, Play, Player, Team, Trick
 
 LOG = logging.getLogger(__name__)
 

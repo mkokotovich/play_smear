@@ -1,8 +1,7 @@
 import pytest
-
 from rest_framework.exceptions import ValidationError
 
-from apps.smear.models import Player, Game
+from apps.smear.models import Game, Player
 from tests.internal.apps.smear.factories import GameFactory, PlayerFactory
 from tests.internal.apps.user.factories import UserFactory
 

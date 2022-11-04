@@ -1,7 +1,7 @@
 import requests
 
-from tests.external.utils import create_headers
 from tests.external.test_20_multi_player_game_setup import get_game
+from tests.external.utils import create_headers
 
 
 def add_player_to_team(smear_host, user, game, team, player):

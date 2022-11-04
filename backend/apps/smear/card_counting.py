@@ -5,7 +5,6 @@ from django.db.models import Q
 from apps.smear.cards import Card, Deck
 from apps.smear.models import Play
 
-
 LOG = logging.getLogger(__name__)
 
 

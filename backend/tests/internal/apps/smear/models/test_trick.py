@@ -1,8 +1,8 @@
 import pytest
 
-from apps.smear.models import Play
 from apps.smear.cards import Card
-from tests.internal.apps.smear.factories import TrickFactory, GameFactory, PlayerFactory
+from apps.smear.models import Play
+from tests.internal.apps.smear.factories import GameFactory, PlayerFactory, TrickFactory
 
 
 @pytest.mark.django_db

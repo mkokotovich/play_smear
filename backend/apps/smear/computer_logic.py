@@ -1,8 +1,7 @@
 import logging
 
-from apps.smear.cards import SUITS, Card
 from apps.smear import card_counting
-
+from apps.smear.cards import SUITS, Card
 
 LOG = logging.getLogger(__name__)
 

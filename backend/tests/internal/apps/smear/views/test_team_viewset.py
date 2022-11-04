@@ -1,10 +1,9 @@
 import pytest
-
-from rest_framework.reverse import reverse
 from rest_framework import status
+from rest_framework.reverse import reverse
 
 from apps.smear.serializers import TeamSummarySerializer
-from tests.internal.apps.smear.factories import TeamFactory, PlayerFactory, GameFactory
+from tests.internal.apps.smear.factories import GameFactory, PlayerFactory, TeamFactory
 from tests.internal.apps.user.factories import UserFactory
 
 

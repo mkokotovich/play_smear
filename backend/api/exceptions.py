@@ -3,11 +3,10 @@ import sys
 import traceback
 
 from django.conf import settings
-from django.http.response import HttpResponse, Http404
-from rest_framework.views import exception_handler
-from rest_framework.serializers import ValidationError as SerializerValidationError
+from django.http.response import Http404, HttpResponse
 from rest_framework.response import Response
-
+from rest_framework.serializers import ValidationError as SerializerValidationError
+from rest_framework.views import exception_handler
 
 LOG = logging.getLogger(__name__)
 

@@ -1,7 +1,6 @@
-import logging
 import copy
+import logging
 import random
-
 
 LOG = logging.getLogger(__name__)
 

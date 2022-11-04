@@ -3,7 +3,6 @@ import dj_database_url
 
 from api.settings.common import *
 
-
 DEBUG = False
 
 REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = (

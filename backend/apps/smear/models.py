@@ -1,15 +1,14 @@
-from random import shuffle
 import logging
+from random import shuffle
 
-from django.db import models
-from django.db.models import F
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
+from django.db import models
+from django.db.models import F
 from django.utils.functional import cached_property
 from rest_framework.exceptions import ValidationError
 
-from apps.smear.cards import Card, Deck, SUIT_CHOICES
-
+from apps.smear.cards import SUIT_CHOICES, Card, Deck
 
 LOG = logging.getLogger(__name__)
 

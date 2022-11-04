@@ -1,6 +1,6 @@
 import requests
 
-from tests.external.utils import update_game, create_headers
+from tests.external.utils import create_headers, update_game
 
 
 def test_mp_game_returns_cards(smear_host, state):

@@ -1,6 +1,7 @@
-import sendgrid
 import os
-from sendgrid.helpers.mail import Email, Content, Mail
+
+import sendgrid
+from sendgrid.helpers.mail import Content, Email, Mail
 
 
 def send_password_reset_email(to, reset_token):
