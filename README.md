@@ -13,6 +13,12 @@ docker compose up
 
 The UI and the API are both served from `http://localhost:8000`
 
+Install precommit hooks
+
+```
+pre-commit install --install-hooks
+```
+
 # Deployment
 
 `flyctl deploy`
