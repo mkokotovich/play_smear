@@ -12,7 +12,17 @@ LOG = logging.getLogger(__name__)
 class PlayerSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields = ("id", "name", "user", "team", "is_computer", "score", "winner", "seat")
+        fields = (
+            "id",
+            "name",
+            "user",
+            "team",
+            "is_computer",
+            "score",
+            "winner",
+            "seat",
+            "current_hand_game_points_won",
+        )
 
 
 class PlayerIDSerializer(serializers.Serializer):

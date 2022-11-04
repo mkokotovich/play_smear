@@ -39,15 +39,22 @@ function Player(props) {
     }
     return accum
   }, []);
+  const pointToHumanText = {
+    "winner_high": "Won High",
+    "winner_low": "Won Low",
+    "winner_game": "Won Game",
+    "winner_jick": "Won Jick",
+    "winner_jack": "Won Jack"
+  };
   const resultsEntries = pointsWon.map((point) => {
     return (
       <div>
-        <b>{point}</b>
+        <b>{pointToHumanText[point]}</b>
       </div>
     );
   });;
 
-  const border = waitingForMe ? "3px solid blue" : "1px solid grey";
+  const border = waitingForMe ? "4px solid blue" : "1px solid grey";
   const playerStyles = {
     display: "flex-inline",
     alignSelf: "flex-start",
@@ -60,15 +67,16 @@ function Player(props) {
     maxWidth: "200px",
     height: "100%",
   };
+  const score = team ? team.score : player.score;
 
   return (
     <div style={playerStyles}>
-      <p>
-        {player.name}
-      </p>
-      {player.team && (<p> {teamName} </p>)}
+      {player.name}<br/>
+      {player.team && (<> {teamName} <br/></>)}
+      Score: {score}
       {<Bid bid={bid} isDealer={isDealer} currentlyBidding={currentlyBidding} isBidder={isBidder}/>}
       {card && <Card card={card} small={true}/>}
+      {results && (<> Game Points: {player.current_hand_game_points_won} </>) }
       {results && resultsEntries}
     </div>
   );
