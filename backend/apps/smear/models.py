@@ -797,6 +797,7 @@ class Trick(models.Model):
     def start_trick(self, player_who_leads):
         LOG.info(f"Starting trick with {player_who_leads} leading")
         self.active_player = player_who_leads
+        self.save()
 
     def advance_trick(self, trick_finished_arg=False):
         """Advances any computers playing"""
