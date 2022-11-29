@@ -5,7 +5,15 @@ const paths = reqSvgs.keys()
 const cards = paths.map(path => reqSvgs(path))
 
 function Card(props) {
-  const {card, small} = props;
+  const {card, selected, small, clickCard} = props;
+
+  function handleClick(e) {
+    e.preventDefault();
+    if (clickCard) {
+      clickCard(card);
+    }
+  }
+
   const cardFile = cards.find(filename => filename.includes(card));
   const cardStyle = small ? {
       height: "auto",
@@ -19,9 +27,11 @@ function Card(props) {
     padding: "0px",
   } : {
     padding: "0.5vw",
+    border: selected ? "2px solid lightgrey" : "0px",
+    borderRadius: "10px",
   };
   return (
-    <div style={divStyle}>
+    <div style={divStyle} onClick={handleClick}>
       <img alt={cardFile} style={cardStyle} src={cardFile} />
     </div>
   );

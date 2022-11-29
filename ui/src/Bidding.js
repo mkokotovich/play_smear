@@ -73,7 +73,7 @@ function Bidding(props) {
   return (
     <div>
       <PlayerDisplay {...props} />
-      <CardDisplay cards={game.current_hand.cards} />
+      <CardDisplay {...props} />
       { !myTurn && waitingForTurn }
       { myTurn && bidInput }
     </div>

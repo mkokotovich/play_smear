@@ -15,7 +15,7 @@ import getErrorString from './utils';
 import './Game.css';
 
 
-function loadGame(gameID, handNum, trickNum, setLoading, setGame) {
+function loadGame(gameID, handNum, trickNum, setLoading, setGame, setCardsIfNeeded) {
   // {
   // created_at: "2020-04-28T15:57:38.064116Z"
   // current_hand: {id: 4, dealer: 36, bidder: 34, high_bid: 4, cards: ["6C", "4S", "7C", "8H", "JD", "5H"]}
@@ -45,6 +45,8 @@ function loadGame(gameID, handNum, trickNum, setLoading, setGame) {
       console.log("loadGame", response);
       setLoading(false);
       setGame(response.data);
+      const initialCards = response.data?.current_hand?.cards || [];
+      setCardsIfNeeded(initialCards);
     })
     .catch((error) => {
       console.log(error);
@@ -94,15 +96,21 @@ function Game(props) {
   const [loading, setLoading] = useState(false);
   const [game, setGame] = useState(null);
   const [needInput, setNeedInput] = useState(true);
+  const [cards, setCards] = useState([]);
   const {signedInUser} = props;
 
+  function setCardsIfNeeded(newCards) {
+    if (cards.length == 0) {
+      setCards(newCards);
+    }
+  }
   function reloadGame(fullReload, setPolling = undefined, displayLoading = false) {
     if (setPolling !== undefined) {
       setNeedInput(setPolling);
     }
     const showLoading = displayLoading ? setLoading : () => {};
     if (fullReload) {
-      loadGame(props.match.params.gameID, undefined, undefined, showLoading, setGame);
+      loadGame(props.match.params.gameID, undefined, undefined, showLoading, setGame, setCardsIfNeeded);
     } else {
       reloadGameStatus(props.match.params.gameID, game?.current_hand?.num, game?.current_trick?.num, showLoading, updateGame);
     }
@@ -114,7 +122,7 @@ function Game(props) {
       // current_hand update didn't contain cards, and the dict expansion below
       // doesn't work recursively, so cards is lost if we don't grab it from game
       const hand = newStatus.current_hand ? newStatus.current_hand : game.current_hand;
-      const cards = game?.current_hand ? game.current_hand.cards : []
+      const cards = game?.current_hand ? game.current_hand.cards : [];
       newCurrentHand = {
         ...hand,
         "cards": cards
@@ -130,7 +138,7 @@ function Game(props) {
 
   // Load game if the gameID in the URL ever changes
   useEffect(() => {
-    loadGame(props.match.params.gameID, 0, 0, setLoading, setGame);
+    loadGame(props.match.params.gameID, 0, 0, setLoading, setGame, setCardsIfNeeded);
   }, [props.match.params.gameID])
 
   // Set a timer to reload game every 2 seconds
@@ -159,6 +167,8 @@ function Game(props) {
     setLoading,
     reloadGame,
     signedInUser,
+    cards,
+    setCards,
   };
   if (game) {
     if (game.state  === "starting") {

@@ -12,32 +12,10 @@ const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
 
 
-function CardSelection(props) {
-  // eslint-disable-next-line
-  const {cards, cardSelected, setCardSelected, submitSpecificCard} = props;
-
-  function onChangeCardSelected(e) {
-    submitSpecificCard(e.target.value);
-  }
-
-  const cardRadios = cards.map((card, idx) => (
-    <RadioButton value={card} key={idx}>{card}</RadioButton>
-  ));
-
-  return (
-    <>
-      <p>Which card do you want to play</p>
-      <RadioGroup name="cardSelected" onChange={onChangeCardSelected} value={cardSelected}>
-        {cardRadios}
-      </RadioGroup>
-    </>
-  );
-}
-
 function Trick(props) {
   const [cardSelected, setCardSelected] = useState();
   const [trickAcknowledged, setTrickAcknowledged] = useState(false);
-  const {game, loading, setLoading, reloadGame, signedInUser} = props;
+  const {game, loading, setLoading, reloadGame, signedInUser, cards, setCards} = props;
   const myPlayer = game.players.find(player => player.user === signedInUser.id)?.id;
 
   function submitSpecificCard(card) {
@@ -46,6 +24,8 @@ function Trick(props) {
     axios.post(`/api/smear/v1/games/${game.id}/hands/${game.current_hand.id}/tricks/${game.current_trick.id}/plays/`,
       { card: card }
     ).then((response) => {
+      const newCards = cards.filter(item => item !== card);
+      setCards(newCards);
       reloadGame(false, true, true);
     }).catch((error) => {
       console.log(error);
@@ -63,6 +43,15 @@ function Trick(props) {
     return submitSpecificCard(cardSelected);
   }
 
+  function clickCard(card) {
+    if (cardSelected === card) {
+      // This is a second click
+      submitSpecificCard(cardSelected);
+    } else {
+      setCardSelected(card);
+    }
+  }
+
   function nextTrick() {
     if (game.current_trick.num === 6) {
       setTrickAcknowledged(true);
@@ -71,11 +60,6 @@ function Trick(props) {
     }
   }
 
-  const cardSelection = (
-    <>
-      <CardSelection cards={game.current_hand.cards} cardSelected={cardSelected} setCardSelected={setCardSelected} submitSpecificCard={submitSpecificCard} />
-    </>
-  );
   const player = game.players.find(player => player.id === game?.current_trick?.active_player);
   const waitingForTurn = (
     <>
@@ -89,15 +73,20 @@ function Trick(props) {
       <Button onClick={nextTrick} disabled={loading}>Continue</Button>
     </>
   );
+  const promptUserToPlay = (
+    <>
+      <p>Your turn, select a card to play</p>
+    </>
+  );
   const trickIsFinished = Boolean(game.current_trick.taker);
   const handIsFinished = Boolean(game.current_hand.results);
   const myTurn = game.current_trick.active_player === myPlayer;
   return (
     <div>
       <PlayerDisplay {...props} />
-      { !trickIsFinished && <CardDisplay cards={game.current_hand.cards} /> }
-      { myTurn && cardSelection }
+      { !trickIsFinished && <CardDisplay {...props} cardSelected={cardSelected} clickCard={clickCard} /> }
       { !myTurn && !trickIsFinished && waitingForTurn }
+      { myTurn && !trickIsFinished && promptUserToPlay }
       { !trickAcknowledged && trickIsFinished && trickFinishedPrompt }
       { trickAcknowledged && handIsFinished && <HandResults {...props} /> }
     </div>

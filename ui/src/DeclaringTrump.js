@@ -72,7 +72,7 @@ function DeclaringTrump(props) {
   return (
     <div>
       <PlayerDisplay {...props} />
-      <CardDisplay cards={game.current_hand.cards} />
+      <CardDisplay {...props} />
       { myTurn && submitTrumpDialog }
       { !myTurn && waitingForTurn }
     </div>
