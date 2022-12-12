@@ -166,13 +166,13 @@ function addComputerToGame(gameID, setLoading, addPlayer) {
 }
 
 function AddComputer(props) {
-  const { gameID, addPlayer } = props;
+  const { owner, gameID, addPlayer } = props;
   const [loading, setLoading] = useState(false);
 
   const PlusIcon = loading ? LoadingOutlined : PlusOutlined;
 
   return (
-    <Button style={{width: "100%"}} disabled={loading} onClick={() => addComputerToGame(gameID, setLoading, addPlayer)}><PlusIcon /> Computer Player</Button>
+    <Button style={{width: "100%"}} disabled={loading || !owner} onClick={() => addComputerToGame(gameID, setLoading, addPlayer)}><PlusIcon /> Computer Player</Button>
   );
 }
 
@@ -285,6 +285,8 @@ function TeamDroppable(props) {
 function WaitingRoom(props) {
   const [allPlayers, setAllPlayers] = useState([]);
   const [bench, setBench] = useState([]);
+  const isOwner = props.game.owner === props.signedInUser?.id;
+
   // TODO: see if teams needs to be like this
   // Build a dict that looks like
   // {
@@ -455,7 +457,6 @@ function WaitingRoom(props) {
       />
     </Col>
   ));
-
   const dnd = (
     <DragDropContext onDragEnd={onDragEnd}>
       <Row type="flex">
@@ -475,7 +476,7 @@ function WaitingRoom(props) {
                     removePlayerFromList={(player) => removePlayer(player, bench, setBench, allPlayers, setAllPlayers)}
                     removeIsVisible={true}
                   />
-                  <AddComputer gameID={props.game.id} addPlayer={addPlayer}/>
+                  <AddComputer gameID={props.game.id} owner={isOwner} addPlayer={addPlayer}/>
                   {provided.placeholder}
                 </div>
               </Card>
@@ -497,8 +498,8 @@ function WaitingRoom(props) {
       </span>
       {dnd}
       <div className="flex">
-        <Button onClick={() => startGame(teams, props.game.id, props.setLoading, props.reloadGame)}>Start Game</Button>
-        { props.game.teams.length > 0 &&
+        <Button disabled={!isOwner} onClick={() => startGame(teams, props.game.id, props.setLoading, props.reloadGame)}>Start Game</Button>
+        { isOwner && props.game.teams.length > 0 &&
           <>
             <Button onClick={() => autoAssign(props.game.id, props.setLoading)}>Auto Assign</Button>
             <Button onClick={() => resetPlayers(props.game.id, props.setLoading)}>Reset</Button>

@@ -151,7 +151,6 @@ function Game(props) {
       const myTurn = myTurnTrick || myTurnBidding;
       const trickOver = Boolean(game?.current_trick?.taker);
       const gameOver = game?.state === "game_over";
-      console.log(needInput, myPlayer, autoPilotEnabled, myTurn, gameOver);
       if (needInput && (!myTurn || autoPilotEnabled) && !trickOver && !gameOver) {
         // Do not reload status if it is my turn (unless autopilot is enabled,
         // then reload anyway because we won't be waiting for user input
@@ -174,6 +173,7 @@ function Game(props) {
     if (game.state  === "starting") {
       gameDisplay = (<WaitingRoom {...allProps} />);
     } else if (game.state  === "bidding") {
+      setCardsIfNeeded(game?.current_hand?.cards);
       gameDisplay = (<Bidding {...allProps} />);
     } else if (game.state  === "declaring_trump") {
       gameDisplay = (<DeclaringTrump {...allProps} />);

@@ -46,7 +46,7 @@ class GameSelector extends Component {
     const single = values.single ? values.single : false;
     var query = "";
     if (mode === "mine") {
-      query = `?owner=${this.props.signedInUser.id}&single_player=${single}`;
+      query = `?players=${this.props.signedInUser.id}&single_player=${single}`;
     } else {
       query = "?public=true";
 

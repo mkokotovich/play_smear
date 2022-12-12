@@ -18,7 +18,7 @@ class GameList extends Component {
   }
 
   render() {
-    const { initLoading, gameList, handleDelete, handleJoin, handleResume } = this.props;
+    const { signedInUser, initLoading, gameList, handleDelete, handleJoin, handleResume } = this.props;
 
     const title = this.props.mode === 'public' ? "Join a game started by someone else" : "Manage My Games";
 
@@ -26,7 +26,11 @@ class GameList extends Component {
       <div className="GameList" key={game.id}>
         <Row type="flex" align="middle">
           <Col className="GameName" xs={12} md={6}>
-            <b style={{cursor: "pointer"}} onClick={() => handleResume(game.id)}>{game.name}</b>
+            {this.props.mode === 'manage' ? (
+              <b style={{cursor: "pointer"}} onClick={() => handleResume(game.id)}>{game.name}</b>
+            ) : (
+              <b>{game.name}</b>
+            )}
           </Col>
           <Col className="GameIcons" xs={12} md={6}>
             <Popover placement="topLeft" content="The number of players who have joined out of the total number of players this game accepts" title="Players">
@@ -53,7 +57,7 @@ class GameList extends Component {
                   (
                     <>
                       <Button style={{marginRight: "5px"}} onClick={() => handleResume(game.id)}>Resume</Button>
-                      <Button onClick={() => handleDelete(game.id)}>Cancel</Button>
+                      <Button disabled={game.owner !== signedInUser.id} onClick={() => handleDelete(game.id)}>Delete Game</Button>
                     </>
                   ) :
                   (

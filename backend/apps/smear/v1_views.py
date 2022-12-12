@@ -44,7 +44,7 @@ class GameViewSet(viewsets.ModelViewSet):
     )
     pagination_class = SmearPagination
     search_fields = ("name",)
-    filterset_fields = ("owner", "passcode_required", "single_player")
+    filterset_fields = ("owner", "passcode_required", "single_player", "players")
 
     def get_serializer_class(self):
         if self.action == "retrieve":
@@ -62,7 +62,7 @@ class GameViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         base_queryset = (
-            Game.objects.filter(single_player=False).exclude(owner=self.request.user)
+            Game.objects.filter(single_player=False).exclude(players=self.request.user)
             if self.request.query_params.get("public", "false") == "true"
             else Game.objects.all()
         )
