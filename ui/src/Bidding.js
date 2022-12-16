@@ -12,21 +12,23 @@ const RadioGroup = Radio.Group;
 
 
 function BidInput(props) {
-  const {bidValue, setBidValue} = props;
+  const {game, bidValue, setBidValue} = props;
 
   function onChangeBid(e) {
     setBidValue(e.target.value);
   }
 
+  const high_bid_id = game?.current_hand?.high_bid;
+  const high_bid = game?.current_hand?.bids.find(bid => bid.id === high_bid_id)?.bid;
   return (
     <>
       <p>What is your bid:</p>
       <RadioGroup name="bidValue" onChange={onChangeBid} value={bidValue}>
         <RadioButton value="0">Pass</RadioButton>
-        <RadioButton value="2">2</RadioButton>
-        <RadioButton value="3">3</RadioButton>
-        <RadioButton value="4">4</RadioButton>
-        <RadioButton value="5">5</RadioButton>
+        <RadioButton disabled={high_bid >= 2} value="2">2</RadioButton>
+        <RadioButton disabled={high_bid >= 3} value="3">3</RadioButton>
+        <RadioButton disabled={high_bid >= 4} value="4">4</RadioButton>
+        <RadioButton disabled={high_bid >= 5} value="5">5</RadioButton>
       </RadioGroup>
     </>
   );
@@ -64,7 +66,7 @@ function Bidding(props) {
   );
   const bidInput = (
     <>
-      <BidInput bidValue={bidValue} setBidValue={setBidValue} />
+      <BidInput game={game} bidValue={bidValue} setBidValue={setBidValue} />
       &nbsp;
       <Button onClick={submitBid} disabled={loading}>Submit Bid</Button>
     </>

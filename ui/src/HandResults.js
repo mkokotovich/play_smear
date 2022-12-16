@@ -18,10 +18,11 @@ function HandResults(props) {
       bidder_points += 1;
     }
   }
+  const bidReaction = bidder_points >= high_bid.bid ? (<>{bidder.name} made the bid! <span style={{fontSize: "40px"}}>👍</span></>) : (<>{bidder.name} was set! <span style={{fontSize: "40px"}}>👎</span></>);
 
   return (
     <div>
-      Hand Is Over! {bidder.name} bid {high_bid.bid} and got {bidder_points}.
+      Hand Is Over! {bidder.name} bid {high_bid.bid} and got {bidder_points}. {bidReaction}
       <br />
       <Button onClick={nextHand} disabled={loading}>Continue</Button>
     </div>

@@ -170,7 +170,7 @@ class CreateGame extends Component {
           }
         </Modal>
         <div>
-          <Button style={{width:300}} onClick={() => this.setState({visible: true})}>Create New Game</Button>
+          <Button style={{width:250}} onClick={() => this.setState({visible: true})}>Create New Game</Button>
         </div>
       </div>
     );

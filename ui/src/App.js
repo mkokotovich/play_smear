@@ -5,6 +5,7 @@ import './App.css';
 import SignIn from './SignIn';
 import Login from './Login';
 import Home from './Home';
+import HowToPlay from './HowToPlay';
 import GameSelector from './GameSelector';
 import Game from './Game';
 import Profile from './Profile';
@@ -120,6 +121,13 @@ class App extends Component {
           path={`/forgot`}
           render={() => {
             return <ForgotPassword/>;
+          }}
+        />
+        <Route
+          exact 
+          path={`/rules`}
+          render={() => {
+            return <HowToPlay/>;
           }}
         />
       </div>

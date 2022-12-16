@@ -22,10 +22,10 @@ function TrumpInput(props) {
     <>
       <p>Pick a suit for trump</p>
       <RadioGroup name="trump" onChange={onChangeTrump} value={trump}>
-        <RadioButton value="spades">Spades</RadioButton>
-        <RadioButton value="hearts">Hearts</RadioButton>
-        <RadioButton value="clubs">Clubs</RadioButton>
-        <RadioButton value="diamonds">Diamonds</RadioButton>
+        <RadioButton value="spades"><span style={{color: "black"}}>♠️</span> Spades</RadioButton>
+        <RadioButton value="hearts"><span style={{color: "red"}}>♥️</span> Hearts</RadioButton>
+        <RadioButton value="clubs"><span style={{color: "black"}}>♣️</span> Clubs</RadioButton>
+        <RadioButton value="diamonds"><span style={{color: "red"}}>♦️</span> Diamonds</RadioButton>
       </RadioGroup>
     </>
   );

@@ -8,7 +8,7 @@ class ActionButton extends Component {
   render() {
     return (
       <div className="ActionButton">
-        <Button disabled={this.props.disabled} style={{width:300}} onClick={this.props.handleClick}>{this.props.buttonText}</Button>
+        <Button disabled={this.props.disabled} style={{width:250}} onClick={this.props.handleClick}>{this.props.buttonText}</Button>
       </div>
     );
   }

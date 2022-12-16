@@ -120,7 +120,7 @@ def could_be_defeated(hand, player, card, already_played=False):
                 f"could_be_defeated {card} breaking because it is highest remaining trump (excluding cards already played this hand)"
             )
             break
-        elif player.team == next_player.team:
+        elif hand.game.num_teams != 0 and player.team == next_player.team:
             # This is a teammate
             LOG.debug(f"could_be_defeated {card} continuing because {next_player} is a teammate")
             continue

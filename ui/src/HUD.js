@@ -15,7 +15,7 @@ function HUD(props) {
 
   const myPlayer = game?.players.find(player => player.user === signedInUser.id)?.id || "unknown";
   const myTurnToPlay = game?.current_trick?.active_player === myPlayer;
-  const myTurnToBid = game?.current_hand?.bidder === myPlayer;
+  const myTurnToBid = game?.current_hand?.bidder === myPlayer && game.state === "bidding";
 
   function toggleAutoPilot() {
     setLoading(true);

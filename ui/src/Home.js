@@ -13,6 +13,7 @@ class Home extends Component {
     loading: false,
     redirectToGames: false,
     redirectToManage: false,
+    redirectToHowToPlay: false,
   }
 
   componentDidMount() {
@@ -44,6 +45,9 @@ class Home extends Component {
     if (this.state.redirectToManage) {
       return <Redirect push to={`/manage?single=${this.state.single}`} />
     }
+    if (this.state.redirectToHowToPlay) {
+      return <Redirect push to={`/rules`} />
+    }
 
     const multiplayer = !this.props.signedInUser ? (
       <div className="HomeNoAuth">
@@ -71,6 +75,14 @@ class Home extends Component {
       </>
     );
     const singleplayerTitle = "Play against the computer";
+    const howToPlayTitle = "How to play";
+    const howToPlay = (
+      <>
+        <ActionButton disabled={this.props.signedInUser === null} buttonText="View Rules" handleClick={() => this.setState({
+          redirectToHowToPlay: true,
+        })} />
+      </>
+    );
 
     return (
       <Row type="flex" align="top" className="Home">
@@ -80,14 +92,19 @@ class Home extends Component {
         <Col xs={24}>
           <h1>Welcome to Play Smear</h1>
         </Col>
-        <Col xs={24} md={12} align="center">
-          <Card title={singleplayerTitle} style={{ width: 380 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
+        <Col xs={24} md={12} lg={8} align="center">
+          <Card title={singleplayerTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
             {singleplayer}
           </Card>
         </Col>
-        <Col xs={24} md={12} align="center">
-          <Card title={multiplayerTitle} style={{ width: 380 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
+        <Col xs={24} md={12} lg={8} align="center">
+          <Card title={multiplayerTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
             {multiplayer}
+          </Card>
+        </Col>
+        <Col xs={24} md={12} lg={8} align="center">
+          <Card title={howToPlayTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
+            {howToPlay}
           </Card>
         </Col>
       </Row>
