@@ -10,6 +10,13 @@ LOG = logging.getLogger(__name__)
 
 
 class PlayerSummarySerializer(serializers.ModelSerializer):
+    game_points_won = serializers.SerializerMethodField()
+
+    def get_game_points_won(self, player):
+        return (
+            player.prev_hand_game_points_won if self.context.get("prev_hand") else player.current_hand_game_points_won
+        )
+
     class Meta:
         model = Player
         fields = (
@@ -21,7 +28,7 @@ class PlayerSummarySerializer(serializers.ModelSerializer):
             "score",
             "winner",
             "seat",
-            "current_hand_game_points_won",
+            "game_points_won",
         )
 
 
@@ -147,10 +154,11 @@ class StatusPlayingTrickSerializer(serializers.ModelSerializer):
     current_hand = serializers.SerializerMethodField()
     current_trick = serializers.SerializerMethodField()
     state = serializers.SerializerMethodField()
+    players = serializers.SerializerMethodField()
 
     class Meta:
         model = Game
-        fields = ("state", "current_hand", "current_trick")
+        fields = ("state", "current_hand", "current_trick", "players")
 
     def get_current_hand(self, game):
         hand_num = self.context.get("hand_num")
@@ -168,6 +176,15 @@ class StatusPlayingTrickSerializer(serializers.ModelSerializer):
         trick_num = self.context.get("trick_num")
         # Force PLAYING_TRICK if user asks for trick specifically
         return Game.PLAYING_TRICK if trick_num else game.state
+
+    def get_players(self, game):
+        hand_num = self.context.get("hand_num")
+        player_context = {
+            **self.context,
+            "prev_hand": game.current_hand.num != hand_num,
+        }
+        players = game.player_set.all().order_by("seat")
+        return PlayerSummarySerializer(players, many=True, read_only=True, context=player_context).data
 
 
 class GameSerializer(serializers.ModelSerializer):

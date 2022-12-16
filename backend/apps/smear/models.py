@@ -208,6 +208,7 @@ class Player(models.Model):
 
     cards_in_hand = ArrayField(models.CharField(max_length=2), default=list)
     current_hand_game_points_won = models.IntegerField(blank=True, null=True)
+    prev_hand_game_points_won = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.name} ({self.id})"
@@ -227,6 +228,7 @@ class Player(models.Model):
 
     def reset_for_new_hand(self):
         self.cards_in_hand = []
+        self.prev_hand_game_points_won = self.current_hand_game_points_won
         self.current_hand_game_points_won = 0
 
     def accept_dealt_cards(self, cards):
@@ -351,7 +353,9 @@ class Hand(models.Model):
             player.accept_dealt_cards(deck.deal(3))
         for player in players:
             player.accept_dealt_cards(deck.deal(3))
-        Player.objects.bulk_update(players, ["cards_in_hand", "current_hand_game_points_won"])
+        Player.objects.bulk_update(
+            players, ["cards_in_hand", "current_hand_game_points_won", "prev_hand_game_points_won"]
+        )
 
         self.save()
 

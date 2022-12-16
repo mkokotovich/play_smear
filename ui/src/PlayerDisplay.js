@@ -76,7 +76,7 @@ function Player(props) {
       Score: {score}
       {<Bid bid={bid} isDealer={isDealer} currentlyBidding={currentlyBidding} isBidder={isBidder}/>}
       {card && <Card card={card} small={true}/>}
-      {results && (<> Game Points: {player.current_hand_game_points_won} </>) }
+      {results && (<> Game Points: {player.game_points_won} </>) }
       {results && resultsEntries}
     </div>
   );

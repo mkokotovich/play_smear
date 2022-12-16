@@ -114,7 +114,7 @@ def expected_points_from_high(player, hand, suit):
     )
 
     exp_points = 1 * percent_that_no_one_else_has_high
-    if exp_points < 0.3:
+    if exp_points < 0.4:
         exp_points = 0
     LOG.debug(f"{player} calculates {exp_points:.2f} expected points from high for {suit}")
 
@@ -139,7 +139,7 @@ def expected_points_from_low(player, hand, suit):
     )
 
     exp_points = 1 * percent_that_no_one_else_has_low
-    if exp_points < 0.3:
+    if exp_points < 0.4:
         exp_points = 0
     LOG.debug(f"{player} calculates {exp_points:.2f} expected points from low for {suit}")
 
