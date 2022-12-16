@@ -78,7 +78,7 @@ class Home extends Component {
     const howToPlayTitle = "How to play";
     const howToPlay = (
       <>
-        <ActionButton disabled={this.props.signedInUser === null} buttonText="View Rules" handleClick={() => this.setState({
+        <ActionButton buttonText="View Rules" handleClick={() => this.setState({
           redirectToHowToPlay: true,
         })} />
       </>
