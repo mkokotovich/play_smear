@@ -7,5 +7,6 @@ whitenoise==6.2.0
 psycopg2-binary==2.9.3
 PyJWT==1.7.1
 pytz==2022.5
-gunicorn==20.1.0
+gunicorn==21.1.0
 sendgrid==6.9.7
+unique-names-generator==1.0.2

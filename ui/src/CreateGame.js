@@ -15,7 +15,6 @@ class CreateGame extends Component {
     redirectToGame: false,
     gameID: 0,
     visible: false,
-    gameName: "",
     passcode: "",
     requirePasscode: false,
     numPlayers: null,
@@ -31,7 +30,6 @@ class CreateGame extends Component {
       loading: true
     });
     var game_data = {
-      name: this.state.gameName,
       passcode: this.state.passcode,
       num_players: this.state.numPlayers,
       num_teams: this.state.numTeams ? this.state.numTeams : 0,
@@ -71,7 +69,6 @@ class CreateGame extends Component {
   onCancel = () => {
     this.setState({
       visible: false,
-      gameName: "",
       passcode: "",
       requirePasscode: false,
       numPlayers: null,
@@ -83,7 +80,6 @@ class CreateGame extends Component {
 
   readyToStart = () => {
     return (
-      (this.state.gameName.length > 0) &&
       (this.state.requirePasscode === false || (this.state.requirePasscode === true && this.state.passcode.length > 0)) &&
       (this.state.scoreToPlayTo && this.state.scoreToPlayTo > 0) &&
       (this.state.numPlayers && this.state.numPlayers > 0)
@@ -108,16 +104,6 @@ class CreateGame extends Component {
           okButtonProps={{ disabled: !this.readyToStart()}}
           onCancel={this.onCancel}
         >
-          <Row className="create_div">
-            <Input
-              className="create_input"
-              placeholder="Game Name"
-              name="gameName"
-              value={this.state.gameName}
-              onChange={this.onChangeInput}
-              onPressEnter={() => this.handleCreate()}
-            />
-          </Row>
           <Row className="create_div">
             <p className="inputLabel">Number of players:</p>
             <RadioGroup name="numPlayers" onChange={this.onChangeInput}>

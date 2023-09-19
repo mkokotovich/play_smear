@@ -32,7 +32,7 @@ class Home extends Component {
         console.log(error);
         Modal.error({
           title: "Unable to reach server",
-          content: "Please refresh page and try again. " + getErrorString(error.response.data),
+          content: "Please refresh page and try again. " + getErrorString(error.response?.data),
           maskClosable: true,
         })
       });

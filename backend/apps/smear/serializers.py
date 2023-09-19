@@ -195,7 +195,7 @@ class GameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
         fields = "__all__"
-        read_only_fields = ("owner", "passcode_required")
+        read_only_fields = ("owner", "passcode_required", "name")
 
     def get_players(self, game):
         players = game.player_set.all().order_by("seat")

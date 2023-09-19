@@ -1,5 +1,8 @@
 function getErrorString(data) {
   console.log("In getErrorString:", data)
+  if (!data) {
+    return "";
+  }
   if (data.status && data.status === "error" && data.error) {
     console.log(`Well formed error`)
     // This is a well-formed error from our API
@@ -18,7 +21,7 @@ function getErrorString(data) {
       return data.error.error_description;
     }
   } else {
-    return JSON.stringify(data)
+    return JSON.stringify(data);
   }
 }
 
