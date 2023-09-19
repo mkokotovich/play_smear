@@ -40,7 +40,7 @@ REST_FRAMEWORK = {
 
 JWT_AUTH = {
     "JWT_AUTH_HEADER_PREFIX": "Bearer",
-    "JWT_EXPIRATION_DELTA": timedelta(hours=24),
+    "JWT_EXPIRATION_DELTA": timedelta(days=31),
     "JWT_RESPONSE_PAYLOAD_HANDLER": "api.jwt.jwt_response_payload_handler",
 }
 
