@@ -12,23 +12,22 @@ const RadioGroup = Radio.Group;
 
 
 function BidInput(props) {
-  const {game, bidValue, setBidValue} = props;
+  const {game, highBid, twoSet, bidValue, setBidValue} = props;
 
   function onChangeBid(e) {
     setBidValue(e.target.value);
   }
 
-  const high_bid_id = game?.current_hand?.high_bid;
-  const high_bid = game?.current_hand?.bids.find(bid => bid.id === high_bid_id)?.bid;
+  const passText = twoSet ? "Accept 2 set" : "Pass";
   return (
     <>
       <p>What is your bid:</p>
       <RadioGroup name="bidValue" onChange={onChangeBid} value={bidValue}>
-        <RadioButton value="0">Pass</RadioButton>
-        <RadioButton disabled={high_bid >= 2} value="2">2</RadioButton>
-        <RadioButton disabled={high_bid >= 3} value="3">3</RadioButton>
-        <RadioButton disabled={high_bid >= 4} value="4">4</RadioButton>
-        <RadioButton disabled={high_bid >= 5} value="5">5</RadioButton>
+        <RadioButton value="0">{passText}</RadioButton>
+        <RadioButton disabled={highBid >= 2} value="2">2</RadioButton>
+        <RadioButton disabled={highBid >= 3} value="3">3</RadioButton>
+        <RadioButton disabled={highBid >= 4} value="4">4</RadioButton>
+        <RadioButton disabled={highBid >= 5} value="5">5</RadioButton>
       </RadioGroup>
     </>
   );
@@ -46,7 +45,7 @@ function Bidding(props) {
     axios.post(`/api/smear/v1/games/${game.id}/hands/${game.current_hand.id}/bids/`,
       { bid: bidValue }
     ).then((response) => {
-      reloadGame(true, true, true);
+      reloadGame(false, true, true);
     }).catch((error) => {
       console.log(error);
       setLoading(false);
@@ -64,9 +63,12 @@ function Bidding(props) {
       <p>Waiting for {player?.name} to bid</p>
     </>
   );
+  const highBidId = game?.current_hand?.high_bid;
+  const highBid = game?.current_hand?.bids.find(bid => bid.id === highBidId)?.bid;
+  const amIDealer = game?.current_hand?.dealer === myPlayer;
   const bidInput = (
     <>
-      <BidInput game={game} bidValue={bidValue} setBidValue={setBidValue} />
+      <BidInput game={game} highBid={highBid} twoSet={amIDealer && highBid  === 0} bidValue={bidValue} setBidValue={setBidValue} />
       &nbsp;
       <Button onClick={submitBid} disabled={loading}>Submit Bid</Button>
     </>

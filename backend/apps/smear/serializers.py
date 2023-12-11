@@ -39,13 +39,13 @@ class PlayerIDSerializer(serializers.Serializer):
 class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
-        fields = ("id", "name", "members", "score", "winner")
+        fields = ("id", "name", "members", "score", "winner", "color")
 
 
 class TeamSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
-        fields = ("id", "name", "score", "winner")
+        fields = ("id", "name", "score", "winner", "color")
 
 
 class PlaySerializer(serializers.ModelSerializer):
@@ -90,7 +90,7 @@ class HandSummarySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Hand
-        fields = ("id", "num", "dealer", "bidder", "high_bid", "trump", "bids")
+        fields = ("id", "num", "dealer", "bidder", "high_bid", "trump", "bids", "finished")
 
     def get_bids(self, hand):
         return BidSerializer(hand.bids.all(), many=True, read_only=True, context=self.context).data if hand else []
@@ -126,7 +126,7 @@ class HandSummaryWithCardsSerializer(HandSummarySerializer):
 
     class Meta:
         model = Hand
-        fields = ("id", "num", "dealer", "bidder", "high_bid", "trump", "bids", "cards", "results")
+        fields = ("id", "num", "dealer", "bidder", "high_bid", "trump", "bids", "cards", "results", "finished")
 
 
 class StatusBiddingSerializer(serializers.ModelSerializer):

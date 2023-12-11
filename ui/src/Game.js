@@ -7,8 +7,8 @@ import WaitingRoom from './WaitingRoom';
 import Bidding from './Bidding';
 import DeclaringTrump from './DeclaringTrump';
 import Trick from './Trick';
-//import HandResults from './HandResults';
 import GameResults from './GameResults';
+import HandResults from './HandResults';
 import HUD from './HUD';
 import getErrorString from './utils';
 
@@ -172,9 +172,11 @@ function Game(props) {
   if (game) {
     if (game.state  === "starting") {
       gameDisplay = (<WaitingRoom {...allProps} />);
-    } else if (game.state  === "bidding") {
+    } else if (game.state  === "bidding" && !game.current_hand?.finished) {
       setCardsIfNeeded(game?.current_hand?.cards);
       gameDisplay = (<Bidding {...allProps} />);
+    } else if (game.state  === "bidding" && game.current_hand?.finished) {
+      gameDisplay = (<HandResults {...allProps} />);
     } else if (game.state  === "declaring_trump") {
       gameDisplay = (<DeclaringTrump {...allProps} />);
     } else if (game.state  === "playing_trick") {

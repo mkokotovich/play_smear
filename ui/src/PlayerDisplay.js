@@ -2,6 +2,7 @@ import React from 'react';
 import { withRouter } from 'react-router-dom';
 import Card from './Card';
 import Bid from './Bid';
+import { TeamOutlined, UserOutlined } from '@ant-design/icons';
 
 function Player(props) {
   const {
@@ -54,7 +55,7 @@ function Player(props) {
     );
   });;
 
-  const border = waitingForMe ? "4px solid blue" : "1px solid grey";
+  const border = waitingForMe ? "5px solid red" : "1px solid grey";
   const playerStyles = {
     display: "flex-inline",
     alignSelf: "flex-start",
@@ -69,10 +70,27 @@ function Player(props) {
   };
   const score = team ? team.score : player.score;
 
+  const teamColor = team?.color || "grey";
+  const teamBorder = `3px solid ${teamColor}`;
+  const teamStyles = {
+    display: "flex-inline",
+    alignSelf: "flex-start",
+    alignItems: "center",
+    padding: "0px 5px 0px 5px",
+    margin: 0,
+    borderRadius: "5px",
+    border: teamBorder,
+  };
+  const teamDisplay = team && (
+    <div style={teamStyles}>
+      <TeamOutlined /> <b>{teamName}</b> <br/>
+    </div>
+  );
+
   return (
     <div style={playerStyles}>
-      {player.name}<br/>
-      {player.team && (<> {teamName} <br/></>)}
+      {teamDisplay}
+      <UserOutlined /> {player.name}<br/>
       Score: {score}
       {<Bid bid={bid} isDealer={isDealer} currentlyBidding={currentlyBidding} isBidder={isBidder}/>}
       {card && <Card card={card} small={true}/>}

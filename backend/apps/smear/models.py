@@ -70,7 +70,8 @@ class Game(models.Model):
     def create_initial_teams(self):
         teams = []
         for i in range(0, self.num_teams):
-            teams.append(Team(game=self, name=f"Team {i+1}"))
+            color = Team.COLORS[i]
+            teams.append(Team(game=self, name=f"Team {color}", color=color))
         Team.objects.bulk_create(teams)
 
     def add_computer_players(self, count):
@@ -180,10 +181,12 @@ class Game(models.Model):
 
 
 class Team(models.Model):
+    COLORS = ["blue", "orange", "plum", "sienna", "khaki", "linen", "cyan", "green"]
     game = models.ForeignKey(Game, related_name="teams", on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
     score = models.IntegerField(blank=True, default=0)
     winner = models.BooleanField(blank=True, default=False)
+    color = models.CharField(max_length=1024, blank=True, null=True)
 
     def __str__(self):
         return f"{self.name} ({self.id})"

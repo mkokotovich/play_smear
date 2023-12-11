@@ -9,8 +9,9 @@ function GameResults(props) {
   // eslint-disable-next-line no-unused-vars
   const {game, loading, reloadGame} = props;
 
-  const winners = game.players.filter(player => player.winner);
-  const winner_names = winners.map(player => player.name);
+  const teams = game.num_teams > 0;
+  const winners = teams ? game.teams.filter(team => team.winner) : game.players.filter(player => player.winner);
+  const winner_names = winners.map(winner => winner.name);
   return (
     <div>
       <PlayerDisplay {...props} />
