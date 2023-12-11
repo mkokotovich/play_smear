@@ -742,8 +742,10 @@ class Trick(models.Model):
         if lead_card.is_trump(self.hand.trump) and not card.is_trump(self.hand.trump) and has_trump:
             return "must follow suit"
 
-        # For other lead suits, ensure card is following suit (or player is trumping)
-        has_lead_suit = any(c.suit == lead_card.suit for c in cards)
+        # For other lead suits, ensure either:
+        # - card is following suit (if able, and ignoring jick suit)
+        # - player is trumping
+        has_lead_suit = any((c.suit == lead_card.suit and not c.is_jick(self.hand.trump)) for c in cards)
         if (lead_card.suit != card.suit) and has_lead_suit and not card.is_trump(self.hand.trump):
             return "must follow suit"
 
