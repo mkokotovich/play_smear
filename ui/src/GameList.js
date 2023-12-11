@@ -56,7 +56,7 @@ class GameList extends Component {
                 !game.loading && this.props.mode === 'manage' ?
                   (
                     <>
-                      <Button style={{marginRight: "5px"}} onClick={() => handleResume(game.id)}>Resume</Button>
+                      <Button disabled={game.state === "game_over"} style={{marginRight: "5px"}} onClick={() => handleResume(game.id)}>{game.state === "game_over" ? "Finished" : "Resume"}</Button>
                       <Button disabled={game.owner !== signedInUser.id} onClick={() => handleDelete(game.id)}>Delete Game</Button>
                     </>
                   ) :
