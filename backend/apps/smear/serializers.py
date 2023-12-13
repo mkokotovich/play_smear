@@ -131,10 +131,12 @@ class HandSummaryWithCardsSerializer(HandSummarySerializer):
 
 class StatusBiddingSerializer(serializers.ModelSerializer):
     current_hand = serializers.SerializerMethodField()
+    players = serializers.SerializerMethodField()
+    teams = TeamSummarySerializer(read_only=True, many=True)
 
     class Meta:
         model = Game
-        fields = ("state", "current_hand", "players")
+        fields = ("state", "current_hand", "players", "teams")
 
     def get_current_hand(self, game):
         hand_num = self.context.get("hand_num")
@@ -164,10 +166,11 @@ class StatusPlayingTrickSerializer(serializers.ModelSerializer):
     current_trick = serializers.SerializerMethodField()
     state = serializers.SerializerMethodField()
     players = serializers.SerializerMethodField()
+    teams = TeamSummarySerializer(read_only=True, many=True)
 
     class Meta:
         model = Game
-        fields = ("state", "current_hand", "current_trick", "players")
+        fields = ("state", "current_hand", "current_trick", "players", "teams")
 
     def get_current_hand(self, game):
         hand_num = self.context.get("hand_num")

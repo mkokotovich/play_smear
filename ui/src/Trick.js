@@ -20,6 +20,9 @@ function Trick(props) {
 
   function submitSpecificCard(card) {
     //console.log(card);
+    if (loading) {
+      return;
+    }
     setLoading(true);
     axios.post(`/api/smear/v1/games/${game.id}/hands/${game.current_hand.id}/tricks/${game.current_trick.id}/plays/`,
       { card: card }
