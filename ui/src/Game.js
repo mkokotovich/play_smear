@@ -146,15 +146,20 @@ function Game(props) {
     if (game) {
       const myPlayer = game?.players.find(player => player.user === signedInUser.id);
       const autoPilotEnabled = myPlayer?.is_computer;
-      const myTurnTrick = game?.current_trick?.active_player === myPlayer.id;
+      const myTurnTrick = game?.current_trick?.active_player === myPlayer?.id;
       const myTurnBidding = (game?.current_hand?.bidder === myPlayer.id) && (game?.state === "bidding" || game?.state === "declaring_trump");
       const myTurn = myTurnTrick || myTurnBidding;
       const trickOver = Boolean(game?.current_trick?.taker);
       const gameOver = game?.state === "game_over";
-      if (needInput && (!myTurn || autoPilotEnabled) && !trickOver && !gameOver) {
+      if ((needInput || autoPilotEnabled) && (!myTurn || autoPilotEnabled) && (!trickOver || autoPilotEnabled) && !gameOver) {
         // Do not reload status if it is my turn (unless autopilot is enabled,
         // then reload anyway because we won't be waiting for user input
-        reloadGameStatus(props.match.params.gameID, game?.current_hand?.num, game?.current_trick?.num, () => {}, updateGame);
+        if (autoPilotEnabled) {
+          // Do not pin the reload to the trick or hand
+          loadGame(props.match.params.gameID, undefined, undefined, () => {}, setGame, setCards);
+        } else {
+          reloadGameStatus(props.match.params.gameID, game?.current_hand?.num, game?.current_trick?.num, () => {}, updateGame);
+        }
       }
     }
   }, 2000);

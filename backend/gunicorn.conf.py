@@ -4,7 +4,7 @@ import os
 # Non logging stuff
 bind = ":8000"
 workers = 2
-threads = 4
+threads = 2
 
 # Reload if source changes, but only when running locally
 reload = bool(os.getenv("ENVIRON", "").lower() == "local")

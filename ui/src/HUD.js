@@ -10,22 +10,30 @@ import getErrorString from './utils';
 
 
 function HUD(props) {
-  const [autoPilot, setAutoPilot] = useState(false);
   const {game, loading, setLoading, signedInUser } = props;
 
-  const myPlayer = game?.players.find(player => player.user === signedInUser.id)?.id || "unknown";
-  const myTurnToPlay = game?.current_trick?.active_player === myPlayer;
-  const myTurnToBid = game?.current_hand?.bidder === myPlayer && game.state === "bidding";
+  const myPlayer = game?.players.find(player => player.user === signedInUser.id);
+  const autoPilotEnabled = myPlayer?.is_computer;
+  const [autoPilot, setAutoPilot] = useState(autoPilotEnabled);
+  const myTurnToPlay = game?.current_trick?.active_player === myPlayer?.id;
+  const myTurnToBid = game?.current_hand?.bidder === myPlayer?.id && game?.state === "bidding";
+
+  React.useEffect(() => {
+    const myPlayer = game?.players.find(player => player.user === signedInUser.id);
+    const autoPilotEnabled = myPlayer?.is_computer;
+    setAutoPilot(autoPilotEnabled);
+  }, [game])
 
   function toggleAutoPilot() {
     setLoading(true);
     axios.post(`/api/smear/v1/games/${game.id}/auto_pilot/`
     ).then((response) => {
       setLoading(false);
-      setAutoPilot(!autoPilot);
+      setAutoPilot(autoPilotEnabled);
     }).catch((error) => {
       console.log(error);
       setLoading(false);
+      setAutoPilot(autoPilotEnabled);
       Modal.error({
         title: "Unable to change AutoPilot setting",
         content: getErrorString(error.response.data),

@@ -20,7 +20,10 @@ function Player(props) {
         results = {},
       } = {},
       teams = [],
-    } = {}
+      players = [],
+      state = undefined,
+    } = {},
+    signedInUser
   } = props;
   const bid = bids.find(bid => bid.player === player.id);
   const play = plays.find(play => play.player === player.id);
@@ -30,8 +33,13 @@ function Player(props) {
   const isDealer = dealer === player.id;
   const isBidder = bidder === player.id;
   const isActivePlayer = active_player === player.id;
-  const waitingForMe = (currentlyBidding && isBidder) || (!currentlyBidding && isActivePlayer);
+  const myPlayer = players.find(player => player.user === signedInUser.id);
 
+  const myTurnToPlay = active_player === myPlayer?.id && isActivePlayer;
+  const myTurnToBid = bidder === myPlayer?.id && isBidder && state === "bidding";
+  const myTurn = myTurnToPlay || myTurnToBid;
+  const waitingForMe = myTurn;
+  const waitingForPlayer = (currentlyBidding && isBidder) || (!currentlyBidding && isActivePlayer);
   const possiblePoints = results ? Object.keys(results) : [];
   
   const pointsWon = possiblePoints.reduce((accum, key) => {
@@ -55,7 +63,7 @@ function Player(props) {
     );
   });;
 
-  const border = waitingForMe ? "5px solid red" : "1px solid grey";
+  const border = waitingForMe ? "5px solid red" : waitingForPlayer ? "3px solid blue" : "1px solid grey";
   const playerStyles = {
     display: "flex-inline",
     alignSelf: "flex-start",

@@ -134,12 +134,21 @@ class StatusBiddingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Game
-        fields = ("state", "current_hand")
+        fields = ("state", "current_hand", "players")
 
     def get_current_hand(self, game):
         hand_num = self.context.get("hand_num")
         hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
         return HandSummaryWithCardsSerializer(hand, read_only=True, context=self.context).data if hand else {}
+
+    def get_players(self, game):
+        hand_num = self.context.get("hand_num")
+        player_context = {
+            **self.context,
+            "prev_hand": game.current_hand.num != hand_num,
+        }
+        players = game.player_set.all().order_by("seat")
+        return PlayerSummarySerializer(players, many=True, read_only=True, context=player_context).data
 
 
 class TrickSummarySerializer(serializers.ModelSerializer):
