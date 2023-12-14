@@ -1,3 +1,5 @@
+from unittest.mock import ANY
+
 import requests
 
 from tests.external.test_20_multi_player_game_setup import get_game
@@ -21,6 +23,7 @@ def add_player_to_team(smear_host, user, game, team, player):
         "name": team["name"],
         "score": 0,
         "winner": False,
+        "color": ANY,
     }
 
     return response.json()
@@ -70,6 +73,7 @@ def test_mp_game_team_rename(smear_host, state):
         "name": "coolname",
         "score": 0,
         "winner": False,
+        "color": ANY,
     }
 
 

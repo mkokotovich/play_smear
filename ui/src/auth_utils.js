@@ -22,7 +22,7 @@ export function signIn(email, password, handleAuthChange, successCallback) {
       if (user) {
         localStorage.setItem('user', JSON.stringify(user));
         if (handleAuthChange) {
-          console.log("Calling handleAuthChange with user" + user);
+          console.log("Calling handleAuthChange with user" + JSON.stringify(user));
           handleAuthChange(user);
         }
       }

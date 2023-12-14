@@ -14,6 +14,8 @@ def get_token(smear_host, user):
     assert response.json()["user"] == {
         "id": user["id"],
         "username": user["username"],
+        "first_name": "",
+        "is_anonymous": False,
     }
     user["token"] = response.json()["token"]
 

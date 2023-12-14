@@ -27,6 +27,7 @@ def test_user_get(smear_host, state):
         "first_name": "",
         "last_name": "",
         "username": state["user"]["username"],
+        "is_anonymous": False,
     }
 
 

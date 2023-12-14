@@ -18,18 +18,24 @@ function SignOut(props) {
     }
   };
 
-  const menu = (
+  const menu = (props.user.is_anonymous) ? (
+    <Menu onClick={menuClick}>
+      <Menu.Item key="signout">Sign Out</Menu.Item>
+    </Menu>
+  ) : (
     <Menu onClick={menuClick}>
       <Menu.Item key="profile">Profile</Menu.Item>
       <Menu.Item key="signout">Sign Out</Menu.Item>
     </Menu>
   );
 
+  const username = props.user.is_anonymous ? props.user.first_name : props.user.username;
+
   return (
     <React.Fragment>
       <Dropdown overlay={menu} placement="bottomRight">
         <Button type="default" icon={ <UserOutlined /> }>
-          {props.email}
+          {username}
         </Button>
       </Dropdown>
     </React.Fragment>
@@ -89,7 +95,7 @@ class SignIn extends React.Component {
 
   render() {
     const signInOrOut = this.props.isSignedIn ? (
-      <SignOut handleSignOut={this.handleSignOut} handleProfile={this.handleProfile} email={this.props.signedInUser.username} />
+      <SignOut handleSignOut={this.handleSignOut} handleProfile={this.handleProfile} user={this.props.signedInUser} />
     ) : (
       <>
         <SignInForm handleSignIn={this.handleSignIn} />

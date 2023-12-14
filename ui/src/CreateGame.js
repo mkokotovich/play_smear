@@ -3,6 +3,7 @@ import { Redirect, withRouter } from 'react-router-dom';
 import { Radio, Row, Checkbox, Input, Button, Modal, Spin } from 'antd';
 import axios from 'axios';
 import getErrorString from './utils';
+import { signIn } from './auth_utils';
 import './CreateGame.css';
 
 const RadioButton = Radio.Button;
@@ -22,13 +23,39 @@ class CreateGame extends Component {
     scoreToPlayTo: null,
   }
 
-  handleCreate = () => {
-    if (!this.readyToStart()) {
-      return;
+  createAnonymousUser(callNext) {
+    var random_user;
+    try {
+      random_user = crypto.randomUUID();
+    } catch (error) {
+        Modal.error({
+          title: "Unable to create anonymous user, please create a user and sign in, instead",
+          content: getErrorString(error.response.data),
+          maskClosable: true,
+        })
+        return;
     }
-    this.setState({
-      loading: true
-    });
+    var user_data = {"username": random_user, "password": random_user, "is_anonymous": "true"};
+
+    axios.post('/api/users/v1/', user_data)
+      .then((response) => {
+        console.log(response);
+        signIn(random_user, random_user, this.props.handleAuthChange, callNext);
+      })
+      .catch((error) => {
+        console.log(error);
+        this.setState({
+          loading: false,
+        });
+        Modal.error({
+          title: "Unable to create anonymous user, please create a user and sign in, instead",
+          content: getErrorString(error.response.data),
+          maskClosable: true,
+        })
+      });
+  }
+
+  createGame() {
     var game_data = {
       passcode: this.state.passcode,
       num_players: this.state.numPlayers,
@@ -56,6 +83,23 @@ class CreateGame extends Component {
           maskClosable: true,
         })
       });
+  }
+
+  handleCreate = () => {
+    if (!this.readyToStart()) {
+      return;
+    }
+    this.setState({
+      loading: true
+    });
+    if (!this.props.signedInUser) {
+      // If we aren't signed in, create an anonymous user and then create the game
+      this.createAnonymousUser(()=>{
+        this.createGame();
+      });
+    } else {
+      this.createGame();
+    }
   }
 
   onChangeInput = (e) => {

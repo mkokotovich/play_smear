@@ -4,6 +4,8 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from unique_names_generator import get_random_name
+from unique_names_generator.data import ANIMALS
 
 from apps.smear.pagination import SmearPagination
 from apps.user.email import send_password_reset_email
@@ -44,6 +46,15 @@ class UserViewSet(viewsets.ModelViewSet):
                 IsOwnerPermission,
             ]
         return super(UserViewSet, self).get_permissions()
+
+    def create(self, request, *args, **kwargs):
+        # This is a hack because extending the User model is a pain
+        is_anonymous_arg = request.data.get("is_anonymous", "false")
+        is_anonymous = is_anonymous_arg.lower() == "true"
+        if is_anonymous:
+            request.data["email"] = "is_anonymous@playsmear.com"
+            request.data["first_name"] = f"Anon. {get_random_name(combo=[ANIMALS])}"
+        return super().create(request, *args, **kwargs)
 
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def changepassword(self, request):

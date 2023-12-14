@@ -34,9 +34,13 @@ class App extends Component {
     this.setState({
       user: user,
     });
-    window.analytics.identify(user.id, {
-      name: user.name,
-    });
+    if (user && user?.id) {
+      window.analytics.identify(user.id, {
+        username: user.username,
+        is_anonymous: user.is_anonymous,
+        first_name: user.first_name,
+      });
+    };
 
   }
 
@@ -62,7 +66,7 @@ class App extends Component {
           exact
           path="/"
           render={() => {
-            return <Home signedInUser={this.state.user}/>;
+            return <Home handleAuthChange={this.handleAuthChange} signedInUser={this.state.user}/>;
           }}
         />
 

@@ -67,7 +67,7 @@ class Home extends Component {
 
     const singleplayer = (
       <>
-        <CreateGame single={true}/>
+        <CreateGame single={true} handleAuthChange={this.props.handleAuthChange} />
         <ActionButton disabled={this.props.signedInUser === null} buttonText="Resume A Game" handleClick={() => this.setState({
           redirectToManage: true,
           single: true,
