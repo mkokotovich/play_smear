@@ -201,6 +201,11 @@ def expected_points_from_jack_and_jick(player, hand, suit):
     num_my_AKQ = len([card for card in my_trump if card.value in ("ace", "king", "queen")])
     num_expected_trump = expected_total_trump(hand.game.num_players)
     num_expected_remaining_trump = num_expected_trump - len(my_trump)
+    if num_expected_remaining_trump < 1:
+        # Enforce a minimum so we don't divide by zero
+        num_expected_remaining_trump = 1
+    # buffer_required is the number of other trump I need in order to feel comfortable
+    # that I can take my J&Js
     buffer_required = num_expected_remaining_trump * 0.6
     expected_jacks_and_jicks = 2 * (6 * hand.game.num_players) / 52
 
