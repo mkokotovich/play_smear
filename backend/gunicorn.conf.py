@@ -3,8 +3,8 @@ import os
 # gunicorn.conf.py
 # Non logging stuff
 bind = ":8000"
-workers = 2
-threads = 2
+workers = 1
+threads = 4
 
 # Reload if source changes, but only when running locally
 reload = bool(os.getenv("ENVIRON", "").lower() == "local")
