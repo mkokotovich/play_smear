@@ -34,6 +34,10 @@ class App extends Component {
     this.setState({
       user: user,
     });
+    window.analytics.identify(user.id, {
+      name: user.name,
+    });
+
   }
 
   render() {
