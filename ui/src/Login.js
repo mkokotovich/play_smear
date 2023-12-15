@@ -2,7 +2,7 @@ import React, { Component, useState } from 'react';
 import { Link, withRouter, Redirect } from 'react-router-dom';
 import {
 } from 'antd';
-import { signIn, signUp } from './auth_utils';
+import { signIn, signUp, signOut } from './auth_utils';
 import './Login.css';
 
 import {
@@ -48,12 +48,16 @@ const tailFormItemLayout = {
 const RegistrationForm = (props) => {
   const [form] = Form.useForm();
   const [redirectHome, setRedirectHome] = useState(false);
+  const signedIn = !!props.signedInUser;
 
   const onFinish = values => {
     console.log('Received values of form: ', values);
+    if (signedIn) {
+      signOut(props.handleAuthChange);
+    }
     signUp(values.email, values.password, props.handleAuthChange, ()=>{
-     setRedirectHome(true);
-    })
+      setRedirectHome(true);
+    });
   };
 
   if (redirectHome) {
@@ -61,6 +65,8 @@ const RegistrationForm = (props) => {
   }
 
   return (
+    <>
+    <h2>Create a free account!</h2>
     <Form
       {...formItemLayout}
       form={form}
@@ -132,6 +138,7 @@ const RegistrationForm = (props) => {
         </Button>
       </Form.Item>
     </Form>
+    </>
   );
 };
 
@@ -139,9 +146,13 @@ const RegistrationForm = (props) => {
 const NormalLoginForm = (props) => {
   const [form] = Form.useForm();
   const [redirectHome, setRedirectHome] = useState(false);
+  const signedIn = !!props.signedInUser;
 
   const onFinish = values => {
     console.log('Received values of form: ', values);
+    if (signedIn) {
+      signOut(props.handleAuthChange);
+    }
     signIn(values.email, values.password, props.handleAuthChange, ()=>{
       setRedirectHome(true);
     })
@@ -152,6 +163,8 @@ const NormalLoginForm = (props) => {
   }
 
   return (
+    <>
+    <h2>Or if you already have an account, Sign In!</h2>
     <Form
       {...formItemLayout}
       form={form}
@@ -200,6 +213,7 @@ const NormalLoginForm = (props) => {
         </Button>
       </Form.Item>
     </Form>
+    </>
   );
 };
 
@@ -224,10 +238,10 @@ class Login extends Component {
           </>
         </Col>
         <Col xs={24} md={12} align="center">
-          <NormalLoginForm {...this.props} />
+          <RegistrationForm {...this.props} />
         </Col>
         <Col xs={24} md={12} align="center">
-          <RegistrationForm {...this.props} />
+          <NormalLoginForm {...this.props} />
         </Col>
       </Row>
     );

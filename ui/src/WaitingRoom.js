@@ -496,6 +496,7 @@ function WaitingRoom(props) {
       <span>
       Currently assigning teams.
       </span>
+      <p>Drag and drop players onto teams, or click "Auto Assign" to randomly assign players. When you are satisfied with the teams, click "Start Game" to begin!</p>
       {dnd}
       <div className="flex">
         <Button disabled={!isOwner} onClick={() => startGame(teams, props.game.id, props.setLoading, props.reloadGame)}>Start Game</Button>

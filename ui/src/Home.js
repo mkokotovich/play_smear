@@ -49,7 +49,9 @@ class Home extends Component {
       return <Redirect push to={`/rules`} />
     }
 
-    const multiplayer = !this.props.signedInUser ? (
+    const signedIn = this.props.signedInUser && !this.props.signedInUser.is_anonymous;
+
+    const multiplayer = !signedIn ? (
       <div className="HomeNoAuth">
         <Link to="/login">Sign in or create a free account</Link> to play multiplayer games.
       </div>
@@ -68,7 +70,7 @@ class Home extends Component {
     const singleplayer = (
       <>
         <CreateGame single={true} handleAuthChange={this.props.handleAuthChange} />
-        <ActionButton disabled={this.props.signedInUser === null} buttonText="Resume A Game" handleClick={() => this.setState({
+        <ActionButton disabled={!signedIn} buttonText="Resume A Game" handleClick={() => this.setState({
           redirectToManage: true,
           single: true,
         })} />
@@ -90,7 +92,11 @@ class Home extends Component {
           { this.state.loading && <Spin size="large" />}
         </div>
         <Col xs={24}>
-          <h1>Welcome to Play Smear</h1>
+          <div style={{maxWidth: 1200, padding: "0px 20px 0px 20px"}} >
+            <h1>Welcome to Play Smear!</h1>
+            <p>Welcome to the new Play Smear, now featuring the ability to resume games, more easily discover multiplayer games, and an overall improved user experience!</p>
+            <p>To take advantage of all the new features, please <Link to="/login">create a free account</Link>. Otherwise, single player games against the computer can still be played without logging in.</p>
+          </div>
         </Col>
         <Col xs={24} md={12} lg={8} align="center">
           <Card title={singleplayerTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">

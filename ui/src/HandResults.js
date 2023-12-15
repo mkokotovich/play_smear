@@ -4,9 +4,12 @@ import { Button } from 'antd';
 
 function HandResults(props) {
   // eslint-disable-next-line no-unused-vars
-  const {game, loading, reloadGame} = props;
+  const {game, loading, reloadGame, resetCards, setCards} = props;
 
   function nextHand() {
+    if (resetCards) {
+      setCards([]);
+    }
     reloadGame(true, true, true);
   }
 

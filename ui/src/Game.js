@@ -100,7 +100,7 @@ function Game(props) {
   const {signedInUser} = props;
 
   function setCardsIfNeeded(newCards) {
-    if (cards.length == 0) {
+    if (cards.length === 0) {
       setCards(newCards);
     }
   }
@@ -181,7 +181,8 @@ function Game(props) {
       setCardsIfNeeded(game?.current_hand?.cards);
       gameDisplay = (<Bidding {...allProps} />);
     } else if (game.state  === "bidding" && game.current_hand?.finished) {
-      gameDisplay = (<HandResults {...allProps} />);
+      // This is a "dealer took a two set" scenario
+      gameDisplay = (<HandResults {...allProps} resetCards={true} setCards={setCards} />);
     } else if (game.state  === "declaring_trump") {
       gameDisplay = (<DeclaringTrump {...allProps} />);
     } else if (game.state  === "playing_trick") {
