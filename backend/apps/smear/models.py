@@ -18,7 +18,7 @@ class Game(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-    owner = models.ForeignKey("auth.User", related_name="games", on_delete=models.CASCADE, null=True)
+    owner = models.ForeignKey("auth.User", related_name="games", on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=256, blank=True, default="")
     num_players = models.IntegerField()
     num_teams = models.IntegerField()
@@ -29,7 +29,7 @@ class Game(models.Model):
     players = models.ManyToManyField("auth.User", through="Player")
     state = models.CharField(max_length=1024, blank=True, default="")
     next_dealer = models.ForeignKey(
-        "Player", related_name="games_next_dealer", on_delete=models.CASCADE, null=True, blank=True
+        "Player", related_name="games_next_dealer", on_delete=models.SET_NULL, null=True, blank=True
     )
 
     # Available states
@@ -294,8 +294,10 @@ class Hand(models.Model):
     num = models.IntegerField()
 
     game = models.ForeignKey(Game, related_name="hands", on_delete=models.CASCADE, null=True)
-    dealer = models.ForeignKey(Player, on_delete=models.CASCADE, null=True, blank=True)
-    bidder = models.ForeignKey(Player, related_name="hands_was_bidder", on_delete=models.CASCADE, null=True, blank=True)
+    dealer = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True)
+    bidder = models.ForeignKey(
+        Player, related_name="hands_was_bidder", on_delete=models.SET_NULL, null=True, blank=True
+    )
     high_bid = models.OneToOneField(
         "smear.Bid", related_name="hand_with_high_bid", on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -314,19 +316,19 @@ class Hand(models.Model):
     # These values are updated as players win the cards, but game is
     # awarded at the end of the game
     winner_high = models.ForeignKey(
-        Player, related_name="games_winner_high", on_delete=models.CASCADE, null=True, blank=True
+        Player, related_name="games_winner_high", on_delete=models.SET_NULL, null=True, blank=True
     )
     winner_low = models.ForeignKey(
-        Player, related_name="games_winner_low", on_delete=models.CASCADE, null=True, blank=True
+        Player, related_name="games_winner_low", on_delete=models.SET_NULL, null=True, blank=True
     )
     winner_jack = models.ForeignKey(
-        Player, related_name="games_winner_jack", on_delete=models.CASCADE, null=True, blank=True
+        Player, related_name="games_winner_jack", on_delete=models.SET_NULL, null=True, blank=True
     )
     winner_jick = models.ForeignKey(
-        Player, related_name="games_winner_jick", on_delete=models.CASCADE, null=True, blank=True
+        Player, related_name="games_winner_jick", on_delete=models.SET_NULL, null=True, blank=True
     )
     winner_game = models.ForeignKey(
-        Player, related_name="games_winner_game", on_delete=models.CASCADE, null=True, blank=True
+        Player, related_name="games_winner_game", on_delete=models.SET_NULL, null=True, blank=True
     )
 
     finished = models.BooleanField(blank=True, default=False)
@@ -680,7 +682,7 @@ class Bid(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     hand = models.ForeignKey(Hand, related_name="bids", on_delete=models.CASCADE, null=True)
-    player = models.ForeignKey(Player, related_name="bids", on_delete=models.CASCADE, null=True)
+    player = models.ForeignKey(Player, related_name="bids", on_delete=models.SET_NULL, null=True)
     bid = models.IntegerField()
     trump = models.CharField(max_length=16, blank=True, default="", choices=SUIT_CHOICES)
 
@@ -697,7 +699,7 @@ class Play(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     trick = models.ForeignKey("Trick", related_name="plays", on_delete=models.CASCADE, null=True)
-    player = models.ForeignKey(Player, related_name="plays", on_delete=models.CASCADE, null=True)
+    player = models.ForeignKey(Player, related_name="plays", on_delete=models.SET_NULL, null=True)
     card = models.CharField(max_length=2)
 
     class Meta:
@@ -718,8 +720,8 @@ class Trick(models.Model):
     num = models.IntegerField()
 
     hand = models.ForeignKey(Hand, related_name="tricks", on_delete=models.CASCADE, null=True)
-    active_player = models.ForeignKey(Player, related_name="tricks_playing", on_delete=models.CASCADE, null=True)
-    taker = models.ForeignKey(Player, related_name="tricks_taken", on_delete=models.CASCADE, null=True)
+    active_player = models.ForeignKey(Player, related_name="tricks_playing", on_delete=models.SET_NULL, null=True)
+    taker = models.ForeignKey(Player, related_name="tricks_taken", on_delete=models.SET_NULL, null=True)
 
     class Meta:
         unique_together = (("hand", "num"),)

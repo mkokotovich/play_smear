@@ -72,7 +72,7 @@ function Player(props) {
     margin: 5,
     border: border,
     borderRadius: "5px",
-    minWidth: "130px",
+    minWidth: "125px",
     maxWidth: "200px",
     height: "100%",
   };

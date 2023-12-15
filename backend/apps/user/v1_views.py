@@ -1,5 +1,10 @@
+import logging
+from datetime import timedelta
+
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -16,6 +21,8 @@ from apps.user.serializers import (
     ResetPasswordSerializer,
     UserSerializer,
 )
+
+LOG = logging.getLogger(__name__)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -52,7 +59,7 @@ class UserViewSet(viewsets.ModelViewSet):
         is_anonymous_arg = request.data.get("is_anonymous", "false")
         is_anonymous = is_anonymous_arg.lower() == "true"
         if is_anonymous:
-            request.data["email"] = "is_anonymous@playsmear.com"
+            request.data["email"] = settings.ANONYMOUS_EMAIL
             request.data["first_name"] = f"Anon. {get_random_name(combo=[ANIMALS])}"
         return super().create(request, *args, **kwargs)
 
@@ -109,3 +116,16 @@ class UserViewSet(viewsets.ModelViewSet):
         user.set_password(serializer.data["new_password"])
         user.save()
         return Response({"status": "password reset"})
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="cleanup-anonymous",
+        url_name="cleanup-anonymous",
+    )
+    def cleanup_anonymous(self, request):
+        one_month = timezone.now() - timedelta(days=31)
+        old_anonymous_users = User.objects.filter(email=settings.ANONYMOUS_EMAIL, date_joined__lte=one_month)
+        num_objects, results = old_anonymous_users.delete()
+        LOG.info(f"Deleted {num_objects} objects from anonymous users")
+        return Response({"status": "success", "num_objects": num_objects, "results": results})

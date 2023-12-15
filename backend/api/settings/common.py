@@ -203,3 +203,5 @@ LOGGING = {
         "handlers": ["console"],
     },
 }
+
+ANONYMOUS_EMAIL = "is_anonymous@playsmear.com"

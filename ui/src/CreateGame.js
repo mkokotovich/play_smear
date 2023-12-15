@@ -39,7 +39,9 @@ class CreateGame extends Component {
 
     axios.post('/api/users/v1/', user_data)
       .then((response) => {
-        console.log(response);
+        window.analytics.track("Anonymous User Created", {
+          username: random_user,
+        });
         signIn(random_user, random_user, this.props.handleAuthChange, callNext);
       })
       .catch((error) => {
@@ -65,7 +67,13 @@ class CreateGame extends Component {
     };
     axios.post('/api/smear/v1/games/', game_data)
       .then((response) => {
-        console.log(response);
+        window.analytics.track("Game Created", {
+          "Game ID": response.data.id,
+          "Number of players": game_data.num_players,
+          "Number of Teams": game_data.num_teams,
+          "Score to play to": game_data.score_to_play_to,
+          "Single player": game_data.single_player,
+        });
         this.setState({
           gameID: response.data.id,
           redirectToGame: true,

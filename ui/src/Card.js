@@ -17,7 +17,9 @@ function Card(props) {
   const cardFile = cards.find(filename => filename.includes(card));
   const cardStyle = small ? {
       height: "auto",
-      width: "100px",
+      width: "15vw",
+      minWidth: "75px",
+      maxWidth: "100px",
   } : {
       height: "auto",
       width: "15vw",

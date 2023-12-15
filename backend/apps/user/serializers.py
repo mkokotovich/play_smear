@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
@@ -14,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_anonymous(self, user):
         # This is a hack because extending the User model is a pain
-        return user.email == "is_anonymous@playsmear.com"
+        return user.email == settings.ANONYMOUS_EMAIL
 
     class Meta:
         model = User
