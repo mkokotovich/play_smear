@@ -92,7 +92,7 @@ class CreateGame extends Component {
     this.setState({
       loading: true
     });
-    if (!this.props.signedInUser) {
+    if (!this.props.signedIn) {
       // If we aren't signed in, create an anonymous user and then create the game
       this.createAnonymousUser(()=>{
         this.createGame();

@@ -57,7 +57,7 @@ class Home extends Component {
       </div>
     ) : (
       <>
-        <CreateGame single={false}/>
+        <CreateGame single={false} signedIn={signedIn}/>
         <ActionButton buttonText="Join A Game" handleClick={() => this.setState({redirectToGames: true})} />
         <ActionButton buttonText="Resume A Game" handleClick={() => this.setState({
           redirectToManage: true,
@@ -69,7 +69,7 @@ class Home extends Component {
 
     const singleplayer = (
       <>
-        <CreateGame single={true} handleAuthChange={this.props.handleAuthChange} />
+        <CreateGame single={true} signedIn={signedIn} handleAuthChange={this.props.handleAuthChange} />
         <ActionButton disabled={!signedIn} buttonText="Resume A Game" handleClick={() => this.setState({
           redirectToManage: true,
           single: true,
