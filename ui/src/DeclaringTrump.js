@@ -39,10 +39,24 @@ function DeclaringTrump(props) {
 
   function submitTrump() {
     console.log(trump);
+    const high_bid = game.current_hand.bids.filter((bid) => {
+      return bid.id === game.current_hand.high_bid
+    });
+
     setLoading(true);
     axios.patch(`/api/smear/v1/games/${game.id}/hands/${game.current_hand.id}/bids/${game.current_hand.high_bid}/`,
       { trump: trump }
     ).then((response) => {
+      window.analytics.track("High Bid", {
+        "Trump": trump,
+        "Bid": high_bid.bid,
+        "Bid ID": high_bid.id,
+        "Game ID": game.id,
+        "Hand ID": game.current_hand.id,
+        "Cards": game.current_hand.cards,
+        "Game Num Players": game.num_players,
+        "Game Num Teams": game.num_teams,
+      });
       reloadGame(true, true, true);
     }).catch((error) => {
       console.log(error);

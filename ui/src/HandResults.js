@@ -6,7 +6,19 @@ function HandResults(props) {
   // eslint-disable-next-line no-unused-vars
   const {game, loading, reloadGame, resetCards, setCards} = props;
 
-  function nextHand() {
+  function nextHand(bidder, bid, points_won) {
+    window.analytics.track("Hand Ended", {
+      "Bidder User ID": bidder.user,
+      "Bidder Name": bidder.name,
+      "Bidder is_computer": bidder.is_computer,
+      "Bid": bid,
+      "Points Won": points_won,
+      "Bid ID": game?.current_hand?.high_bid,
+      "Hand ID": game?.current_hand?.id,
+      "Game ID": game?.id,
+      "Game Num Players": game?.num_players,
+      "Game Num Teams": game?.num_teams,
+    });
     if (resetCards) {
       setCards([]);
     }
@@ -19,8 +31,6 @@ function HandResults(props) {
   const high_bid = game?.current_hand?.bids.find(bid => bid.id === game?.current_hand?.high_bid);
   var bidder_points = 0;
   for (const [point, winner_id] of Object.entries(game?.current_hand?.results)) {
-    console.log(bidderIds);
-    console.log(winner_id);
     if (bidderIds.indexOf(winner_id) !== -1) {
       bidder_points += 1;
     }
@@ -39,7 +49,7 @@ function HandResults(props) {
     <div>
       Hand Is Over! {bidder.name} bid {high_bid.bid} and got {bidder_points}. {bidReaction}
       <br />
-      <Button onClick={nextHand} disabled={loading}>Continue</Button>
+      <Button onClick={()=>nextHand(bidder, high_bid.bid, bidder_points)} disabled={loading}>Continue</Button>
     </div>
   );
 }
