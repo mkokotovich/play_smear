@@ -3,8 +3,10 @@ import os
 # gunicorn.conf.py
 # Non logging stuff
 bind = ":8000"
+# Threads seem to break writing to neon.tech databases, for some reason
+# For now, keeping database on fly.io
 workers = 1
-threads = 4
+threads = 8
 
 # Reload if source changes, but only when running locally
 reload = bool(os.getenv("ENVIRON", "").lower() == "local")
