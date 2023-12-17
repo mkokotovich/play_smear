@@ -26,7 +26,15 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "amazing, I have the same key on my 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["api", "localhost", "0.0.0.0", "playsmear.fly.dev", "test.playsmear.com", "playsmear.com"]
+ALLOWED_HOSTS = [
+    "api",
+    "localhost",
+    "0.0.0.0",
+    "playsmear.fly.dev",
+    "test.playsmear.com",
+    "playsmear.com",
+    "www.playsmear.com",
+]
 
 REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),

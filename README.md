@@ -22,3 +22,9 @@ pre-commit install --install-hooks
 # Deployment
 
 `flyctl deploy`
+
+# Accessing Prod
+
+```
+fly ssh console
+```
