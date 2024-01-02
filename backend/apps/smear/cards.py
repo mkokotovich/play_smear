@@ -147,11 +147,29 @@ class Card:
             return suit == CLUBS or suit == SPADES
 
     def is_suit(self, suit, trump):
+        """Determines if a card is considered Clubs, Spades, etc
+
+        Accounts for jick (places it in the trump suit)
+
+        However, this method should not be used to determine if a given card
+        is the same suit as another card, as it will get mixed up comparing
+        to a jick. Use same_suit() instead.
+        """
         if self.suit == suit:
             return True
         if trump == suit and self.value == "jack" and self._same_color(suit):
             return True
         return False
+
+    def same_suit(self, other_card, trump):
+        """Determines if a card is the same suit as another card"""
+        if self.is_trump(trump) and other_card.is_trump(trump):
+            return True
+        if self.is_jick(trump) or other_card.is_jick(trump):
+            # Since we already know both cards aren't trump, if one is jick
+            # then the other is not the same suit
+            return False
+        return self.suit == other_card.suit
 
     def is_trump(self, trump):
         if self.suit == trump:
