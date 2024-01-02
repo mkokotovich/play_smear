@@ -47,7 +47,7 @@ def test_game_viewset_start(authed_client, owner):
 
 
 @pytest.mark.django_db
-def test_game_viewset_status(authed_client, django_assert_num_queries, mocker):
+def test_game_viewset_status_bidding(authed_client, django_assert_num_queries, mocker):
     owner_user = UserFactory()
     game = GameFactory(owner=owner_user, num_players=4, num_teams=2)
     game.create_initial_teams()
@@ -61,7 +61,7 @@ def test_game_viewset_status(authed_client, django_assert_num_queries, mocker):
 
     url = f"{reverse('games-detail', kwargs={'pk': game.id})}status/"
 
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(11):
         response = client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
@@ -73,12 +73,15 @@ def test_game_viewset_status(authed_client, django_assert_num_queries, mocker):
             "cards": p1.cards_in_hand,
             "dealer": game.current_hand.dealer.id,
             "high_bid": mocker.ANY,
+            "finished": False,
             "id": game.current_hand.id,
             "num": game.current_hand.num,
             "results": None,
             "trump": "",
         },
         "state": "bidding",
+        "players": NotNull,
+        "teams": NotNull,
     }
 
 
