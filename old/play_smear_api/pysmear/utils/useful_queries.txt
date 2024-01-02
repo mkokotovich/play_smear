@@ -1,1 +1,0 @@
-bids = client.smear.bids.find({'player': players[0]['_id'], "$where": "this.bid == this.high_bid"})
