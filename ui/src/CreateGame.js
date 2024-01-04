@@ -157,7 +157,7 @@ class CreateGame extends Component {
           onCancel={this.onCancel}
         >
           <Row className="create_div">
-            <p className="inputLabel">Number of players:</p>
+            <p className="inputLabel">Total number of players:</p>
             <RadioGroup name="numPlayers" onChange={this.onChangeInput}>
               <RadioButton value="2">2</RadioButton>
               <RadioButton value="3">3</RadioButton>
@@ -168,6 +168,7 @@ class CreateGame extends Component {
               <RadioButton value="8">8</RadioButton>
             </RadioGroup>
           </Row>
+          <p>{!this.props.single && "Note: computer players can be assigned in the next screen"}</p>
           <Row className="create_div">
             <p className="inputLabel">Number of teams:</p>
             <RadioGroup name="numTeams" onChange={this.onChangeInput}>
@@ -177,6 +178,7 @@ class CreateGame extends Component {
               <RadioButton value="4">4</RadioButton>
             </RadioGroup>
           </Row>
+          <br/>
           <Row className="create_div">
             <p className="inputLabel">Score to play to:</p>
             <RadioGroup name="scoreToPlayTo" onChange={this.onChangeInput}>
@@ -186,6 +188,7 @@ class CreateGame extends Component {
               <RadioButton value="21">21</RadioButton>
             </RadioGroup>
           </Row>
+          <br/>
           { !this.props.single &&
           <Row type="flex" className="create_div">
             <Checkbox

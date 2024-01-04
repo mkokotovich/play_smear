@@ -96,7 +96,7 @@ class Home extends Component {
             <h1>Welcome to Play Smear!</h1>
             <p>Welcome to the new Play Smear, now featuring the ability to resume games, more easily discover multiplayer games, and an overall improved user experience!</p>
             <p>To take advantage of all the new features, please <Link to="/login">create a free account</Link>. Otherwise, single player games against the computer can still be played without logging in.</p>
-            <p>For a while the original version of Play Smear will still be available at <a href="https://original.playsmear.com">https://original.playsmear.com</a>, but eventually it will be shut down. Please use the contact form on the other site to let me know if you notice any issues!</p>
+            <p>Questions? Comments? Concerns? Contact us using the Chat bubble in the lower-right corner of the screen!</p>
           </div>
         </Col>
         <Col xs={24} md={12} lg={8} align="center">
