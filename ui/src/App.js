@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Route, Link } from 'react-router-dom';
 import { Row, Col } from 'antd';
+import TawkMessengerReact from '@tawk.to/tawk-messenger-react';
 import './App.css';
 import SignIn from './SignIn';
 import Login from './Login';
@@ -138,6 +139,11 @@ class App extends Component {
             return <HowToPlay/>;
           }}
         />
+        <div className="App">
+          <TawkMessengerReact
+            propertyId="657fc53307843602b803173c"
+            widgetId="1hhthkknp"/>
+        </div>
       </div>
     );
   }
