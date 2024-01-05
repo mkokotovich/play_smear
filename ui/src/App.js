@@ -9,6 +9,7 @@ import Home from './Home';
 import HowToPlay from './HowToPlay';
 import GameSelector from './GameSelector';
 import Game from './Game';
+import Privacy from './Privacy';
 import Profile from './Profile';
 import ChangePassword from './ChangePassword';
 import ForgotPassword from './ForgotPassword';
@@ -137,6 +138,13 @@ class App extends Component {
           path={`/rules`}
           render={() => {
             return <HowToPlay/>;
+          }}
+        />
+        <Route
+          exact 
+          path={`/privacy`}
+          render={() => {
+            return <Privacy/>;
           }}
         />
         <div className="App">
