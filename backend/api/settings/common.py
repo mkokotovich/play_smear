@@ -190,7 +190,7 @@ LOGGING = {
         "console": {
             "level": "INFO",
             "class": "logging.StreamHandler",
-            "filters": ["request_id", "game_id"],
+            "filters": ["request_id", "game_id", "skip_status_requests"],
             "formatter": "default",
         },
     },
