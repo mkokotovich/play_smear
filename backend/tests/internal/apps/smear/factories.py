@@ -39,7 +39,7 @@ class HandFactory(factory.django.DjangoModelFactory):
         if extracted:
             self.high_bid = extracted
         else:
-            self.high_bid = BidFactory(hand=self)
+            self.high_bid = BidFactory(hand=self, bid=5, trump="spades")
 
 
 class TrickFactory(factory.django.DjangoModelFactory):
@@ -69,3 +69,12 @@ class BidFactory(factory.django.DjangoModelFactory):
     hand = factory.SubFactory("tests.internal.apps.smear.factories.HandFactory")
     player = factory.SubFactory("tests.internal.apps.smear.factories.PlayerFactory")
     bid = 2
+
+
+class PlayFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = "smear.Play"
+
+    trick = factory.SubFactory("tests.internal.apps.smear.factories.TrickFactory")
+    player = factory.SubFactory("tests.internal.apps.smear.factories.PlayerFactory")
+    card = "AS"

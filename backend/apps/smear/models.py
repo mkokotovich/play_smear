@@ -345,7 +345,7 @@ class Hand(models.Model):
         return self.tricks.last()
 
     def start_hand(self, dealer):
-        LOG.info(f"Starting hand with dealer: {dealer}")
+        LOG.info(f"Starting hand {self.num} with dealer: {dealer}")
         # Set the dealer
         self.dealer = dealer
         self.bidder = self.game.next_player(dealer)
@@ -358,6 +358,8 @@ class Hand(models.Model):
             player.accept_dealt_cards(deck.deal(3))
         for player in players:
             player.accept_dealt_cards(deck.deal(3))
+        for player in players:
+            LOG.info(f"{player} starts hand {self.num} with {player.cards_in_hand}")
         Player.objects.bulk_update(
             players, ["cards_in_hand", "current_hand_game_points_won", "prev_hand_game_points_won"]
         )

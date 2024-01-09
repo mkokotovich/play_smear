@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 from datetime import timedelta
 
+from api.logging import add_game_id_filter
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -70,6 +72,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "log_request_id.middleware.RequestIDMiddleware",
+    "api.logging.AddGameIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -171,12 +175,14 @@ def skip_status_requests(record):
     return not ("GET /api/smear/v1/games/" in record.msg and "/status/ HTTP" in record.msg)
 
 
+GENERATE_REQUEST_ID_IF_NOT_IN_HEADER = True
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
         "default": {
-            "format": "{levelname} {asctime} {name} {lineno} {funcName} {message}",
+            "format": "{levelname} {asctime} {name} {lineno} {funcName} [game:{game_id}] [{request_id}] {message}",
             "style": "{",
         },
     },
@@ -184,6 +190,7 @@ LOGGING = {
         "console": {
             "level": "INFO",
             "class": "logging.StreamHandler",
+            "filters": ["request_id", "game_id"],
             "formatter": "default",
         },
     },
@@ -191,6 +198,13 @@ LOGGING = {
         "skip_status_requests": {
             "()": "django.utils.log.CallbackFilter",
             "callback": skip_status_requests,
+        },
+        "request_id": {
+            "()": "log_request_id.filters.RequestIDFilter",
+        },
+        "game_id": {
+            "()": "django.utils.log.CallbackFilter",
+            "callback": add_game_id_filter,
         },
     },
     "loggers": {
