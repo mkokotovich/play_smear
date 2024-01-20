@@ -13,7 +13,7 @@ reload = bool(os.getenv("ENVIRON", "").lower() == "local")
 
 # Access log - records incoming HTTP requests
 accesslog = "-"
-access_log_format = '%(h)s %(t)s "%(r)s" %(s)s %(b)s %(M)s ms'
+access_log_format = '%(h)s %(t)s "%(r)s" "%(a)s" %(r)s %(s)s %(b)s %(M)s ms %({x-request-id}o)s'
 
 # Error log - records Gunicorn server goings-on
 errorlog = "-"
