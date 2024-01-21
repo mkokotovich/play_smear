@@ -13,6 +13,8 @@ docker compose up
 
 The UI and the API are both served from `http://localhost:8000`
 
+Alternatively, the UI can be run using `yarn start`
+
 Install precommit hooks
 
 ```

@@ -1,27 +1,48 @@
+import logging
 import os
 
-import sendgrid
-from sendgrid.helpers.mail import Content, Email, Mail
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
+LOG = logging.getLogger(__name__)
 
 
 def send_password_reset_email(to, reset_token):
-    sg = sendgrid.SendGridAPIClient(apikey=os.environ.get("SENDGRID_API_KEY"))
-    from_email = Email("mkokotovich@gmail.com")
-    subject = "Password Reset for playsmeartest.herokuapp.com"
-    to_email = Email(to)
-    url = f"https://playsmeartest.herokuapp.com/#/reset?email={to}&token={reset_token}"
-    body = f"""
-<a href="{url}">Click Here</a> to reset your password, or copy and paste {url} into your browser
 
-<a href="https://playsmeartest.herokuapp.com">Unsubscribe</a>
-"""
-    content = Content("text/html", body)
-    mail = Mail(from_email, subject, to_email, content)
-    response = sg.client.mail.send.post(request_body=mail.get())
+    url = f"https://playsmear.com/#/reset?email={to}&token={reset_token}"
+
+    message = Mail(
+        from_email="support@playsmear.com",
+        to_emails=to,
+        subject="Password Reset for playsmear.com",
+        html_content=f"""
+<h2>
+Play Smear Password Reset
+</h2>
+<p>
+<a href="{url}">Click Here</a> to reset your password, or copy and paste {url} into your browser
+</p>
+
+<p>
+<a href="https://playsmear.com">Unsubscribe</a>
+</p>
+<br/><br/>
+        """,
+    )
+
+    try:
+        sg = SendGridAPIClient(os.environ.get("SENDGRID_API_KEY"))
+        response = sg.send(message)
+
+    except Exception as ex:
+        body = getattr(ex, "body", "unknown error")
+        LOG.exception(f"Unable to send password reset email: {body}")
+        raise
+
     success_codes = [200, 202]
     if response.status_code not in success_codes:
         # TODO: Add logging
-        print(response.status_code)
-        print(response.body)
-        print(response.headers)
+        LOG.error(f"Unable to send password reset email. Status code: {response.status_code}, body: {response.body}")
+        raise Exception("Unable to send password reset email")
+
     return response.status_code in success_codes
