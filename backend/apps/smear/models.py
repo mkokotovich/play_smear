@@ -210,8 +210,6 @@ class Player(models.Model):
     )
 
     cards_in_hand = ArrayField(models.CharField(max_length=2), default=list)
-    current_hand_game_points_won = models.IntegerField(blank=True, null=True)
-    prev_hand_game_points_won = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.name} ({self.id})"
@@ -231,8 +229,6 @@ class Player(models.Model):
 
     def reset_for_new_hand(self):
         self.cards_in_hand = []
-        self.prev_hand_game_points_won = self.current_hand_game_points_won
-        self.current_hand_game_points_won = 0
 
     def accept_dealt_cards(self, cards):
         representations = [card.to_representation() for card in cards]
@@ -331,6 +327,17 @@ class Hand(models.Model):
         Player, related_name="games_winner_game", on_delete=models.SET_NULL, null=True, blank=True
     )
 
+    # Used to store game points by player
+    # The keys are the string of the player.id
+    # The values are an integer number of points the player has
+    # {
+    #   "123": 10,
+    #   "456": 0,
+    #   "789": 4,
+    #   "555": 12,
+    # }
+    game_points_by_player = models.JSONField(default=dict)
+
     finished = models.BooleanField(blank=True, default=False)
 
     class Meta:
@@ -360,9 +367,7 @@ class Hand(models.Model):
             player.accept_dealt_cards(deck.deal(3))
         for player in players:
             LOG.info(f"{player} starts hand {self.num} with {player.cards_in_hand}")
-        Player.objects.bulk_update(
-            players, ["cards_in_hand", "current_hand_game_points_won", "prev_hand_game_points_won"]
-        )
+        Player.objects.bulk_update(players, ["cards_in_hand"])
 
         self.save()
 
@@ -518,12 +523,15 @@ class Hand(models.Model):
         if teams:
             for team in self.game.teams.all():
                 team_score = 0
-                high_score = 0
+                highest_member_score = 0
                 high_member = None
                 for member in team.members.all():
-                    team_score += member.current_hand_game_points_won
-                    if member.current_hand_game_points_won > high_score:
+                    member_id = str(member.id)
+                    member_score = self.game_points_by_player.get(member_id, 0)
+                    team_score += member_score
+                    if member_score > highest_member_score:
                         high_member = member
+                        highest_member_score = member_score
                 if team_score > high_game_score:
                     high_game_player = [high_member]
                     high_game_score = team_score
@@ -532,10 +540,12 @@ class Hand(models.Model):
                     high_game_player.append(high_member)
         else:
             for player in self.game.player_set.all():
-                if player.current_hand_game_points_won > high_game_score:
+                player_id = str(player.id)
+                player_score = self.game_points_by_player.get(player_id, 0)
+                if player_score > high_game_score:
                     high_game_player = [player]
-                    high_game_score = player.current_hand_game_points_won
-                elif player.current_hand_game_points_won == high_game_score:
+                    high_game_score = player_score
+                elif player_score == high_game_score:
                     # It's a tie!
                     high_game_player.append(player)
 
@@ -838,12 +848,13 @@ class Trick(models.Model):
         winning_play = self.find_winning_play()
         LOG.info(f"Winning play was {winning_play}")
         self.taker = winning_play.player
+        taker_id = str(self.taker.id)
         cards = self.get_cards()
 
         # Give games points to taker
         game_points = sum(card.game_points for card in cards)
-        self.taker.current_hand_game_points_won = F("current_hand_game_points_won") + game_points
-        self.taker.save()
+        prev_points = self.hand.game_points_by_player.get(taker_id, 0)
+        self.hand.game_points_by_player[taker_id] = prev_points + game_points
 
         # Award Jack or Jick, if taken
         jack = next((card for card in cards if card.is_jack(self.hand.trump)), None)
@@ -854,8 +865,9 @@ class Trick(models.Model):
         if jick:
             self.hand.winner_jick = self.taker
             LOG.info(f"{self.taker} won Jick ({jick})")
-        if jick or jack:
-            self.hand.save()
+
+        # Save hand
+        self.hand.save()
 
     def _finalize_trick(self):
         self.active_player = None

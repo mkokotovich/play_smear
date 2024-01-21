@@ -13,9 +13,9 @@ class PlayerSummarySerializer(serializers.ModelSerializer):
     game_points_won = serializers.SerializerMethodField()
 
     def get_game_points_won(self, player):
-        return (
-            player.prev_hand_game_points_won if self.context.get("prev_hand") else player.current_hand_game_points_won
-        )
+        player_id = str(player.id)
+        gpbp = self.context.get("game_points_by_player", {})
+        return gpbp.get(player_id, 0)
 
     class Meta:
         model = Player
@@ -145,9 +145,10 @@ class StatusBiddingSerializer(serializers.ModelSerializer):
 
     def get_players(self, game):
         hand_num = self.context.get("hand_num")
+        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
         player_context = {
             **self.context,
-            "prev_hand": game.current_hand.num != hand_num,
+            "game_points_by_player": hand.game_points_by_player,
         }
         players = game.player_set.all().order_by("seat")
         return PlayerSummarySerializer(players, many=True, read_only=True, context=player_context).data
@@ -191,9 +192,10 @@ class StatusPlayingTrickSerializer(serializers.ModelSerializer):
 
     def get_players(self, game):
         hand_num = self.context.get("hand_num")
+        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
         player_context = {
             **self.context,
-            "prev_hand": game.current_hand.num != hand_num,
+            "game_points_by_player": hand.game_points_by_player,
         }
         players = game.player_set.all().order_by("seat")
         return PlayerSummarySerializer(players, many=True, read_only=True, context=player_context).data
