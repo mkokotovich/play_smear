@@ -205,6 +205,7 @@ function Game(props) {
       <HUD {...allProps} />
       { gameDisplay }
       <br/><br/><br/>
+      <hr />
       <AdsComponent key={adsKey} dataAdSlot="2506958810" />
     </div>
   );
