@@ -11,6 +11,7 @@ import GameResults from './GameResults';
 import HandResults from './HandResults';
 import HUD from './HUD';
 import getErrorString from './utils';
+import AdsComponent from './AdsComponent';
 
 import './Game.css';
 
@@ -174,6 +175,7 @@ function Game(props) {
     cards,
     setCards,
   };
+  let adsKey = "default";
   if (game) {
     if (game.state  === "starting") {
       gameDisplay = (<WaitingRoom {...allProps} />);
@@ -192,6 +194,7 @@ function Game(props) {
     } else {
       gameDisplay = (<>Unknown status {game.state}</>);
     }
+    adsKey = `game:${game.id}:hand:${game?.current_hand?.id}:trick:${game?.current_trick?.id}`;
   }
 
   return (
@@ -201,6 +204,8 @@ function Game(props) {
       </div>
       <HUD {...allProps} />
       { gameDisplay }
+      <br/><br/><br/>
+      <AdsComponent key={adsKey} dataAdSlot="2506958810" />
     </div>
   );
 }

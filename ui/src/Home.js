@@ -14,6 +14,7 @@ class Home extends Component {
     redirectToGames: false,
     redirectToManage: false,
     redirectToHowToPlay: false,
+    redirectToPrivacy: false,
   }
 
   componentDidMount() {
@@ -48,6 +49,9 @@ class Home extends Component {
     if (this.state.redirectToHowToPlay) {
       return <Redirect push to={`/rules`} />
     }
+    if (this.state.redirectToPrivacy) {
+      return <Redirect push to={`/privacy`} />
+    }
 
     const signedIn = this.props.signedInUser && !this.props.signedInUser.is_anonymous;
 
@@ -77,11 +81,14 @@ class Home extends Component {
       </>
     );
     const singleplayerTitle = "Play against the computer";
-    const howToPlayTitle = "How to play";
-    const howToPlay = (
+    const aboutTitle = "About Play Smear";
+    const aboutPlaySmear = (
       <>
-        <ActionButton buttonText="View Rules" handleClick={() => this.setState({
+        <ActionButton buttonText="View Rules of Smear" handleClick={() => this.setState({
           redirectToHowToPlay: true,
+        })} />
+        <ActionButton buttonText="Privacy Policy" handleClick={() => this.setState({
+          redirectToPrivacy: true,
         })} />
       </>
     );
@@ -91,12 +98,11 @@ class Home extends Component {
         <div className="Loading" align="center">
           { this.state.loading && <Spin size="large" />}
         </div>
-        <Col xs={24}>
+        <Col xs={24} align="center">
           <div style={{maxWidth: 1200, padding: "0px 20px 0px 20px"}} >
             <h1>Welcome to Play Smear!</h1>
             <p>Welcome to the new Play Smear, now featuring the ability to resume games, more easily discover multiplayer games, and an overall improved user experience!</p>
             <p>To take advantage of all the new features, please <Link to="/login">create a free account</Link>. Otherwise, single player games against the computer can still be played without logging in.</p>
-            <p>Questions? Comments? Concerns? Contact us using the Chat bubble in the lower-right corner of the screen!</p>
           </div>
         </Col>
         <Col xs={24} md={12} lg={8} align="center">
@@ -110,9 +116,15 @@ class Home extends Component {
           </Card>
         </Col>
         <Col xs={24} md={12} lg={8} align="center">
-          <Card title={howToPlayTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
-            {howToPlay}
+          <Card title={aboutTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
+            {aboutPlaySmear}
           </Card>
+        </Col>
+        <Col xs={24} align="center">
+          <div style={{maxWidth: 1200, padding: "0px 20px 0px 20px"}} >
+            <br/>
+            <p>Questions? Comments? Concerns? Contact us using the Chat bubble in the lower-right corner of the screen! We appreciate your feedback and patience!</p>
+          </div>
         </Col>
       </Row>
     );
