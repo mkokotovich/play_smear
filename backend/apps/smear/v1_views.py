@@ -7,7 +7,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException, ValidationError
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from unique_names_generator import get_random_name
 from unique_names_generator.data import ADJECTIVES, ANIMALS, COLORS
@@ -56,7 +56,7 @@ class GameViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ["create", "list", "retrieve"]:
-            self.permission_classes = [AllowAny]
+            self.permission_classes = [IsAuthenticated]
         elif self.action in ["update", "partial_update", "destroy"]:
             self.permission_classes = [IsGameOwnerPermission]
 
@@ -74,13 +74,9 @@ class GameViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_create(self, serializer):
         passcode = serializer.validated_data.get("passcode", None)
-        instance = serializer.save(
-            owner=self.request.user if self.request.user.is_authenticated else None, passcode_required=bool(passcode)
-        )
+        instance = serializer.save(owner=self.request.user, passcode_required=bool(passcode))
         instance.name = get_random_name(combo=[ADJECTIVES, COLORS, ANIMALS])
-        # TODO: allow unauthed single player games
-        if self.request.user.is_authenticated:
-            Player.objects.create(game=instance, user=self.request.user, is_computer=False)
+        Player.objects.create(game=instance, user=self.request.user, is_computer=False)
         LOG.info(f"Created game {instance} and added {self.request.user} as player and creator")
 
         instance.create_initial_teams()

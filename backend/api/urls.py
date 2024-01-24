@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import requests
 from django.urls import include, re_path
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
@@ -27,10 +28,19 @@ def up(request, format=None):
     return Response(data)
 
 
+@api_view(["GET"])
+@renderer_classes((JSONRenderer,))
+def blog_proxy(request, format=None):
+    response = requests.get("https://playsmear.blogspot.com/feeds/posts/default?alt=json")
+
+    return Response(response.json())
+
+
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
     re_path(r"^up/$", up),
+    re_path(r"^api/blog-proxy$", blog_proxy),
     re_path(r"^api/auth/", obtain_jwt_token),
     re_path(r"^api/users/", include("apps.user.urls")),
     re_path(r"^api/smear/", include("apps.smear.urls")),

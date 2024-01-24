@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Link, withRouter, Redirect } from 'react-router-dom';
 import { Card, Row, Col, Modal, Spin } from 'antd';
 import axios from 'axios';
+import BlogSnippets from './BlogSnippets';
 import CreateGame from './CreateGame';
 import ActionButton from './ActionButton';
 import getErrorString from './utils';
@@ -92,6 +93,12 @@ class Home extends Component {
         })} />
       </>
     );
+    const updatesAndNewsTitle = "Updates and News";
+    const updatesAndNews = (
+      <>
+        <BlogSnippets />
+      </>
+    );
 
     return (
       <Row type="flex" align="top" className="Home">
@@ -105,19 +112,24 @@ class Home extends Component {
             <p>To take advantage of all the new features, please <Link to="/login">create a free account</Link>. Otherwise, single player games against the computer can still be played without logging in.</p>
           </div>
         </Col>
-        <Col xs={24} md={12} lg={8} align="center">
+        <Col xs={24} md={12} align="center">
           <Card title={singleplayerTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
             {singleplayer}
           </Card>
         </Col>
-        <Col xs={24} md={12} lg={8} align="center">
+        <Col xs={24} md={12} align="center">
           <Card title={multiplayerTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
             {multiplayer}
           </Card>
         </Col>
-        <Col xs={24} md={12} lg={8} align="center">
+        <Col xs={24} md={12} align="center">
           <Card title={aboutTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
             {aboutPlaySmear}
+          </Card>
+        </Col>
+        <Col xs={24} md={12} align="center">
+          <Card title={updatesAndNewsTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
+            {updatesAndNews}
           </Card>
         </Col>
         <Col xs={24} align="center">
