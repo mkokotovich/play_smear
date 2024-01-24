@@ -112,22 +112,22 @@ class Home extends Component {
             <p>To take advantage of all the new features, please <Link to="/login">create a free account</Link>. Otherwise, single player games against the computer can still be played without logging in.</p>
           </div>
         </Col>
-        <Col xs={24} md={12} align="center">
+        <Col xs={24} md={12} xxl={6} align="center">
           <Card title={singleplayerTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
             {singleplayer}
           </Card>
         </Col>
-        <Col xs={24} md={12} align="center">
+        <Col xs={24} md={12} xxl={6} align="center">
           <Card title={multiplayerTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
             {multiplayer}
           </Card>
         </Col>
-        <Col xs={24} md={12} align="center">
+        <Col xs={24} md={12} xxl={6} align="center">
           <Card title={aboutTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
             {aboutPlaySmear}
           </Card>
         </Col>
-        <Col xs={24} md={12} align="center">
+        <Col xs={24} md={12} xxl={6} align="center">
           <Card title={updatesAndNewsTitle} style={{ width: 340 }} headStyle={{backgroundColor: "#f0f5f0" }} className="HomeCard">
             {updatesAndNews}
           </Card>
