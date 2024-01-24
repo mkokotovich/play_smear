@@ -11,3 +11,4 @@ gunicorn==21.1.0
 sendgrid==6.9.7
 unique-names-generator==1.0.2
 django-log-request-id==2.1.0
+requests==2.31.0
