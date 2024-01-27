@@ -85,9 +85,12 @@ class GameViewSet(viewsets.ModelViewSet):
             num_computers = instance.num_players - instance.player_set.count()
             instance.add_computer_players(num_computers)
 
-        instance.state = Game.STARTING
-
-        instance.save()
+        if instance.single_player and instance.num_teams == 0:
+            # Start single player games without teams immediately
+            instance.start_game()
+        else:
+            instance.state = Game.STARTING
+            instance.save()
 
     @action(
         detail=True,
