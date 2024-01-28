@@ -139,6 +139,7 @@ class CreateGame extends Component {
   }
 
   render() {
+    const buttonText = this.props.buttonText || "Create New Game";
     if (this.state.redirectToGame) {
       return <Redirect push to={`/games/${this.state.gameID}`} />
     }
@@ -211,7 +212,7 @@ class CreateGame extends Component {
           }
         </Modal>
         <div>
-          <Button style={{width:250}} onClick={() => this.setState({visible: true})}>Create New Game</Button>
+          <Button style={{width:250}} onClick={() => this.setState({visible: true})}>{buttonText}</Button>
         </div>
       </div>
     );
