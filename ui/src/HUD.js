@@ -6,6 +6,7 @@ import axios from 'axios';
 // import PlayerDisplay from './PlayerDisplay';
 // import CardDisplay from './CardDisplay';
 import TrumpHint from './TrumpHint';
+import ScoreGraph from './ScoreGraph';
 import getErrorString from './utils';
 
 
@@ -15,6 +16,7 @@ function HUD(props) {
   const myPlayer = game?.players.find(player => player.user === signedInUser.id);
   const autoPilotEnabled = myPlayer?.is_computer;
   const [autoPilot, setAutoPilot] = useState(autoPilotEnabled);
+  const [scoreGraphVisible, setScoreGraphVisible] = useState(false);
   const myTurnToPlay = game?.current_trick?.active_player === myPlayer?.id;
   const myTurnToBid = game?.current_hand?.bidder === myPlayer?.id && game?.state === "bidding";
 
@@ -23,6 +25,10 @@ function HUD(props) {
     const autoPilotEnabled = myPlayer?.is_computer;
     setAutoPilot(autoPilotEnabled);
   }, [game])
+
+  function showScoreGraph() {
+    setScoreGraphVisible(true);
+  }
 
   function toggleAutoPilot() {
     setLoading(true);
@@ -62,8 +68,11 @@ function HUD(props) {
   );
 
   return (
+    <>
+    <ScoreGraph scoreGraphVisible={scoreGraphVisible} setScoreGraphVisible={setScoreGraphVisible} {...props} />
     <div style={{display: "flex-inline" }}>
       <div style={{display: "flex" }}>
+        <Button onClick={showScoreGraph} disabled={loading}>Show Score Graph</Button>
         <Button onClick={toggleAutoPilot} disabled={loading}>{autoPilot ? "Disable" : "Enable"} AutoPilot</Button>
         { myTurnToPlay && promptUserToPlay }
         { myTurnToBid && promptUserToBid }
@@ -71,6 +80,7 @@ function HUD(props) {
       </div>
       <hr />
     </div>
+    </>
   );
 }
 
