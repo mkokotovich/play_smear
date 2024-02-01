@@ -93,19 +93,9 @@ function ScoreGraph(props) {
 
   function retrieveScoreData() {
     setLoading(true);
-    axios.get(`/api/smear/v1/games/${game.id}`).then((response) => {
+    axios.get(`/api/smear/v1/games/${game.id}/scores`).then((response) => {
       setLoading(false);
-      //setScoreData(response.data);
-      const tempScoreData = {
-        contestants: ["Team 1", "Team 2"],
-        contestantData: {
-          "Team 1": {color: "red", scores: [0, 2, 2, 5, 6, 7, 7]},
-          "Team 2": {color: "blue", scores: [0, -2, 2, 3, 6, 9, 11]},
-        },
-        maxScore: 11,
-        minScore: -2,
-      }
-      setScoreData(tempScoreData);
+      setScoreData(response.data);
     }).catch((error) => {
       console.log(error);
       setLoading(false);

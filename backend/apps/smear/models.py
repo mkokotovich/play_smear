@@ -31,6 +31,11 @@ class Game(models.Model):
     next_dealer = models.ForeignKey(
         "Player", related_name="games_next_dealer", on_delete=models.SET_NULL, null=True, blank=True
     )
+    # {
+    #     "id1": [0, 3, 3, 5],
+    #     "id2": [2, 2, 4, 7],
+    # }
+    scores_by_contestant = models.JSONField(default=dict)
 
     # Available states
     STARTING = "starting"
@@ -60,6 +65,21 @@ class Game(models.Model):
     def current_trick(self):
         hand = self.hands.last()
         return hand.tricks.last() if hand else None
+
+    def start_new_hand_in_contestants_scores(self):
+        if not self.scores_by_contestant:
+            # Initialize the dict
+            contestants_qs = self.teams.all() if self.num_teams else self.player_set.all()
+            self.scores_by_contestant = {str(contestant.id): [0] for contestant in contestants_qs}
+        else:
+            # Otherwise, just add one more entry
+            for contestant_id, scores in self.scores_by_contestant.items():
+                # Add the last score as the starting value for the next score
+                scores.append(scores[-1])
+
+    def add_to_contestants_current_hand_score(self, contestant_id, score_delta):
+        scores = self.scores_by_contestant[contestant_id]
+        scores[-1] = scores[-1] + score_delta
 
     def next_player(self, player):
         # TODO determine if this is really more performant
@@ -132,6 +152,7 @@ class Game(models.Model):
         self.next_dealer = self.set_plays_after()
         LOG.info(f"Starting game {self} with players {', '.join([str(p) for p in self.player_set.all()])}")
 
+        self.start_new_hand_in_contestants_scores()
         self.set_state(Game.NEW_HAND, save=False)
         self.advance_game()
 
@@ -179,6 +200,29 @@ class Game(models.Model):
         elif self.state == Game.BIDDING:
             self.current_hand.advance_bidding()
 
+    def get_score_data(self):
+        contestants_qs = self.teams.all() if self.num_teams else self.player_set.all()
+        contestants_names = []
+        contestants_data = {}
+        min_score = 0
+        max_score = 0
+        for index, contestant in enumerate(contestants_qs):
+            # Use team color or pick one
+            color = getattr(contestant, "color", Team.COLORS[index])
+            scores = self.scores_by_contestant.get(str(contestant.id), [0])
+            contestants_names.append(contestant.name)
+            contestants_data[contestant.name] = {"color": color, "scores": scores}
+            # Check for new min/max
+            min_score = min(min_score, *scores)
+            max_score = max(max_score, *scores)
+
+        return {
+            "contestants": contestants_names,
+            "contestantData": contestants_data,
+            "maxScore": max_score,
+            "minScore": min_score,
+        }
+
 
 class Team(models.Model):
     COLORS = ["blue", "orange", "plum", "sienna", "khaki", "linen", "cyan", "green"]
@@ -218,6 +262,10 @@ class Player(models.Model):
         super().__init__(*args, **kwargs)
         if not self.name:
             self.name = self._get_name_from_user(kwargs.get("user", None))
+
+    @property
+    def contestant_id(self):
+        return str(self.team_id if self.team else self.id)
 
     def _get_name_from_user(self, user):
         if not user:
@@ -633,21 +681,31 @@ class Hand(models.Model):
             f"Low: {self.winner_low} Jack: {self.winner_jack} "
             f"Jick: {self.winner_jick} Game: {self.winner_game}"
         )
+
+        self.game.start_new_hand_in_contestants_scores()
         bid_won, teammate_ids = self._calculate_if_bid_was_won()
         if not bid_won:
             self.bidder.decrement_score(self.high_bid.bid)
+            self.game.add_to_contestants_current_hand_score(self.bidder.contestant_id, -self.high_bid.bid)
 
         # Award the points, but not to the bidder if the bidder was set
         if self.winner_high and (bid_won or self.winner_high.id not in teammate_ids):
             self.winner_high.increment_score()
+            self.game.add_to_contestants_current_hand_score(self.winner_high.contestant_id, 1)
         if self.winner_low and (bid_won or self.winner_low.id not in teammate_ids):
             self.winner_low.increment_score()
+            self.game.add_to_contestants_current_hand_score(self.winner_low.contestant_id, 1)
         if self.winner_jick and (bid_won or self.winner_jick.id not in teammate_ids):
             self.winner_jick.increment_score()
+            self.game.add_to_contestants_current_hand_score(self.winner_jick.contestant_id, 1)
         if self.winner_jack and (bid_won or self.winner_jack.id not in teammate_ids):
             self.winner_jack.increment_score()
+            self.game.add_to_contestants_current_hand_score(self.winner_jack.contestant_id, 1)
         if self.winner_game and (bid_won or self.winner_game.id not in teammate_ids):
             self.winner_game.increment_score()
+            self.game.add_to_contestants_current_hand_score(self.winner_game.contestant_id, 1)
+
+        self.game.save()
 
         # Refresh the scores of all contestants to get the latest loaded from DB
         self._refresh_all_scores()

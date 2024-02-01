@@ -197,6 +197,16 @@ class GameViewSet(viewsets.ModelViewSet):
         player.save()
         return Response({"status": "success"})
 
+    @action(
+        detail=True,
+        methods=["get"],
+        permission_classes=[IsPlayerInGame],
+    )
+    def scores(self, request, pk=None):
+        game = self.get_object()
+        score_data = game.get_score_data()
+        return Response(score_data)
+
 
 class TeamViewSet(viewsets.ModelViewSet):
     filter_backends = (
