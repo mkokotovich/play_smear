@@ -669,6 +669,7 @@ class Hand(models.Model):
         if no_bid:
             LOG.info("No bids, dealer is set 2")
             self.dealer.decrement_score(2)
+            self.game.add_to_contestants_current_hand_score(self.bidder.contestant_id, -2)
             self.finished = True
             self._refresh_all_scores()
             return False
