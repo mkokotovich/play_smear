@@ -25,6 +25,11 @@ const range = (start, stop, step) =>
 
 function ScoreGraphVis(props) {
   const {scoreData} = props;
+  if (!scoreData) {
+    return (
+      <></>
+    );
+  }
 
   const scoreDelta = scoreData.maxScore - scoreData.minScore;
   const numTicks = scoreDelta > 10 ? scoreDelta/2 : scoreDelta;
@@ -86,10 +91,10 @@ function ScoreGraph(props) {
   const [scoreData, setScoreData] = useState(null);
 
   React.useEffect(() => {
-    if (game) {
+    if (game && scoreGraphVisible) {
       retrieveScoreData();
     }
-  }, [game, scoreGraphVisible]);
+  }, [scoreGraphVisible]);
 
   function retrieveScoreData() {
     setLoading(true);
