@@ -14,7 +14,7 @@
     "babel-plugin-import": "^1.13.0",
     "customize-cra": "^0.9.1",
     "jwt-decode": "^2.2.0",
-    "query-string": "^6.12.1",
+    "query-string": "^8.2.0",
     "react": "^16.13.1",
     "react-app-rewired": "^2.1.5",
     "react-beautiful-dnd": "^13.0.0",
