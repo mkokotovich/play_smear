@@ -21,6 +21,7 @@ class CreateGame extends Component {
     numPlayers: null,
     numTeams: null,
     scoreToPlayTo: null,
+    mustBidToWin: false,
   }
 
   createAnonymousUser(callNext) {
@@ -64,6 +65,7 @@ class CreateGame extends Component {
       num_teams: this.state.numTeams ? this.state.numTeams : 0,
       score_to_play_to: this.state.scoreToPlayTo,
       single_player: this.props.single,
+      must_bid_to_win: this.state.mustBidToWin,
     };
     axios.post('/api/smear/v1/games/', game_data)
       .then((response) => {
@@ -72,6 +74,7 @@ class CreateGame extends Component {
           "Number of players": game_data.num_players,
           "Number of Teams": game_data.num_teams,
           "Score to play to": game_data.score_to_play_to,
+          "Must bid to win": game_data.must_bid_to_win,
           "Single player": game_data.single_player,
         });
         this.setState({
@@ -126,6 +129,7 @@ class CreateGame extends Component {
       numPlayers: null,
       numTeams: null,
       scoreToPlayTo: null,
+      mustBidToWin: false,
     });
   }
 
@@ -188,6 +192,16 @@ class CreateGame extends Component {
               <RadioButton value="15">15</RadioButton>
               <RadioButton value="21">21</RadioButton>
             </RadioGroup>
+          </Row>
+          <br/>
+          <Row className="create_div">
+            <Checkbox
+              value={this.state.mustBidToWin}
+              name="mustBidToWin"
+              onChange={this.onChangeCheck}
+            >
+              Require a winning bid to go out
+            </Checkbox>
           </Row>
           <br/>
           { !this.props.single &&

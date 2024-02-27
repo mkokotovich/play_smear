@@ -14,6 +14,9 @@ function HowToPlay(props) {
         <p>
         Smear (also known as Schmier, and a variety of Pitch or Setback) is a trick-taking card game where points are won not by taking tricks, but by taking certain cards during the course of the hand. Everyone is dealt six cards, and then places a bid based on how many points they think they can get. The high bidder gets to pick which suit will be trump, and plays the first card. After all tricks have been played, points are awarded. Once someone reaches 11 (or whatever score is agreed upon at the beginning of the game) then the game is over, and that player wins.
         </p>
+        <p>
+        There is one alternate rule to ending the game! Some people play where a player can only win the game by winning a bid. If the first player to go over 11 (or whatever score is agreed upon) does so by taking home Low or other points, but not while winning a bid, that player does not win the game until they make a bid. This mode can be enabled by selecting "Require a winning bid to go out" when creating a game.
+        </p>
         <h2>Points</h2>
         <p>
         There are a maximum of five points per hand. However, not all points are out during each hand.

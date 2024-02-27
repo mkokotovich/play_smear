@@ -36,6 +36,7 @@ class Game(models.Model):
     #     "id2": [2, 2, 4, 7],
     # }
     scores_by_contestant = models.JSONField(default=dict)
+    must_bid_to_win = models.BooleanField(blank=True, default=False)
 
     # Available states
     STARTING = "starting"
@@ -604,17 +605,27 @@ class Hand(models.Model):
             self.winner_game = high_game_player[0]
         LOG.info(f"Awarding game to {self.winner_game} with {high_game_score} game points")
 
-    def _declare_winner_if_game_is_over(self):
+    def _check_for_must_bid_to_win(self, bid_won, bidding_contestant, contestants_over):
+        # If we aren't playing with must_bid_to_win, this function always returns True
+        if not self.game.must_bid_to_win:
+            return True
+
+        # If we are playing with must_bid_to_win, then only return True if the
+        # bidder went out
+        return bid_won and bidding_contestant in contestants_over
+
+    def _declare_winner_if_game_is_over(self, bid_won):
         # This function deals with players or teams. We will use the generic
         # noun contestants to describe either
         teams = self.game.teams.exists()
         winners = None
+        bidding_contestant = self.bidder.team if teams else self.bidder
         contestants = self.game.teams.all() if teams else self.game.player_set.all()
         contestants_at_or_over = list(contestants.filter(score__gte=self.game.score_to_play_to))
-        game_is_over = bool(contestants_at_or_over)
+        bidder_went_out = self._check_for_must_bid_to_win(bid_won, bidding_contestant, contestants_at_or_over)
+        game_is_over = bool(contestants_at_or_over) and bidder_went_out
 
         if game_is_over:
-            bidding_contestant = self.bidder.team if teams else self.bidder
             if bidding_contestant in contestants_at_or_over:
                 # Bidder always goes out
                 bidding_contestant.refresh_from_db()
@@ -711,7 +722,7 @@ class Hand(models.Model):
         # Refresh the scores of all contestants to get the latest loaded from DB
         self._refresh_all_scores()
 
-        return self._declare_winner_if_game_is_over()
+        return self._declare_winner_if_game_is_over(bid_won)
 
     def update_if_out_of_cards(self, player, card_played):
         all_plays = Play.objects.filter(trick__hand=self)
