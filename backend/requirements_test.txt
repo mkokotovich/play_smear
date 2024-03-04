@@ -3,5 +3,5 @@ requests
 pytest==7.1.3
 pytest-mock==3.10.0
 pytest-django==4.5.2
-pytest-rerunfailures==10.2
+pytest-rerunfailures==13.0
 factory-boy
