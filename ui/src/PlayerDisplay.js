@@ -67,12 +67,11 @@ function Player(props) {
   const playerStyles = {
     display: "flex-inline",
     alignSelf: "flex-start",
-    alignItems: "center",
-    padding: 10,
-    margin: 5,
+    padding: "0.3vw",
+    margin: "0.4vw",
     border: border,
     borderRadius: "5px",
-    minWidth: "125px",
+    minWidth: "115px",
     maxWidth: "200px",
     height: "100%",
   };

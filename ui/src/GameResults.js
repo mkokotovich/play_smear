@@ -28,7 +28,7 @@ function GameResults(props) {
     <div>
       <PlayerDisplay {...props} />
       <CardDisplay cards={game.current_hand.cards} />
-      Game is over, <b>{winner_names.toString()}</b> won! <span style={{fontSize: "40px"}}>🏆</span>
+      <span style={{fontSize: "1.3em"}}>Game is over, <b>{winner_names.toString()}</b> won! </span><span style={{fontSize: "40px"}}>🏆</span>
       <CreateGame single={game.single_player} signedIn={true} buttonText="Start another game"/>
       <ActionButton buttonText="Home" handleClick={() => newGameClick()} />
     </div>

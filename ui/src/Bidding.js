@@ -21,7 +21,7 @@ function BidInput(props) {
   const passText = twoSet ? "Accept 2 set" : "Pass";
   return (
     <>
-      <p>What is your bid:</p>
+      <p style={{fontSize: "1.3em"}}>What is your bid:</p>
       <RadioGroup name="bidValue" onChange={onChangeBid} value={bidValue}>
         <RadioButton value="0">{passText}</RadioButton>
         <RadioButton disabled={highBid >= 2} value="2">2</RadioButton>

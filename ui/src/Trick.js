@@ -66,19 +66,19 @@ function Trick(props) {
   const player = game.players.find(player => player.id === game?.current_trick?.active_player);
   const waitingForTurn = (
     <>
-      <p>Waiting for {player?.name} to play</p>
+      <p style={{fontSize: "1.3em"}}>Waiting for {player?.name} to play</p>
     </>
   );
   const taker = game.players.find(player => player.id === game.current_trick.taker);
   const trickFinishedPrompt = (
     <>
-      <p>Trick is finished, {taker?.name} took the trick.</p>
+      <p style={{fontSize: "1.3em"}}>Trick is finished, {taker?.name} took the trick.</p>
       <Button onClick={nextTrick} disabled={loading}>Continue</Button>
     </>
   );
   const promptUserToPlay = (
     <>
-      <p>Your turn, select a card to play</p>
+      <p style={{fontSize: "1.3em"}}>Your turn, select a card to play</p>
     </>
   );
   const trickIsFinished = Boolean(game.current_trick.taker);

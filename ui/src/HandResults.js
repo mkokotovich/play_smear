@@ -47,7 +47,7 @@ function HandResults(props) {
 
   return (
     <div>
-      Hand Is Over! {bidder.name} bid {high_bid.bid} and got {bidder_points}. {bidReaction}
+      <span style={{fontSize: "1.3em"}}>Hand Is Over! {bidder.name} bid {high_bid.bid} and got {bidder_points}. {bidReaction}</span> 
       <br />
       <Button onClick={()=>nextHand(bidder, high_bid.bid, bidder_points)} disabled={loading}>Continue</Button>
     </div>

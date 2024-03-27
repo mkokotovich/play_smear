@@ -18,17 +18,18 @@ function Card(props) {
   const cardStyle = small ? {
       height: "auto",
       width: "15vw",
-      minWidth: "75px",
-      maxWidth: "100px",
+      minWidth: "100px",
+      maxWidth: "110px",
   } : {
       height: "auto",
       width: "15vw",
-      maxWidth: "150px",
+      minWidth: "50px",
+      maxWidth: "175px",
   };
   const divStyle = small ? {
     padding: "0px",
   } : {
-    padding: "0.5vw",
+    padding: "0.3vw",
     border: selected ? "2px solid lightgrey" : "0px",
     borderRadius: "10px",
   };

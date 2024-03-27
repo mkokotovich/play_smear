@@ -54,14 +54,14 @@ function HUD(props) {
   const leadSuitLetter = leadCard.slice(1);
   const promptUserToPlay = (
     <>
-      <div style={{color: "red", display: "flex", alignItems: "center"}}>
+      <div style={{fontSize: "1.5em", color: "red", display: "flex", alignItems: "center"}}>
         &nbsp; &nbsp; <b>Your turn to play!</b>
       </div>
     </>
   );
   const promptUserToBid = (
     <>
-      <div style={{color: "red", display: "flex", alignItems: "center"}}>
+      <div style={{fontSize: "1.5em", color: "red", display: "flex", alignItems: "center"}}>
         &nbsp; &nbsp; <b>Your turn to bid!</b>
       </div>
     </>
@@ -72,8 +72,10 @@ function HUD(props) {
     <ScoreGraph scoreGraphVisible={scoreGraphVisible} setScoreGraphVisible={setScoreGraphVisible} {...props} />
     <div style={{display: "flex-inline" }}>
       <div style={{display: "flex" }}>
-        <Button onClick={showScoreGraph} disabled={loading}>Show Score Graph</Button>
-        <Button onClick={toggleAutoPilot} disabled={loading}>{autoPilot ? "Disable" : "Enable"} AutoPilot</Button>
+        <div style={{display: "flex-inline", maxWidth: "150px" }}>
+          <Button onClick={showScoreGraph} disabled={loading}>Show Score Graph</Button>
+          <Button onClick={toggleAutoPilot} disabled={loading}>{autoPilot ? "Disable" : "Enable"} AutoPilot</Button>
+        </div>
         { myTurnToPlay && promptUserToPlay }
         { myTurnToBid && promptUserToBid }
         <TrumpHint trump={trump} leadSuitLetter={leadSuitLetter} />
