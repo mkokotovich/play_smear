@@ -15,6 +15,7 @@ services:
       - ENVIRON=local
       - DJANGO_SETTINGS_MODULE=api.settings.local
       - SENDGRID_API_KEY=no.key.localhost
+      - TAWK_KEY=abc123
   postgres:
     image: postgres:13
     environment:

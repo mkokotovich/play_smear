@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import logging
 from datetime import timedelta
 
@@ -129,3 +131,17 @@ class UserViewSet(viewsets.ModelViewSet):
         num_objects, results = old_anonymous_users.delete()
         LOG.info(f"Deleted {num_objects} objects from anonymous users")
         return Response({"status": "success", "num_objects": num_objects, "results": results})
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="user-hash",
+        url_name="user_hash",
+        permission_classes=[IsAuthenticated],
+    )
+    def user_hash(self, request):
+        secret_key = settings.TAWK_KEY.encode()
+        email = self.request.user.username.encode()
+        user_hash = hmac.new(secret_key, email, hashlib.sha256).hexdigest()
+        LOG.info(f"For user {email}, returning user hash {user_hash}")
+        return Response({"user_hash": user_hash})

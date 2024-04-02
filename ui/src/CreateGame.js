@@ -40,10 +40,10 @@ class CreateGame extends Component {
 
     axios.post('/api/users/v1/', user_data)
       .then((response) => {
+        signIn(random_user, random_user, this.props.handleAuthChange, callNext);
         window.analytics.track("Anonymous User Created", {
           username: random_user,
         });
-        signIn(random_user, random_user, this.props.handleAuthChange, callNext);
       })
       .catch((error) => {
         console.log(error);

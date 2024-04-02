@@ -227,3 +227,4 @@ LOGGING = {
 }
 
 ANONYMOUS_EMAIL = "is_anonymous@playsmear.com"
+TAWK_KEY = os.getenv("TAWK_KEY", "amazing, I have the same key on my luggage")

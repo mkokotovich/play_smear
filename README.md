@@ -30,3 +30,9 @@ pre-commit install --install-hooks
 ```
 fly ssh console
 ```
+
+# Adding secrets
+
+```
+fly secrets set SECRET_NAME=123abc
+```
