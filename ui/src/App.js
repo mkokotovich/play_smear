@@ -22,14 +22,14 @@ function App() {
   const tawkMessengerRef = useRef();
   const [user, setUser] = useState(null);
 
-  function setTawkUser(user) {
+  function setTawkUser(newUser) {
     axios.get("/api/users/v1/user-hash/").then((response) => {
       const user_hash = response.data.user_hash;
-      const name = user.first_name ? `${user.first_name} ${user.last_name || ""}` : user.username;
+      const name = newUser.first_name ? `${newUser.first_name} ${newUser.last_name || ""}` : newUser.username;
       tawkMessengerRef.current.setAttributes({
         name: name,
-        email: user.username,
-        store: user.username,
+        email: newUser.username,
+        store: newUser.username,
         hash: user_hash,
       }, function(error) {
         if (error) {
@@ -41,16 +41,16 @@ function App() {
     });
   }
 
-  function handleAuthChange(user) {
-    setUser(user);
-    if (user && user?.id) {
-      const user_id = user.is_anonymous ? "anonymous" : user.id;
+  function handleAuthChange(newUser) {
+    setUser(newUser);
+    if (newUser && newUser?.id) {
+      const user_id = newUser.is_anonymous ? "12345678901234567890" : newUser.id;
       window.analytics.identify(user_id, {
-        username: user.username,
-        is_anonymous: user.is_anonymous,
-        first_name: user.first_name,
+        username: newUser.username,
+        is_anonymous: newUser.is_anonymous,
+        first_name: newUser.first_name,
       });
-      setTawkUser(user);
+      setTawkUser(newUser);
     }
   }
 
