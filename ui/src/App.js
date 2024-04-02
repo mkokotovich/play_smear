@@ -41,15 +41,22 @@ function App() {
     });
   }
 
+  function setSegmentUser(newUser) {
+    const is_anon = !newUser || newUser.is_anonymous;
+    const user_id = is_anon ? "12345678901234567890" : newUser.id;
+    window.analytics.identify(user_id, {
+      username: newUser?.username,
+      is_anonymous: is_anon,
+      first_name: newUser?.first_name,
+    }, {
+      anonymousId: user_id
+    });
+  }
+
   function handleAuthChange(newUser) {
     setUser(newUser);
-    if (newUser && newUser?.id) {
-      const user_id = newUser.is_anonymous ? "12345678901234567890" : newUser.id;
-      window.analytics.identify(user_id, {
-        username: newUser.username,
-        is_anonymous: newUser.is_anonymous,
-        first_name: newUser.first_name,
-      });
+    setSegmentUser(newUser);
+    if (newUser) {
       setTawkUser(newUser);
     }
   }
