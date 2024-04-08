@@ -29,7 +29,6 @@ function App() {
       tawkMessengerRef.current.setAttributes({
         name: name,
         email: newUser.username,
-        store: newUser.username,
         hash: user_hash,
       }, function(error) {
         if (error) {
@@ -44,10 +43,12 @@ function App() {
   function setSegmentUser(newUser) {
     const is_anon = !newUser || newUser.is_anonymous;
     const user_id = is_anon ? "12345678901234567890" : newUser.id;
+    const user_name = is_anon ? "Anonymous" : newUser?.username;
+    const first_name = is_anon ? "Anonymous" : newUser?.first_name;
     window.analytics.identify(user_id, {
-      username: newUser?.username,
+      username: user_name,
       is_anonymous: is_anon,
-      first_name: newUser?.first_name,
+      first_name: first_name,
     }, {
       anonymousId: user_id
     });
