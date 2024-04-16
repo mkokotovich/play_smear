@@ -17,6 +17,7 @@ function Trick(props) {
   const [trickAcknowledged, setTrickAcknowledged] = useState(false);
   const {game, loading, setLoading, reloadGame, signedInUser, cards, setCards} = props;
   const myPlayer = game.players.find(player => player.user === signedInUser.id)?.id;
+  const myTurn = game.current_trick.active_player === myPlayer;
 
   function submitSpecificCard(card) {
     //console.log(card);
@@ -49,14 +50,23 @@ function Trick(props) {
   function clickCard(card) {
     if (cardSelected === card) {
       // This is a second click
-      submitSpecificCard(cardSelected);
+      if (!myTurn) {
+        Modal.error({
+          title: "It is not your turn",
+          content: "Please wait until your turn to submit your card.",
+          maskClosable: true,
+        });
+      } else {
+        submitSpecificCard(cardSelected);
+      }
     } else {
       setCardSelected(card);
     }
   }
 
   function nextTrick() {
-    if (game.current_trick.num === 6) {
+    const handIsFinished = Boolean(game.current_hand.results);
+    if (game.current_trick.num === 6 || handIsFinished) {
       setTrickAcknowledged(true);
     } else {
       reloadGame(true, true, true);
@@ -83,7 +93,6 @@ function Trick(props) {
   );
   const trickIsFinished = Boolean(game.current_trick.taker);
   const handIsFinished = Boolean(game.current_hand.results);
-  const myTurn = game.current_trick.active_player === myPlayer;
   return (
     <div>
       <PlayerDisplay {...props} />
@@ -91,7 +100,7 @@ function Trick(props) {
       { !myTurn && !trickIsFinished && waitingForTurn }
       { myTurn && !trickIsFinished && promptUserToPlay }
       { !trickAcknowledged && trickIsFinished && trickFinishedPrompt }
-      { trickAcknowledged && handIsFinished && <HandResults {...props} /> }
+      { trickAcknowledged && handIsFinished && <HandResults {...props} resetCards={true} /> }
     </div>
   );
 }

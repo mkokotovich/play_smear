@@ -192,8 +192,20 @@ class GameViewSet(viewsets.ModelViewSet):
     def auto_pilot(self, request, pk=None):
         game = self.get_object()
         player = Player.objects.get(game=game, user=self.request.user)
-        LOG.info(f"Setting player {player} to auto-pilot {'disabled' if player.is_computer else 'enabled'}")
+        # Default to forever
+        auto_pilot_mode = Player.AUTO_PILOT_FOREVER
+        if request.query_params.get("until_new_hand", "false").lower() == "true":
+            auto_pilot_mode = Player.AUTO_PILOT_UNTIL_NEW_HAND
+
+        LOG.info(
+            f"Setting player {player} to auto-pilot " "disabled"
+            if player.is_computer
+            else "enabled" " with mode " "UNTIL_NEW_HAND"
+            if auto_pilot_mode == Player.AUTO_PILOT_UNTIL_NEW_HAND
+            else "FOREVER"
+        )
         player.is_computer = not player.is_computer
+        player.auto_pilot_mode = auto_pilot_mode
         player.save()
         return Response({"status": "success"})
 

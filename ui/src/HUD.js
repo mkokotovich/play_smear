@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { withRouter } from 'react-router-dom';
-import { Button, Modal } from 'antd';
+import { Button, Dropdown, Modal, Space } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
 // import PlayerDisplay from './PlayerDisplay';
@@ -30,12 +31,12 @@ function HUD(props) {
     setScoreGraphVisible(true);
   }
 
-  function toggleAutoPilot() {
+  function changeAutoPilot(until_new_hand) {
     setLoading(true);
-    axios.post(`/api/smear/v1/games/${game.id}/auto_pilot/`
+    axios.post(`/api/smear/v1/games/${game.id}/auto_pilot/?until_new_hand=${until_new_hand}`
     ).then((response) => {
       setLoading(false);
-      setAutoPilot(autoPilotEnabled);
+      setAutoPilot(!autoPilot);
     }).catch((error) => {
       console.log(error);
       setLoading(false);
@@ -46,6 +47,15 @@ function HUD(props) {
         maskClosable: true,
       })
     });
+  }
+
+  function handleMenuClick(e) {
+    const until_new_hand = e.key === "hand";
+    changeAutoPilot(until_new_hand);
+  };
+
+  function toggleAutoPilot() {
+    changeAutoPilot(false);
   }
 
   const trump = game?.current_hand?.trump;
@@ -67,6 +77,34 @@ function HUD(props) {
     </>
   );
 
+  const autoPilotMenuItems = [
+    {
+      label: 'For the rest of the hand',
+      key: 'hand',
+    },
+    {
+      label: 'For the rest of the game',
+      key: 'forever',
+    }
+  ];
+  const autoPilotMenuProps = {
+    items: autoPilotMenuItems,
+    onClick: handleMenuClick,
+  };
+  const autoPilotButton = autoPilot ? (
+    <>
+      <Button onClick={toggleAutoPilot} disabled={loading}>Disable AutoPlay</Button>
+    </>
+  ) : (
+    <>
+      <Dropdown menu={autoPilotMenuProps}>
+        <Button>
+          Enable AutoPlay
+          <DownOutlined />
+        </Button>
+      </Dropdown>
+    </>
+  )
   return (
     <>
     <ScoreGraph scoreGraphVisible={scoreGraphVisible} setScoreGraphVisible={setScoreGraphVisible} {...props} />
@@ -74,7 +112,8 @@ function HUD(props) {
       <div style={{display: "flex" }}>
         <div style={{display: "flex-inline", maxWidth: "150px" }}>
           <Button onClick={showScoreGraph} disabled={loading}>Show Score Graph</Button>
-          <Button onClick={toggleAutoPilot} disabled={loading}>{autoPilot ? "Disable" : "Enable"} AutoPilot</Button>
+
+          {autoPilotButton}
         </div>
         { myTurnToPlay && promptUserToPlay }
         { myTurnToBid && promptUserToBid }

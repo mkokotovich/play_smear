@@ -256,6 +256,11 @@ class Player(models.Model):
 
     cards_in_hand = ArrayField(models.CharField(max_length=2), default=list)
 
+    AUTO_PILOT_DISABLED = 0
+    AUTO_PILOT_UNTIL_NEW_HAND = 1
+    AUTO_PILOT_FOREVER = 2
+    auto_pilot_mode = models.IntegerField(blank=True, null=True)
+
     def __str__(self):
         return f"{self.name} ({self.id})"
 
@@ -278,6 +283,10 @@ class Player(models.Model):
 
     def reset_for_new_hand(self):
         self.cards_in_hand = []
+        # Reset players who only enabled auto pilot until the end of the hand
+        if self.auto_pilot_mode == self.AUTO_PILOT_UNTIL_NEW_HAND:
+            self.auto_pilot_mode = self.AUTO_PILOT_DISABLED
+            self.is_computer = False
 
     def accept_dealt_cards(self, cards):
         representations = [card.to_representation() for card in cards]
@@ -416,7 +425,7 @@ class Hand(models.Model):
             player.accept_dealt_cards(deck.deal(3))
         for player in players:
             LOG.info(f"{player} starts hand {self.num} with {player.cards_in_hand}")
-        Player.objects.bulk_update(players, ["cards_in_hand"])
+        Player.objects.bulk_update(players, ["cards_in_hand", "is_computer", "auto_pilot_mode"])
 
         self.save()
 
