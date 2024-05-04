@@ -1,0 +1,52 @@
+# fly.toml app configuration file generated for testplaysmear on 2024-05-03T08:06:13-05:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'testplaysmear'
+primary_region = 'ord'
+kill_signal = 'SIGINT'
+kill_timeout = '5s'
+
+[experimental]
+  auto_rollback = true
+
+[build]
+
+[deploy]
+  release_command = 'python manage.py migrate'
+
+[env]
+  DJANGO_SETTINGS_MODULE = 'api.settings.test'
+  PYTHONDONTWRITEBYTECODE = '1'
+  ENVIRON = 'test'
+
+[[services]]
+  http_checks = []
+  protocol = 'tcp'
+  internal_port = 8000
+  processes = ['app']
+
+  [[services.ports]]
+    port = 80
+    handlers = ['http']
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ['tls', 'http']
+
+  [services.concurrency]
+    type = 'connections'
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.tcp_checks]]
+    interval = '15s'
+    timeout = '2s'
+    grace_period = '1s'
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

@@ -33,6 +33,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "0.0.0.0",
     "playsmear.fly.dev",
+    "testplaysmear.fly.dev",
     "test.playsmear.com",
     "playsmear.com",
     "www.playsmear.com",

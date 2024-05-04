@@ -11,6 +11,7 @@ processes = []
 [env]
   DJANGO_SETTINGS_MODULE = "api.settings.prod"
   PYTHONDONTWRITEBYTECODE=1
+  ENVIRON = "prod"
 
 [experimental]
   allowed_public_ports = []
