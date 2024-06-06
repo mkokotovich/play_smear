@@ -23,12 +23,28 @@ pre-commit install --install-hooks
 
 # Deployment
 
-`flyctl deploy`
+Deploy to test:
+
+```
+fly deploy -c config/test.fly.toml
+```
+
+Deploy to prod:
+
+```
+fly deploy
+```
 
 # Accessing Prod
 
 ```
 fly ssh console
+```
+
+# Changing memory for database VM
+
+```
+fly machine -a playsmear-db update --vm-memory 512
 ```
 
 # Adding secrets
