@@ -13,7 +13,6 @@ const AdsComponent = (props) => {
 
     return (
       <>
-        <p style={{fontSize: "0.8em"}}>The following are ads to help pay for the operation of the site:</p>
         <ins className="adsbygoogle"
           style={{ display: "block" }}
           data-ad-client="ca-pub-3354368836279808"

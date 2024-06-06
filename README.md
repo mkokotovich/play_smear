@@ -23,7 +23,13 @@ pre-commit install --install-hooks
 
 # Deployment
 
-`flyctl deploy`
+Deploy to test:
+
+`fly deploy -c config/test.fly.toml`
+
+Deploy to prod:
+
+`fly deploy`
 
 # Accessing Prod
 

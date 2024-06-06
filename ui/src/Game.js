@@ -12,6 +12,7 @@ import HandResults from './HandResults';
 import HUD from './HUD';
 import getErrorString from './utils';
 import AdsComponent from './AdsComponent';
+import YollaAdsComponent from './YollaAdsComponent';
 
 import './Game.css';
 
@@ -206,7 +207,9 @@ function Game(props) {
       { gameDisplay }
       <br/><br/><br/>
       <hr />
+      <p style={{fontSize: "0.8em"}}>The following are ads to help pay for the operation of the site:</p>
       <AdsComponent key={adsKey} dataAdSlot="2506958810" />
+      <YollaAdsComponent key={adsKey} />
     </div>
   );
 }
