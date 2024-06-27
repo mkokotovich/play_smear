@@ -177,6 +177,7 @@ function Game(props) {
     setCards,
   };
   let adsKey = "default";
+  let yollaAdsKey = "yolla:default";
   if (game) {
     if (game.state  === "starting") {
       gameDisplay = (<WaitingRoom {...allProps} />);
@@ -196,6 +197,7 @@ function Game(props) {
       gameDisplay = (<>Unknown status {game.state}</>);
     }
     adsKey = `game:${game.id}:hand:${game?.current_hand?.id}:trick:${game?.current_trick?.id}`;
+    yollaAdsKey = `yolla:game:${game.id}:hand:${game?.current_hand?.id}:trick:${game?.current_trick?.id}`;
   }
 
   return (
@@ -208,8 +210,8 @@ function Game(props) {
       <br/><br/><br/>
       <hr />
       <p style={{fontSize: "0.8em"}}>The following are ads to help pay for the operation of the site:</p>
+      <YollaAdsComponent key={yollaAdsKey} />
       <AdsComponent key={adsKey} dataAdSlot="2506958810" />
-      <YollaAdsComponent key={adsKey} />
     </div>
   );
 }
