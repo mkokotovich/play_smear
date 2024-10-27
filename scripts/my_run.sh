@@ -10,6 +10,8 @@ sleep 5
 echo "Creating test user"
 curl -X POST -H "Content-Type: application/json" -d '{"username": "test", "password": "test"}' http://localhost:8000/api/users/v1/
 curl -X POST -H "Content-Type: application/json" -d '{"username": "test2", "password": "test2"}' http://localhost:8000/api/users/v1/
+curl -X POST -H "Content-Type: application/json" -d '{"username": "test3", "password": "test3"}' http://localhost:8000/api/users/v1/
+curl -X POST -H "Content-Type: application/json" -d '{"username": "test4", "password": "test4"}' http://localhost:8000/api/users/v1/
 
 echo
 echo "Success!"

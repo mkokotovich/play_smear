@@ -602,10 +602,26 @@ class Hand(models.Model):
         self.save()
         self.advance_hand()
 
+    def reset_spectator_hand(self):
+        players = self.game.player_set.all()
+        spectators = []
+        for player in players:
+            if player.is_spectator:
+                spectators.append(player)
+                player.reset_for_new_hand()
+                player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+                player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+                continue
+        Player.objects.bulk_update(spectators, ["cards_in_hand", "is_computer", "auto_pilot_mode"])
+
+        self.save()
+        return
+
     def advance_hand(self):
         if self.game.state == Game.BIDDING:
             self.advance_bidding()
         elif self.game.state == Game.DECLARING_TRUMP:
+            self.reset_spectator_hand()
             trick = Trick.objects.create(hand=self, num=self.tricks.count() + 1)
             trick.start_trick(self.bidder)
             self.game.set_state(Game.PLAYING_TRICK)
@@ -627,6 +643,7 @@ class Hand(models.Model):
                 spectators = []
                 for player in players:
                     if player.is_spectator:
+                        print(f"removing card from hand of {player.name}")
                         player.cards_in_hand = player.cards_in_hand[0:-1]
                         player.save()
                         spectators.append(player)
@@ -710,6 +727,7 @@ class Hand(models.Model):
         game_is_over = bool(contestants_at_or_over) and bidder_went_out
 
         if game_is_over:
+            self.reset_spectator_hand()
             if bidding_contestant in contestants_at_or_over:
                 # Bidder always goes out
                 bidding_contestant.refresh_from_db()

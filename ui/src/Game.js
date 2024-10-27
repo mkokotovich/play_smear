@@ -163,7 +163,8 @@ function Game(props) {
           reloadGameStatus(props.match.params.gameID, game?.current_hand?.num, game?.current_trick?.num, () => {}, updateGame);
         }
       }
-      if ( myPlayer.seat == null ) {
+
+      if ( (myPlayer.seat == null  && !trickOver) || game?.state === "bidding" || game?.state === "declaring_trump" ) {
         loadGame(props.match.params.gameID, undefined, undefined, () => {}, setGame, setCards);
       }
     }

@@ -140,10 +140,11 @@ class GameViewSet(viewsets.ModelViewSet):
         game.num_spectators += 1
         game.save()
 
-        # if game.state != Game.STARTING:
-        #     player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
-        #     player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
-        #     player.save()
+        if game.state != Game.STARTING:
+
+            player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+            player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+            player.save()
 
         
 
