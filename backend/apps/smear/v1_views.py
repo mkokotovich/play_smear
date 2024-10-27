@@ -140,10 +140,10 @@ class GameViewSet(viewsets.ModelViewSet):
         game.num_spectators += 1
         game.save()
 
-        if game.state != Game.STARTING:
-            player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
-            player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
-            player.save()
+        # if game.state != Game.STARTING:
+        #     player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+        #     player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+        #     player.save()
 
         
 
@@ -303,7 +303,7 @@ class TeamViewSet(viewsets.ModelViewSet):
         if (player.spectate_only and adding and team.name != 'Spectators'):
             LOG.info('Player can only spectate')
             return Response({"status":"failure"})
-        if (not player.spectate_only):
+        if (not player.spectate_only and team.name == "Spectators"):
             LOG.info("Player cannot be moved to spectator")
             return Response({"status":"failure"})
         player.team = team if adding else None

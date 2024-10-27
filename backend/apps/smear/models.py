@@ -165,6 +165,8 @@ class Game(models.Model):
 
     def reset_teams(self):
         for team in list(self.teams.all()):
+            if (team.name == "Spectators"):
+                continue
             team.members.clear()
 
     def start_game(self):
@@ -338,18 +340,6 @@ class Player(models.Model):
         if self.auto_pilot_mode == self.AUTO_PILOT_UNTIL_NEW_HAND:
             self.auto_pilot_mode = self.AUTO_PILOT_DISABLED
             self.is_computer = False
-
-    # def can_only_spectate(self):
-    #     self.only_spectate = True
-    #     self.spectator = True
-
-    # def get_spectate_status(self):
-    #     return self.spectator
-
-    # def set_spectator(self, val):
-    #     if (self.only_spectate):
-    #         return
-    #     self.spectator = val
 
     def accept_dealt_cards(self, cards):
         representations = [card.to_representation() for card in cards]

@@ -45,11 +45,8 @@ function loadGame(gameID, handNum, trickNum, setLoading, setGame, setCardsIfNeed
     .then((response) => {
       console.log("loadGame", response);
       setLoading(false);
-      console.log("setGame");
       setGame(response.data);
-      console.log("initial cards");
       const initialCards = response.data?.current_hand?.cards || [];
-      console.log("set if needed")
       setCardsIfNeeded(initialCards);
     })
     .catch((error) => {
@@ -155,7 +152,8 @@ function Game(props) {
       const myTurn = (myTurnTrick || myTurnBidding);
       const trickOver = Boolean(game?.current_trick?.taker);
       const gameOver = game?.state === "game_over";
-      if ((needInput || autoPilotEnabled) && (!myTurn || autoPilotEnabled) && (!trickOver || autoPilotEnabled) && !gameOver) {
+      // myPlayer.team = team id (need last id)
+      if (((needInput || autoPilotEnabled) && (!myTurn || autoPilotEnabled) && (!trickOver || autoPilotEnabled) && !gameOver)) {
         // Do not reload status if it is my turn (unless autopilot is enabled,
         // then reload anyway because we won't be waiting for user input
         if (autoPilotEnabled) {
@@ -164,6 +162,9 @@ function Game(props) {
         } else {
           reloadGameStatus(props.match.params.gameID, game?.current_hand?.num, game?.current_trick?.num, () => {}, updateGame);
         }
+      }
+      if ( myPlayer.seat == null ) {
+        loadGame(props.match.params.gameID, undefined, undefined, () => {}, setGame, setCards);
       }
     }
   }, 2000);
