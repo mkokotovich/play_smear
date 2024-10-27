@@ -164,7 +164,7 @@ function Game(props) {
         }
       }
 
-      if ( (myPlayer.seat == null  && !trickOver) || game?.state === "bidding" || game?.state === "declaring_trump" ) {
+      if ( (myPlayer.seat == null  && (!trickOver || gameOver)) || game?.state === "bidding" || game?.state === "declaring_trump" ) {
         loadGame(props.match.params.gameID, undefined, undefined, () => {}, setGame, setCards);
       }
     }
