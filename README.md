@@ -47,6 +47,24 @@ fly ssh console
 fly machine -a playsmear-db update --vm-memory 512
 ```
 
+# Extend DB volume
+
+```
+fly -a playsmear-db vol list
+fly -a playsmear-db vol extend <volume id> -s 3
+
+# Restarting the machine might be necessary
+fly -a playsmear-db machine list
+fly -a playsmear-db machine stop <machine id>
+fly -a playsmear-db machine start <machine id>
+```
+
+# Restart DB
+
+```
+fly pg restart -a playsmear-db --skip-health-checks --force
+```
+
 # Adding secrets
 
 ```
