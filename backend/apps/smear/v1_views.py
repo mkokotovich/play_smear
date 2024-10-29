@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from unique_names_generator import get_random_name
 from unique_names_generator.data import ADJECTIVES, ANIMALS, COLORS
 
-from apps.smear.models import Bid, Game, Hand, Play, Player, Team, Trick
+from apps.smear.models import Bid, Game, Hand, Play, Player, Spectator, Team, Trick
 from apps.smear.pagination import SmearPagination
 from apps.smear.permissions import (
     IsBidOwnerPermission,
@@ -103,13 +103,16 @@ class GameViewSet(viewsets.ModelViewSet):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if game.player_set.count() >= game.num_players:
+        spectate = serializer.validated_data.get("spectate", False)
+
+        if not spectate and game.player_set.count() >= game.num_players:
             raise ValidationError(f"Unable to join game, already contains {game.num_players} players")
         if game.passcode_required and game.passcode != serializer.data.get("passcode", None):
             raise ValidationError("Unable to join game, passcode is required and was incorrect")
 
-        Player.objects.create(game=game, user=self.request.user)
-        LOG.info(f"Added {self.request.user} to game {game}")
+        member_object = Spectator if spectate else Player
+        member_object.objects.create(game=game, user=self.request.user)
+        LOG.info(f"Added {self.request.user} to game {game} as {'spectator' if spectate else 'player'}")
         return Response({"status": "success"})
 
     @action(

@@ -235,6 +235,7 @@ class GameDetailSerializer(GameSerializer):
 
 class GameJoinSerializer(serializers.Serializer):
     passcode = serializers.CharField(max_length=512, required=False)
+    spectate = serializers.BooleanField(required=False)
 
 
 class BidSerializer(serializers.ModelSerializer):

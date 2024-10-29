@@ -18,7 +18,7 @@ function HUD(props) {
   const autoPilotEnabled = myPlayer?.is_computer;
   const [autoPilot, setAutoPilot] = useState(autoPilotEnabled);
   const [scoreGraphVisible, setScoreGraphVisible] = useState(false);
-  const myTurnToPlay = game?.current_trick?.active_player === myPlayer?.id;
+  const myTurnToPlay = game?.current_trick?.active_player && game?.current_trick?.active_player === myPlayer?.id;
   const myTurnToBid = game?.current_hand?.bidder === myPlayer?.id && game?.state === "bidding";
 
   React.useEffect(() => {

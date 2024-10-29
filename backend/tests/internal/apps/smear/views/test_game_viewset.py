@@ -99,7 +99,7 @@ def test_game_viewset_create(authed_client, django_assert_num_queries):
         "single_player": True,
     }
 
-    with django_assert_num_queries(12):
+    with django_assert_num_queries(13):
         response = client.post(url, data=new_game_data)
 
     assert response.status_code == status.HTTP_201_CREATED
