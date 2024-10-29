@@ -121,12 +121,12 @@ class GameSelector extends Component {
     });
   }
 
-  handleJoin = (gameID, passcode) => {
+  handleJoin = (gameID, passcode, spectate=false) => {
     console.log("join " + gameID);
     this.setState({
       loading: true
     });
-    axios.post(`/api/smear/v1/games/${gameID}/join/`, {passcode: passcode})
+    axios.post(`/api/smear/v1/games/${gameID}/join/`, {passcode: passcode, spectate: spectate})
       .then((response) => {
         this.setState({
           redirect: true,

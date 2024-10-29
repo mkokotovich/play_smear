@@ -101,7 +101,7 @@ function Game(props) {
   const {signedInUser} = props;
 
   function setCardsIfNeeded(newCards) {
-    if (cards.length === 0) {
+    if (cards.length === 0 && newCards && newCards.length !== 0) {
       setCards(newCards);
     }
   }
@@ -147,7 +147,7 @@ function Game(props) {
     if (game) {
       const myPlayer = game?.players.find(player => player.user === signedInUser.id);
       const autoPilotEnabled = myPlayer?.is_computer;
-      const myTurnTrick = game?.current_trick?.active_player === myPlayer?.id;
+      const myTurnTrick = game?.current_trick?.active_player && game?.current_trick?.active_player === myPlayer?.id;
       const myTurnBidding = (game?.current_hand?.bidder === myPlayer?.id) && (game?.state === "bidding" || game?.state === "declaring_trump");
       const myTurn = myTurnTrick || myTurnBidding;
       const trickOver = Boolean(game?.current_trick?.taker);

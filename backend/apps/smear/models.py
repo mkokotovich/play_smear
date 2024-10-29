@@ -27,6 +27,7 @@ class Game(models.Model):
     passcode = models.CharField(max_length=256, blank=True, default="")
     single_player = models.BooleanField(blank=False, default=True)
     players = models.ManyToManyField("auth.User", through="Player")
+    spectators = models.ManyToManyField("auth.User", through="Spectator", related_name="games_spectated")
     state = models.CharField(max_length=1024, blank=True, default="")
     next_dealer = models.ForeignKey(
         "Player", related_name="games_next_dealer", on_delete=models.SET_NULL, null=True, blank=True
@@ -339,6 +340,14 @@ class Player(models.Model):
         else:
             self.score = F("score") - amount
             self.save()
+
+
+class Spectator(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
 
 
 class Hand(models.Model):

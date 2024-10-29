@@ -1,6 +1,6 @@
 from rest_framework import permissions
 
-from apps.smear.models import Bid, Game, Play, Player, Team
+from apps.smear.models import Bid, Game, Play, Player, Spectator, Team
 
 
 class IsPlayerInGame(permissions.IsAuthenticated):
@@ -11,18 +11,26 @@ class IsPlayerInGame(permissions.IsAuthenticated):
         game_id = view.kwargs.get("game_id", None)
         if not game_id:
             return False
-        return Player.objects.filter(game_id=game_id, user_id=request.user.id).exists()
+        user_id = request.user.id
+        return (
+            Player.objects.filter(game_id=game_id, user_id=user_id).exists()
+            or Spectator.objects.filter(game_id=game_id, user_id=user_id).exists()
+        )
 
     def has_object_permission(self, request, view, obj):
         if isinstance(obj, Game):
-            game = obj
+            game_id = obj.id
         elif isinstance(obj, Team):
-            game = obj.game
+            game_id = obj.game_id
         elif isinstance(obj, Bid):
-            game = obj.hand.game
+            game_id = obj.hand.game_id
         elif isinstance(obj, Play):
-            game = obj.trick.hand.game
-        return Player.objects.filter(game_id=game.id, user_id=request.user.id).exists()
+            game_id = obj.trick.hand.game_id
+        user_id = request.user.id
+        return (
+            Player.objects.filter(game_id=game_id, user_id=user_id).exists()
+            or Spectator.objects.filter(game_id=game_id, user_id=user_id).exists()
+        )
 
 
 class IsGameOwnerPermission(permissions.IsAuthenticated):

@@ -72,7 +72,8 @@ class GameList extends Component {
                           onPressEnter={() => handleJoin(game.id, this.state[`passcode_${game.id}`])}
                         />
                       )}
-                      <Button onClick={() => handleJoin(game.id, this.state[`passcode_${game.id}`])}>Join</Button>
+                      <Button onClick={() => handleJoin(game.id, this.state[`passcode_${game.id}`], false)}>Join</Button>
+                      <Button onClick={() => handleJoin(game.id, this.state[`passcode_${game.id}`], true)}>Spectate</Button>
                     </>
                   )
               }
