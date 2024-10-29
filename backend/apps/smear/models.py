@@ -200,8 +200,10 @@ class Game(models.Model):
         # Assign players to their seats
         total_players = 0
         players_to_save = []
-        for team_num, team in enumerate(self.teams.all()[0:-1]):
+        for team_num, team in enumerate(self.teams.all()):
             for player_num, player in enumerate(team.members.all()):
+                if player.is_spectator:
+                    continue
                 player.seat = team_num + (self.num_teams * player_num)
                 LOG.info(f"Added {player.name} from game {self.name} and team {team.name} to seat {player.seat}")
                 players_to_save.append(player)
@@ -457,7 +459,7 @@ class Hand(models.Model):
         return self.tricks.last()
 
     def set_spectators_hands(self):
-        spectators = self.get_spectator_list()
+        spectators = self.game.get_spectator_list()
         for spectator in spectators:
             spectator.reset_for_new_hand()
             spectator.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
@@ -474,7 +476,7 @@ class Hand(models.Model):
 
         # Deal out six cards
         deck = Deck()
-        players = self.get_active_player_list()
+        players = self.game.get_active_player_list()
         self.set_spectators_hands()
 
         for player in players:
@@ -594,11 +596,26 @@ class Hand(models.Model):
         self.save()
         self.advance_hand()
 
+
+    def reset_spectator_hand(self):
+        players = self.game.player_set.all()
+        spectators = []
+        for player in players:
+            if player.is_spectator:
+                spectators.append(player)
+                player.reset_for_new_hand()
+                player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+                player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+                continue
+        Player.objects.bulk_update(spectators, ["cards_in_hand", "is_computer", "auto_pilot_mode"])
+        self.save()
+        return
+
     def advance_hand(self):
         if self.game.state == Game.BIDDING:
             self.advance_bidding()
         elif self.game.state == Game.DECLARING_TRUMP:
-            self.game.set_spectators_hands()
+            self.reset_spectator_hand()
             trick = Trick.objects.create(hand=self, num=self.tricks.count() + 1)
             trick.start_trick(self.bidder)
             self.game.set_state(Game.PLAYING_TRICK)
@@ -619,10 +636,9 @@ class Hand(models.Model):
                 spectators = self.game.get_spectator_list()
                 for spectator in spectators:
                     if spectator.is_spectator:
-                        print(f"removing card from hand of {player.name}")
+                        print(f"removing card from hand of {spectator.name}")
                         spectator.cards_in_hand = spectator.cards_in_hand[0:-1]
                         spectator.save()
-                        spectators.append(player)
                 Player.objects.bulk_update(spectators, ["cards_in_hand"])
 
     def player_can_change_bid(self, player):
