@@ -719,7 +719,7 @@ class Hand(models.Model):
         game_is_over = bool(contestants_at_or_over) and bidder_went_out
 
         if game_is_over:
-            self.game.set_spectators_hands()
+            self.reset_spectator_hand()
             if bidding_contestant in contestants_at_or_over:
                 # Bidder always goes out
                 bidding_contestant.refresh_from_db()
