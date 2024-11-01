@@ -258,6 +258,9 @@ function removePlayer(player, list, setList, allPlayers, setAllPlayers) {
 
 function TeamDroppable(props) {
   const {gameID, team, teamList, setTeamList, allPlayers, setAllPlayers} = props;
+  if (team.name == "Spectators") {
+    return(null);
+  }
   return (
     <Droppable droppableId={team.id.toString()}>
       {(provided, snapshot) => (
