@@ -24,6 +24,12 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='game',
+            name='num_spectators',
+            field=models.IntegerField(default=0),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='game',
             name='num_teams',
             field=models.IntegerField(default=2),
             preserve_default=False,

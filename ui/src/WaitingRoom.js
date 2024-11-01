@@ -110,7 +110,6 @@ const reorder = (list, startIndex, endIndex) => {
     const result = Array.from(list);
     const [removed] = result.splice(startIndex, 1);
     result.splice(endIndex, 0, removed);
-
     return result;
 };
 
@@ -259,6 +258,9 @@ function removePlayer(player, list, setList, allPlayers, setAllPlayers) {
 
 function TeamDroppable(props) {
   const {gameID, team, teamList, setTeamList, allPlayers, setAllPlayers} = props;
+  if (team.name == "Spectators") {
+    return(null);
+  }
   return (
     <Droppable droppableId={team.id.toString()}>
       {(provided, snapshot) => (
@@ -281,6 +283,7 @@ function TeamDroppable(props) {
     </Droppable>
   );
 }
+
 
 function WaitingRoom(props) {
   const [allPlayers, setAllPlayers] = useState([]);
@@ -457,6 +460,8 @@ function WaitingRoom(props) {
       />
     </Col>
   ));
+
+
   const dnd = (
     <DragDropContext onDragEnd={onDragEnd}>
       <Row type="flex">

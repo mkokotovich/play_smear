@@ -21,6 +21,8 @@ class Game(models.Model):
     owner = models.ForeignKey("auth.User", related_name="games", on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=256, blank=True, default="")
     num_players = models.IntegerField()
+    num_spectators = models.IntegerField()
+    
     num_teams = models.IntegerField()
     score_to_play_to = models.IntegerField()
     passcode_required = models.BooleanField(blank=True, default=False)
@@ -93,6 +95,8 @@ class Game(models.Model):
         for i in range(0, self.num_teams):
             color = Team.COLORS[i]
             teams.append(Team(game=self, name=f"Team {color}", color=color))
+        teams.append(Team(game=self, name="Spectators", color="spectator"))
+
         Team.objects.bulk_create(teams)
 
     def add_computer_players(self, count):
@@ -114,8 +118,29 @@ class Game(models.Model):
         computer_strs = [str(comp) for comp in computers_added]
         LOG.info(f"Added computers {', '.join(computer_strs)} to {self}")
 
+    def get_spectator_list(self):
+        spectators = []
+        for player in self.player_set.all():
+            if player.is_spectator:
+                spectators.append(player)
+        return spectators
+
+    def get_active_player_list(self):
+        active_players = []
+        for player in self.player_set.all():
+            if not player.is_spectator:
+                active_players.append(player)
+        return active_players
+
+    def get_num_spectators(self):
+        return len(self.get_spectator_list())
+
+    def get_num_active_players(self):
+        return len(self.get_active_player_list())
+
+
     def add_computer_player(self):
-        if self.players.count() >= self.num_players:
+        if self.get_num_active_players() >= self.num_players:
             raise ValidationError(f"Unable to add computer, game already contains {self.num_players} players")
 
         computers = list(User.objects.filter(username__startswith="mkokotovich+computer").all())
@@ -126,25 +151,38 @@ class Game(models.Model):
                 LOG.info(f"Added computer {computer} to {self}")
                 return computer_player
 
+
     def autofill_teams(self):
         if self.num_teams == 0:
             return
-        teams = list(self.teams.all())
-        players = list(self.player_set.all())
+        teams = list(self.teams.all())[0:-1]
+        spec_team = list(self.teams.all())[-1]
+        # players = list(self.player_set.all())
+        players = self.get_active_player_list()
+        spectators = self.get_spectator_list()
+
         shuffle(players)
 
         for player_num, player in enumerate(players):
             team_num = player_num % self.num_teams
             player.team = teams[team_num]
             LOG.info(f"Autofilling teams for game {self}. Added {player} to team {teams[team_num]}")
+
+        for player_num, player in enumerate(spectators):
+            player.team = spec_team
+            LOG.info(f"Autofilling teams for game {self}. Added {player} to team {spec_team}")
         Player.objects.bulk_update(players, ["team"])
+        print(f"ADDED {spectators} to spectator team")
+        Player.objects.bulk_update(spectators, ["team"])
 
     def reset_teams(self):
         for team in list(self.teams.all()):
+            if (team.name == "Spectators"):
+                continue
             team.members.clear()
 
     def start_game(self):
-        if self.players.count() != self.num_players:
+        if self.get_num_active_players() != self.num_players:
             raise ValidationError(
                 f"Unable to start game, game requires {self.num_players} players, but {self.players.count()} have joined"
             )
@@ -158,23 +196,26 @@ class Game(models.Model):
         self.advance_game()
 
     def set_seats(self):
+        
         # Assign players to their seats
         total_players = 0
         players_to_save = []
         for team_num, team in enumerate(self.teams.all()):
             for player_num, player in enumerate(team.members.all()):
+                if player.is_spectator:
+                    continue
                 player.seat = team_num + (self.num_teams * player_num)
                 LOG.info(f"Added {player.name} from game {self.name} and team {team.name} to seat {player.seat}")
                 players_to_save.append(player)
                 total_players += 1
 
         if not self.teams.exists():
-            for player_num, player in enumerate(self.player_set.all()):
+            for player_num, player in enumerate(self.get_active_player_list()):
                 player.seat = player_num
                 LOG.info(f"Added {player.name} from game {self.name} to seat {player.seat}")
                 players_to_save.append(player)
                 total_players += 1
-
+        
         if total_players != self.num_players:
             raise ValidationError(
                 f"Unable to start game, only {total_players} were assigned to teams, but {self.num_players} are playing"
@@ -182,7 +223,12 @@ class Game(models.Model):
         Player.objects.bulk_update(players_to_save, ["seat"])
 
     def set_plays_after(self):
-        players = list(self.player_set.all().order_by("seat"))
+        players_all = list(self.player_set.all().order_by("seat"))
+        players = []
+        for player in players_all:
+            if not player.is_spectator:
+                players.append(player)
+
         prev_player = players[-1]
         for player in players:
             player.plays_after = prev_player
@@ -243,6 +289,9 @@ class Player(models.Model):
 
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
+    is_spectator = models.BooleanField(blank=True, default=False)
+    spectate_only = models.BooleanField(blank=True, default=False)
+
     score = models.IntegerField(blank=True, default=0)
     winner = models.BooleanField(blank=True, default=False)
 
@@ -409,6 +458,16 @@ class Hand(models.Model):
     def current_trick(self):
         return self.tricks.last()
 
+    def set_spectators_hands(self):
+        spectators = self.game.get_spectator_list()
+        for spectator in spectators:
+            spectator.reset_for_new_hand()
+            spectator.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+            spectator.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+        Player.objects.bulk_update(spectators, ["cards_in_hand", "is_computer", "auto_pilot_mode"])
+        self.save()
+        return
+
     def start_hand(self, dealer):
         LOG.info(f"Starting hand {self.num} with dealer: {dealer}")
         # Set the dealer
@@ -417,7 +476,9 @@ class Hand(models.Model):
 
         # Deal out six cards
         deck = Deck()
-        players = self.game.player_set.all()
+        players = self.game.get_active_player_list()
+        self.set_spectators_hands()
+
         for player in players:
             player.reset_for_new_hand()
             player.accept_dealt_cards(deck.deal(3))
@@ -487,7 +548,7 @@ class Hand(models.Model):
     def award_low_trump(self):
         current_low = None
         current_low_winner = None
-        for player in self.game.player_set.all():
+        for player in self.game.get_active_player_list():
             trump_cards = player.get_trump(self.trump)
             lowest_trump = min(trump_cards, key=lambda x: x.trump_rank(self.trump)) if trump_cards else None
             new_low = (
@@ -507,7 +568,7 @@ class Hand(models.Model):
     def award_high_trump(self):
         current_high = None
         current_high_winner = None
-        for player in self.game.player_set.all():
+        for player in self.game.get_active_player_list():
             trump_cards = player.get_trump(self.trump)
             highest_trump = max(trump_cards, key=lambda x: x.trump_rank(self.trump)) if trump_cards else None
             new_high = (
@@ -535,10 +596,26 @@ class Hand(models.Model):
         self.save()
         self.advance_hand()
 
+
+    def reset_spectator_hand(self):
+        players = self.game.player_set.all()
+        spectators = []
+        for player in players:
+            if player.is_spectator:
+                spectators.append(player)
+                player.reset_for_new_hand()
+                player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+                player.accept_dealt_cards([Card(value="ace", suit="spades"), Card(value="ace", suit="spades"), Card(value="ace", suit="spades")])
+                continue
+        Player.objects.bulk_update(spectators, ["cards_in_hand", "is_computer", "auto_pilot_mode"])
+        self.save()
+        return
+
     def advance_hand(self):
         if self.game.state == Game.BIDDING:
             self.advance_bidding()
         elif self.game.state == Game.DECLARING_TRUMP:
+            self.reset_spectator_hand()
             trick = Trick.objects.create(hand=self, num=self.tricks.count() + 1)
             trick.start_trick(self.bidder)
             self.game.set_state(Game.PLAYING_TRICK)
@@ -556,6 +633,13 @@ class Hand(models.Model):
                 trick = Trick.objects.create(hand=self, num=self.tricks.count() + 1)
                 trick.start_trick(last_taker)
                 trick.advance_trick()
+                spectators = self.game.get_spectator_list()
+                for spectator in spectators:
+                    if spectator.is_spectator:
+                        print(f"removing card from hand of {spectator.name}")
+                        spectator.cards_in_hand = spectator.cards_in_hand[0:-1]
+                        spectator.save()
+                Player.objects.bulk_update(spectators, ["cards_in_hand"])
 
     def player_can_change_bid(self, player):
         next_bidder = self.bidder
@@ -635,6 +719,7 @@ class Hand(models.Model):
         game_is_over = bool(contestants_at_or_over) and bidder_went_out
 
         if game_is_over:
+            self.reset_spectator_hand()
             if bidding_contestant in contestants_at_or_over:
                 # Bidder always goes out
                 bidding_contestant.refresh_from_db()
