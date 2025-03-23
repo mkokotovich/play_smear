@@ -41,6 +41,13 @@ fly deploy
 fly ssh console
 ```
 
+# Delete old games (to save DB disk)
+
+```
+fly ssh console
+python manage.py cleanup_old_games
+```
+
 # Changing memory for database VM
 
 ```
