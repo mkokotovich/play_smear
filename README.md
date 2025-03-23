@@ -41,11 +41,50 @@ fly deploy
 fly ssh console
 ```
 
-# Delete old games (to save DB disk)
+# Database Disk Management
+
+## Delete the old games
+
+Note: this might take a while, use `caffeinate -ims` to keep mac alive
 
 ```
 fly ssh console
 python manage.py cleanup_old_games
+```
+
+## Vacuum to reclaim space in database
+
+```
+fly ssh console
+apt-get install -y postgresql-client
+python manage.py dbshell
+vacuum full;
+```
+
+## Check to see which table is taking up the most space
+
+```
+fly ssh console
+apt-get install -y postgresql-client
+python manage.py dbshell
+
+SELECT
+    table_name,
+    pg_size_pretty(table_size) AS table_size,
+    pg_size_pretty(indexes_size) AS indexes_size,
+    pg_size_pretty(total_size) AS total_size
+FROM (
+    SELECT
+        table_name,
+        pg_table_size(table_name) AS table_size,
+        pg_indexes_size(table_name) AS indexes_size,
+        pg_total_relation_size(table_name) AS total_size
+    FROM (
+        SELECT ('"' || table_schema || '"."' || table_name || '"') AS table_name
+        FROM information_schema.tables
+    ) AS all_tables
+    ORDER BY total_size DESC
+) AS pretty_sizes;
 ```
 
 # Changing memory for database VM
