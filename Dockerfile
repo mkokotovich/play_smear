@@ -15,7 +15,7 @@ RUN yarn build
 
 #=============================================
 
-FROM python:3.10-slim-buster
+FROM python:3.13-slim
 
 ENV PYTHONUNBUFFERED 1
 
