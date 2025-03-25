@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { withRouter } from 'react-router-dom';
 import { Spin, Input, Popover, Button, Row, Col } from 'antd';
 import {
   UserOutlined,
@@ -93,4 +92,4 @@ class GameList extends Component {
   }
 }
 
-export default withRouter(GameList);
+export default GameList;

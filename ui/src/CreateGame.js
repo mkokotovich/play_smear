@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Redirect, withRouter } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { Radio, Row, Checkbox, Input, Button, Modal, Spin } from 'antd';
 import axios from 'axios';
 import getErrorString from './utils';
@@ -145,7 +145,7 @@ class CreateGame extends Component {
   render() {
     const buttonText = this.props.buttonText || "Create New Game";
     if (this.state.redirectToGame) {
-      return <Redirect push to={`/games/${this.state.gameID}`} />
+      return <Navigate to={`/games/${this.state.gameID}`} />
     }
 
     return (
@@ -233,4 +233,4 @@ class CreateGame extends Component {
   }
 }
 
-export default withRouter(CreateGame);
+export default CreateGame;

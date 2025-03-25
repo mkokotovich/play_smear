@@ -1,5 +1,4 @@
 import React from 'react';
-import { withRouter } from 'react-router-dom';
 import Card from './Card';
 import Bid from './Bid';
 import { TeamOutlined, UserOutlined } from '@ant-design/icons';
@@ -120,4 +119,4 @@ function PlayerDisplay(props) {
   );
 }
 
-export default withRouter(PlayerDisplay);
+export default PlayerDisplay;

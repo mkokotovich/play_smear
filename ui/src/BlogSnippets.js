@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { withRouter } from 'react-router-dom';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import Card from './Card';
 import axios from 'axios';
 
 function BlogSnippets(props) {
@@ -41,4 +38,4 @@ function BlogSnippets(props) {
   );
 }
 
-export default withRouter(BlogSnippets);
+export default BlogSnippets;

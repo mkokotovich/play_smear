@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { withRouter } from 'react-router-dom';
 import { Row, Col, Input, Modal, Spin, Button} from 'antd';
 import axios from 'axios';
 import getErrorString from './utils';
@@ -147,4 +146,4 @@ class ChangePassword extends Component {
   }
 }
 
-export default withRouter(ChangePassword);
+export default ChangePassword;

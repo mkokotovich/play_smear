@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { withRouter } from 'react-router-dom';
-import { Button, Dropdown, Modal, Space } from 'antd';
+import { Button, Dropdown, Modal } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
@@ -125,4 +124,4 @@ function HUD(props) {
   );
 }
 
-export default withRouter(HUD);
+export default HUD;

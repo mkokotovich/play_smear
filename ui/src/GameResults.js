@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Redirect, withRouter } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 // import { Button } from 'antd';
 
 import PlayerDisplay from './PlayerDisplay';
@@ -21,7 +21,7 @@ function GameResults(props) {
   }
 
   if (goHome) {
-    return <Redirect push to="/" />
+    return <Navigate to="/" />
   }
 
   return (
@@ -35,4 +35,4 @@ function GameResults(props) {
   );
 }
 
-export default withRouter(GameResults);
+export default GameResults;

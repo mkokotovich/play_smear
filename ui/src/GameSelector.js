@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Redirect, withRouter } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { Modal, Spin } from 'antd';
 import axios from 'axios';
 import queryString from 'query-string';
@@ -155,7 +155,7 @@ class GameSelector extends Component {
     };
 
     if (this.state.redirect) {
-      return <Redirect push to={`/games/${this.state.gameID}`} />
+      return <Navigate to={`/games/${this.state.gameID}`} />
     }
 
     return (
@@ -180,4 +180,4 @@ class GameSelector extends Component {
   }
 }
 
-export default withRouter(GameSelector);
+export default GameSelector;

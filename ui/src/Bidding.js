@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { withRouter } from 'react-router-dom';
 import { Radio, Button, Modal } from 'antd';
 import axios from 'axios';
 
@@ -84,4 +83,4 @@ function Bidding(props) {
   );
 }
 
-export default withRouter(Bidding);
+export default Bidding;

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { withRouter } from 'react-router-dom';
 import { Radio, Button, Modal } from 'antd';
 import axios from 'axios';
 
@@ -105,4 +104,4 @@ function Trick(props) {
   );
 }
 
-export default withRouter(Trick);
+export default Trick;

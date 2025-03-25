@@ -1,6 +1,6 @@
 import axios from 'axios';
-import React, { Component, useState, useRef } from 'react';
-import { withRouter, Route, Link } from 'react-router-dom';
+import React, { useState, useRef } from 'react';
+import { Route, Routes, Link } from 'react-router-dom';
 import { Row, Col } from 'antd';
 import TawkMessengerReact from '@tawk.to/tawk-messenger-react';
 import './App.css';
@@ -79,89 +79,20 @@ function App() {
           />
         </Col>
       </Row>
-      <Route
-        exact
-        path="/"
-        render={() => {
-          return <Home handleAuthChange={handleAuthChange} signedInUser={user}/>;
-        }}
-      />
+      <Routes>
+        <Route path="/" element={<Home handleAuthChange={handleAuthChange} signedInUser={user}/>} />
+        <Route path="/login" element={ <Login handleAuthChange={handleAuthChange} isSignedIn={user !== null} signedInUser={user} /> }/>
+        <Route path="/games" element={<GameSelector signedInUser={user}/>} />
+        <Route path="/manage" element={ <GameSelector signedInUser={user} manage={true} /> }/>
+        <Route path="/games/:gameID" element={ <Game signedInUser={user}/> } />
+        <Route path="/profile/password" element={ <ChangePassword user={user} /> } />
+        <Route path="/profile" element={ <Profile user={user} /> } />
+        <Route path="/reset" element={ <ResetPassword/> } />
+        <Route path="/forgot" element={ <ForgotPassword/> } />
+        <Route path="/rules" element={ <HowToPlay/> } />
+        <Route path="/privacy" element={ <Privacy/> } />
+      </Routes>
 
-      <Route
-        exact
-        path={`/login`}
-        render={() => {
-          return <Login
-            handleAuthChange={handleAuthChange}
-            isSignedIn={user !== null}
-            signedInUser={user}
-          />;
-        }}
-      />
-      <Route
-        exact
-        path={`/games`}
-        render={() => {
-          return <GameSelector signedInUser={user}/>;
-        }}
-      />
-      <Route
-        exact
-        path={`/manage`}
-        render={() => {
-          return <GameSelector signedInUser={user} manage={true} />;
-        }}
-      />
-      <Route
-        exact
-        path={`/games/:gameID`}
-        render={() => {
-          return <Game signedInUser={user}/>;
-        }}
-      />
-
-      <Route
-        exact 
-        path={`/profile/password`}
-        render={() => {
-          return <ChangePassword user={user}/>;
-        }}
-      />
-      <Route
-        exact 
-        path={`/profile`}
-        render={() => {
-          return <Profile user={user}/>;
-        }}
-      />
-      <Route
-        exact 
-        path={`/reset`}
-        render={() => {
-          return <ResetPassword/>;
-        }}
-      />
-      <Route
-        exact 
-        path={`/forgot`}
-        render={() => {
-          return <ForgotPassword/>;
-        }}
-      />
-      <Route
-        exact 
-        path={`/rules`}
-        render={() => {
-          return <HowToPlay/>;
-        }}
-      />
-      <Route
-        exact 
-        path={`/privacy`}
-        render={() => {
-          return <Privacy/>;
-        }}
-      />
       <div className="App">
         <TawkMessengerReact
           propertyId="657fc53307843602b803173c"
@@ -172,4 +103,4 @@ function App() {
   );
 }
 
-export default withRouter(App);
+export default App;

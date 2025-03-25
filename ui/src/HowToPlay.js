@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import { withRouter, Link } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 function HowToPlay(props) {
     const rules = (
@@ -112,4 +112,4 @@ function HowToPlay(props) {
     return rules;
 }
 
-export default withRouter(HowToPlay);
+export default HowToPlay;

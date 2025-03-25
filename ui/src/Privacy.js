@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import { withRouter, Link } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 function Privacy(props) {
     const privacy = (
@@ -155,4 +155,4 @@ function Privacy(props) {
     return privacy;
 }
 
-export default withRouter(Privacy);
+export default Privacy;

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Link, withRouter, Redirect } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Card, Row, Col, Modal, Spin } from 'antd';
 import axios from 'axios';
 import BlogSnippets from './BlogSnippets';
@@ -42,16 +42,16 @@ class Home extends Component {
 
   render() {
     if (this.state.redirectToGames) {
-      return <Redirect push to="/games" />
+      return <Navigate to="/games" />
     }
     if (this.state.redirectToManage) {
-      return <Redirect push to={`/manage?single=${this.state.single}`} />
+      return <Navigate to={`/manage?single=${this.state.single}`} />
     }
     if (this.state.redirectToHowToPlay) {
-      return <Redirect push to={`/rules`} />
+      return <Navigate to={`/rules`} />
     }
     if (this.state.redirectToPrivacy) {
-      return <Redirect push to={`/privacy`} />
+      return <Navigate to={`/privacy`} />
     }
 
     const signedIn = this.props.signedInUser && !this.props.signedInUser.is_anonymous;
@@ -143,4 +143,4 @@ class Home extends Component {
   }
 }
 
-export default withRouter(Home);
+export default Home;

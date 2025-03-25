@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { withRouter } from 'react-router-dom';
+import React from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Card from './Card';
 
@@ -86,4 +85,4 @@ function CardDisplay(props) {
   );
 }
 
-export default withRouter(CardDisplay);
+export default CardDisplay;

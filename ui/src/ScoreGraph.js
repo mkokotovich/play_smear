@@ -1,12 +1,10 @@
-import React, { useState, useContext } from 'react';
-import { withRouter } from 'react-router-dom';
-import { Radio, Button, Modal } from 'antd';
+import React, { useState } from 'react';
+import { Button, Modal } from 'antd';
 import axios from 'axios';
 import {
   AnimatedAxis, // any of these can be non-animated equivalents
   AnimatedGrid,
   AnimatedLineSeries,
-  DataContext,
   XYChart,
 } from '@visx/xychart';
 import { LegendOrdinal } from "@visx/legend";
@@ -87,7 +85,7 @@ function ScoreGraphVis(props) {
 }
 
 function ScoreGraph(props) {
-  const {scoreGraphVisible, setScoreGraphVisible, game, loading, setLoading, signedInUser} = props;
+  const {scoreGraphVisible, setScoreGraphVisible, game, setLoading } = props;
   const [scoreData, setScoreData] = useState(null);
 
   React.useEffect(() => {
@@ -135,4 +133,4 @@ function ScoreGraph(props) {
   );
 }
 
-export default withRouter(ScoreGraph);
+export default ScoreGraph;

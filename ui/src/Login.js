@@ -1,5 +1,5 @@
 import React, { Component, useState } from 'react';
-import { Link, withRouter, Redirect } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import {
 } from 'antd';
 import { signIn, signUp, signOut } from './auth_utils';
@@ -61,7 +61,7 @@ const RegistrationForm = (props) => {
   };
 
   if (redirectHome) {
-    return <Redirect push to="/" />
+    return <Navigate to="/" />
   }
 
   return (
@@ -159,7 +159,7 @@ const NormalLoginForm = (props) => {
   };
 
   if (redirectHome) {
-    return <Redirect push to="/" />
+    return <Navigate to="/" />
   }
 
   return (
@@ -248,4 +248,4 @@ class Login extends Component {
   }
 }
 
-export default withRouter(Login);
+export default Login;

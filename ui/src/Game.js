@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { withRouter } from 'react-router-dom';
 import { Modal, Spin } from 'antd';
 import axios from 'axios';
-//import queryString from 'query-string';
+import { useParams } from 'react-router';
 import WaitingRoom from './WaitingRoom';
 import Bidding from './Bidding';
 import DeclaringTrump from './DeclaringTrump';
@@ -94,6 +93,7 @@ const useInterval = (fn: () => void, delay: number) => {
 
 function Game(props) {
 
+  let params = useParams();
   const [loading, setLoading] = useState(false);
   const [game, setGame] = useState(null);
   const [needInput, setNeedInput] = useState(true);
@@ -111,9 +111,9 @@ function Game(props) {
     }
     const showLoading = displayLoading ? setLoading : () => {};
     if (fullReload) {
-      loadGame(props.match.params.gameID, undefined, undefined, showLoading, setGame, setCardsIfNeeded);
+      loadGame(params.gameID, undefined, undefined, showLoading, setGame, setCardsIfNeeded);
     } else {
-      reloadGameStatus(props.match.params.gameID, game?.current_hand?.num, game?.current_trick?.num, showLoading, updateGame);
+      reloadGameStatus(params.gameID, game?.current_hand?.num, game?.current_trick?.num, showLoading, updateGame);
     }
   }
 
@@ -139,8 +139,8 @@ function Game(props) {
 
   // Load game if the gameID in the URL ever changes
   useEffect(() => {
-    loadGame(props.match.params.gameID, 0, 0, setLoading, setGame, setCardsIfNeeded);
-  }, [props.match.params.gameID])
+    loadGame(params.gameID, 0, 0, setLoading, setGame, setCardsIfNeeded);
+  }, [params.gameID])
 
   // Set a timer to reload game every 2 seconds
   useInterval(() => {
@@ -157,9 +157,9 @@ function Game(props) {
         // then reload anyway because we won't be waiting for user input
         if (autoPilotEnabled) {
           // Do not pin the reload to the trick or hand
-          loadGame(props.match.params.gameID, undefined, undefined, () => {}, setGame, setCards);
+          loadGame(params.gameID, undefined, undefined, () => {}, setGame, setCards);
         } else {
-          reloadGameStatus(props.match.params.gameID, game?.current_hand?.num, game?.current_trick?.num, () => {}, updateGame);
+          reloadGameStatus(params.gameID, game?.current_hand?.num, game?.current_trick?.num, () => {}, updateGame);
         }
       }
     }
@@ -211,4 +211,4 @@ function Game(props) {
   );
 }
 
-export default withRouter(Game);
+export default Game;

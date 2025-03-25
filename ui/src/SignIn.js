@@ -1,6 +1,6 @@
 import React from 'react';
 import { Row, Col, Button, Dropdown, Menu } from 'antd';
-import { Link, withRouter } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import decode from 'jwt-decode';
 import { signIn, signOut } from './auth_utils';
@@ -118,4 +118,4 @@ class SignIn extends React.Component {
   }
 }
 
-export default withRouter(SignIn)
+export default SignIn

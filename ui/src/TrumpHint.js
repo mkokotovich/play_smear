@@ -1,6 +1,5 @@
 import React from 'react';
 // import React, { useState, useEffect } from 'react';
-import { withRouter } from 'react-router-dom';
 // import Card from './Card';
 
 function TrumpHint(props) {
@@ -50,4 +49,4 @@ function TrumpHint(props) {
   ) : "";
 }
 
-export default withRouter(TrumpHint);
+export default TrumpHint;

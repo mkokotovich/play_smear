@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { withRouter } from 'react-router-dom';
 import { Radio, Button, Modal } from 'antd';
 import axios from 'axios';
 
@@ -93,4 +92,4 @@ function DeclaringTrump(props) {
   );
 }
 
-export default withRouter(DeclaringTrump);
+export default DeclaringTrump;

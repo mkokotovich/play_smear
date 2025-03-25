@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { withRouter } from 'react-router-dom';
 import { Card, Row, Col, Button, Modal } from 'antd';
 import {
   LoadingOutlined,
@@ -511,4 +510,4 @@ function WaitingRoom(props) {
   );
 }
 
-export default withRouter(WaitingRoom);
+export default WaitingRoom;
