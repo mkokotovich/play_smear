@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { Modal, Spin } from 'antd';
 import axios from 'axios';
 import queryString from 'query-string';
@@ -7,46 +7,38 @@ import GameList from './GameList';
 import './GameSelector.css';
 import getErrorString from './utils';
 
-class GameSelector extends Component {
+function GameSelector(props) {
 
-  state = {
-    mineLoading: true,
-    publicLoading: true,
-    loading: false,
-    myList: [],
-    publicList: [],
-    redirect: false,
-    gameID: 0,
-  }
+  const [mineLoading, setMineLoading] = useState(true);
+  const [publicLoading, setPublicLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [myList, setMyList] = useState([]);
+  const [publicList, setPublicList] = useState([]);
+  const [redirect, setRedirect] = useState(false);
+  const [gameID, setGameID] = useState(0);
 
-  componentDidMount() {
-    if (this.props.signedInUser) {
-      this.loadGames("mine");
+  let location = useLocation();
+
+  useEffect(() => {
+    setPublicList([]);
+    loadGames("public");
+    if (props.signedInUser) {
+      setMyList([]);
+      loadGames("mine");
     }
-    this.loadGames("public");
-  }
+  }, [props.signedInUser, location.search]);
 
-  componentDidUpdate(prevProps) {
-    if (this.props.location.search !== prevProps.location.search) {
-      this.setState({publicList: []});
-      this.loadGames("public");
-      if (this.props.signedInUser) {
-        this.setState({myList: []});
-        this.loadGames("mine");
-      }
-    }
-    if (this.props.signedInUser !== prevProps.signedInUser) {
-      this.loadGames("mine");
-    }
-  }
+  useEffect(() => {
+    setLoading(mineLoading || publicLoading);
+  }, [mineLoading, publicLoading]);
 
-  loadGames = (mode) => {
-    this.setState({loading: true});
-    const values = queryString.parse(this.props.location.search);
+  const loadGames = (mode) => {
+    setLoading(true);
+    const values = queryString.parse(location.search);
     const single = values.single ? values.single : false;
     var query = "";
     if (mode === "mine") {
-      query = `?players=${this.props.signedInUser.id}&single_player=${single}`;
+      query = `?players=${props.signedInUser.id}&single_player=${single}`;
     } else {
       query = "?public=true";
 
@@ -59,25 +51,18 @@ class GameSelector extends Component {
     }
     axios.get(`/api/smear/v1/games/${query}`)
       .then((response) => {
-        console.log(response);
         if (mode === "mine") {
-          this.setState({
-            mineLoading: false,
-            loading: this.state.publicLoading,
-            myList: response.data.results
-          });
+          setMineLoading(false);
+          setMyList(response.data.results);
         } else {
           // Separate games that I have joined and games I haven't
-          this.setState({
-            publicLoading: false,
-            loading: this.state.mineLoading,
-            publicList: response.data.results
-          });
+          setPublicLoading(false);
+          setPublicList(response.data.results);
         }
       })
       .catch((error) => {
         console.log(error);
-        this.setState({loading: false});
+        setLoading(false);
         Modal.error({
           title: "Unable to load games",
           content: getErrorString(error.response.data),
@@ -86,25 +71,19 @@ class GameSelector extends Component {
       });
   }
 
-  handleDelete = (gameId) => {
+  const handleDelete = (gameId) => {
     console.log("delete " + gameId);
-    this.setState({
-      loading: true
-    });
+    setLoading(true);
     axios.delete(`/api/smear/v1/games/${gameId}/`)
       .then((response) => {
         console.log(response);
-        const games = [...this.state.myList];
-        this.setState({
-          myList: games.filter(item => item.id !== gameId),
-          loading: false,
-        });
+        const games = [...myList];
+        setMyList(games.filter(item => item.id !== gameId));
+        setLoading(false);
       })
       .catch((error) => {
         console.log(error);
-        this.setState({
-          loading: false,
-        });
+        setLoading(false);
         Modal.error({
           title: "Unable to delete game",
           content: getErrorString(error.response.data),
@@ -113,32 +92,24 @@ class GameSelector extends Component {
       });
   }
 
-  handleResume = (gameID) => {
+  const handleResume = (gameID) => {
     console.log("resume " + gameID);
-    this.setState({
-      redirect: true,
-      gameID: gameID,
-    });
+    setGameID(gameID);
+    setRedirect(true);
   }
 
-  handleJoin = (gameID, passcode) => {
+  const handleJoin = (gameID, passcode) => {
     console.log("join " + gameID);
-    this.setState({
-      loading: true
-    });
+    setLoading(true);
     axios.post(`/api/smear/v1/games/${gameID}/join/`, {passcode: passcode})
       .then((response) => {
-        this.setState({
-          redirect: true,
-          gameID: gameID,
-          loading: false,
-        });
+        setGameID(gameID);
+        setLoading(false);
+        setRedirect(true);
       })
       .catch((error) => {
         console.log(error);
-        this.setState({
-          loading: false,
-        });
+        setLoading(false);
         Modal.error({
           title: "Unable to join game",
           content: getErrorString(error.response.data),
@@ -147,37 +118,35 @@ class GameSelector extends Component {
       });
   }
 
-  render() {
-    const commonProps = {
-      handleDelete: this.handleDelete,
-      handleJoin: this.handleJoin,
-      handleResume: this.handleResume
-    };
+  const commonProps = {
+    handleDelete: handleDelete,
+    handleJoin: handleJoin,
+    handleResume: handleResume
+  };
 
-    if (this.state.redirect) {
-      return <Navigate to={`/games/${this.state.gameID}`} />
-    }
-
-    return (
-      <div className="GameSelector">
-        <div align="center">
-          { this.state.loading && <Spin size="large" />}
-        </div>
-        {this.props.manage && (
-          <>
-            <GameList signedInUser={this.props.signedInUser} mode="manage" gameList={this.state.myList} initLoading={this.mineLoading} {...commonProps} />
-            <br/>
-          </>
-        )}
-        {!this.props.manage && (
-          <>
-            <GameList mode="public" gameList={this.state.publicList} initLoading={this.publicLoading} {...commonProps} />
-            <br/>
-          </>
-        )}
-      </div>
-    );
+  if (redirect) {
+    return <Navigate to={`/games/${gameID}`} />
   }
+
+  return (
+    <div className="GameSelector">
+      <div align="center">
+        { loading && <Spin size="large" />}
+      </div>
+      {props.manage && (
+        <>
+          <GameList signedInUser={props.signedInUser} mode="manage" gameList={myList} initLoading={mineLoading} {...commonProps} />
+          <br/>
+        </>
+      )}
+      {!props.manage && (
+        <>
+          <GameList mode="public" gameList={publicList} initLoading={publicLoading} {...commonProps} />
+          <br/>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default GameSelector;

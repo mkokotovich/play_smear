@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from "react-router-dom";
 import { Row, Col, Input, Modal, Spin, Button} from 'antd';
 import queryString from 'query-string';
 import axios from 'axios';
@@ -23,27 +24,28 @@ function ProfileLabelAndInput(props) {
   );
 }
 
-class ResetPassword extends Component {
-  state = {
-    newPassword: undefined,
-    verifyNewPassword: undefined,
-    loading: false
+function ResetPassword(props) {
+  const [newPassword, setNewPassword] = useState(undefined);
+  const [verifyNewPassword, setVerifyNewPassword] = useState(undefined);
+  const [loading, setLoading] = useState(false);
+
+  let navigate = useNavigate();
+  let location = useLocation();
+
+  const onChangeNewPassword = (e) => {
+    setNewPassword(e.target.value);
   }
 
-  onChangeNewPassword = (e) => {
-    this.setState({ newPassword: e.target.value });
+  const onChangeVerifyNewPassword = (e) => {
+    setVerifyNewPassword(e.target.value);
   }
 
-  onChangeVerifyNewPassword = (e) => {
-    this.setState({ verifyNewPassword: e.target.value });
+  const handleCancel = () => {
+    navigate("/");
   }
 
-  handleCancel = () => {
-    this.props.history.push('/');
-  }
-
-  handleSubmit = () => {
-    if (!this.state.newPassword) {
+  const handleSubmit = () => {
+    if (!newPassword) {
       Modal.error({
         title: "Missing New Password",
         content: "Please supply your desired new password",
@@ -51,7 +53,7 @@ class ResetPassword extends Component {
       });
       return;
     }
-    if (this.state.newPassword !== this.state.verifyNewPassword) {
+    if (newPassword !== verifyNewPassword) {
       Modal.error({
         title: "New Passwords Do Not Match",
         content: "New passwords do not match, please type them again",
@@ -60,9 +62,9 @@ class ResetPassword extends Component {
       return;
     }
 
-    this.setState({loading: true});
+    setLoading(true);
 
-    const values = queryString.parse(this.props.location.search)
+    const values = queryString.parse(location.search);
     axios.post(`/api/users/v1/resetpassword/`,
       {
         email: values.email,
@@ -71,15 +73,12 @@ class ResetPassword extends Component {
       }
     )
       .then((response) => {
-        console.log(response);
-        this.setState({
-          loading: false,
-        });
-        this.props.history.push('/');
+        setLoading(false);
+        navigate("/");
       })
       .catch((error) => {
         console.log(error);
-        this.setState({loading: false});
+        setLoading(false);
         Modal.error({
           title: "Unable to reset user's password",
           content: getErrorString(error.response.data),
@@ -88,44 +87,42 @@ class ResetPassword extends Component {
       });
   }
 
-  render() {
-    return (
-      <div className="ResetPassword">
-        <h2>Reset Password</h2>
-        <div align="center">
-          { this.state.loading && <Spin size="large" />}
-        </div>
-        <p>Enter your new password below and click submit</p>
-        <ProfileLabelAndInput
-          label="New Password"
-          value={this.state.newPassword}
-          onChange={this.onChangeNewPassword}
-          password={true}
-        />
-        <ProfileLabelAndInput
-          label="Verify New Password"
-          value={this.state.verifyNewPassword}
-          onChange={this.onChangeVerifyNewPassword}
-          password={true}
-        />
-        <Row type="flex">
-          <Button
-            type="default"
-            onClick={this.handleCancel}
-            className="ResetButton">
-              Cancel
-          </Button>
-          <Button
-            type="primary"
-            onClick={this.handleSubmit}
-            disabled={!this.state.newPassword}
-            className="ResetButton">
-              Send
-          </Button>
-        </Row>
+  return (
+    <div className="ResetPassword">
+      <h2>Reset Password</h2>
+      <div align="center">
+        { loading && <Spin size="large" />}
       </div>
-    );
-  }
+      <p>Enter your new password below and click submit</p>
+      <ProfileLabelAndInput
+        label="New Password"
+        value={newPassword}
+        onChange={onChangeNewPassword}
+        password={true}
+      />
+      <ProfileLabelAndInput
+        label="Verify New Password"
+        value={verifyNewPassword}
+        onChange={onChangeVerifyNewPassword}
+        password={true}
+      />
+      <Row type="flex">
+        <Button
+          type="default"
+          onClick={handleCancel}
+          className="ResetButton">
+            Cancel
+        </Button>
+        <Button
+          type="primary"
+          onClick={handleSubmit}
+          disabled={!newPassword}
+          className="ResetButton">
+            Send
+        </Button>
+      </Row>
+    </div>
+  );
 }
 
 export default ResetPassword;

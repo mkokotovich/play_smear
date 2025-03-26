@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import {
 } from 'antd';
@@ -218,34 +218,29 @@ const NormalLoginForm = (props) => {
 };
 
 
-class Login extends Component {
+const Login = (props) => {
 
-  state = {
-    loading: false,
-  }
+  const [loading, setLoading] = useState(false);
 
-
-  render() {
-    return (
-      <Row type="flex" align="top" className="Login">
-        <div align="center">
-          { this.state.loading && <Spin size="large" />}
-        </div>
-        <Col xs={24}>
-          <>
-            <h2>Sign in, or create a free account to start playing!</h2>
-            <br/>
-          </>
-        </Col>
-        <Col xs={24} md={12} align="center">
-          <RegistrationForm {...this.props} />
-        </Col>
-        <Col xs={24} md={12} align="center">
-          <NormalLoginForm {...this.props} />
-        </Col>
-      </Row>
-    );
-  }
+  return (
+    <Row type="flex" align="top" className="Login">
+      <div align="center">
+        { loading && <Spin size="large" />}
+      </div>
+      <Col xs={24}>
+        <>
+          <h2>Sign in, or create a free account to start playing!</h2>
+          <br/>
+        </>
+      </Col>
+      <Col xs={24} md={12} align="center">
+        <RegistrationForm {...props} />
+      </Col>
+      <Col xs={24} md={12} align="center">
+        <NormalLoginForm {...props} />
+      </Col>
+    </Row>
+  );
 }
 
 export default Login;

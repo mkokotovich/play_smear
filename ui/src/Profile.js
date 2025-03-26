@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import { Row, Col, Input, Modal, Spin, Button} from 'antd';
 import axios from 'axios';
 import getErrorString from './utils';
@@ -21,37 +22,26 @@ function ProfileLabelAndInput(props) {
   );
 }
 
-class Profile extends Component {
-  state = {
-    user: undefined,
-    loading: false
-  }
+function Profile(props) {
+  const [user, setUser] = useState(undefined);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  componentDidMount(prevProps) {
-    if (this.props.user) {
-      this.loadUser();
-    }
-  }
+  useEffect(() => {
+    loadUser();
+  }, [props.user]);
 
-  componentDidUpdate(prevProps) {
-    if (this.props.user && (!prevProps.user || this.props.user.id !== prevProps.user.id)) {
-      this.loadUser();
-    }
-  }
-
-  loadUser = () => {
-    this.setState({loading: true});
-    axios.get(`/api/users/v1/${this.props.user.id}/`)
+  const loadUser = () => {
+    setLoading(true);
+    axios.get(`/api/users/v1/${props.user.id}/`)
       .then((response) => {
         console.log(response);
-        this.setState({
-          loading: false,
-          user: response.data
-        });
+        setLoading(false);
+        setUser(response.data);
       })
       .catch((error) => {
         console.log(error);
-        this.setState({loading: false});
+        setLoading(false);
         Modal.error({
           title: "Unable to load user profile data",
           content: getErrorString(error.response.data),
@@ -60,47 +50,44 @@ class Profile extends Component {
       });
   }
 
-  onChangeFirstName = (e) => {
-    var newUser = this.state.user;
+  const onChangeFirstName = (e) => {
+    var newUser = user;
     newUser.first_name = e.target.value;
-    this.setState({ user: newUser });
+    setUser(newUser);
   }
 
-  onChangeLastName = (e) => {
-    var newUser = this.state.user;
+  const onChangeLastName = (e) => {
+    var newUser = user;
     newUser.last_name = e.target.value;
-    this.setState({ user: newUser });
+    setUser(newUser);
   }
 
   // email is stored in username
-  onChangeEmail = (e) => {
-    var newUser = this.state.user;
+  const onChangeEmail = (e) => {
+    var newUser = user;
     newUser.username = e.target.value;
-    this.setState({ user: newUser });
+    setUser(newUser);
   }
 
-  handleCancel = () => {
-    this.props.history.goBack();
+  const handleCancel = () => {
+    navigate(-1)
   }
 
-  handleChangePassword = () => {
-    this.props.history.push('/profile/password');
+  const handleChangePassword = () => {
+    navigate("/profile/password");
   }
 
-  handleSave = () => {
-    this.setState({loading: true});
-    axios.patch(`/api/users/v1/${this.props.user.id}/`, this.state.user)
+  const handleSave = () => {
+    setLoading(true);
+    axios.patch(`/api/users/v1/${props.user.id}/`, user)
       .then((response) => {
-        console.log(response);
-        this.setState({
-          loading: false,
-          user: response.data
-        });
-        this.props.history.goBack();
+        setLoading(false);
+        setUser(response.data);
+        navigate(-1)
       })
       .catch((error) => {
         console.log(error);
-        this.setState({loading: false});
+        setLoading(false);
         Modal.error({
           title: "Unable to update user profile data",
           content: getErrorString(error.response.data),
@@ -109,40 +96,39 @@ class Profile extends Component {
       });
   }
 
-  render() {
-    const labelAndInputs = (this.state.user) ? (
-      <React.Fragment>
-        <ProfileLabelAndInput label="Email" value={this.state.user.username} onChange={this.onChangeEmail} disabled={true} />
-        <ProfileLabelAndInput label="First Name" value={this.state.user.first_name} onChange={this.onChangeFirstName} />
-        <ProfileLabelAndInput label="Last Name" value={this.state.user.last_name} onChange={this.onChangeLastName} />
-        <Button onClick={this.handleChangePassword}>Change Password</Button>
-        <br/><br/>
-      </React.Fragment>
-      ) : '';
-    return (
-      <div className="Profile">
-        <h2>Profile</h2>
-        <div align="center">
-          { this.state.loading && <Spin size="large" />}
-        </div>
-        { labelAndInputs }
-        <Row type="flex">
-          <Button
-            type="default"
-            onClick={this.handleCancel}
-            className="ProfileButton">
-              Cancel
-          </Button>
-          <Button
-            type="primary"
-            onClick={this.handleSave}
-            className="ProfileButton">
-              Update
-          </Button>
-        </Row>
+  const labelAndInputs = (user) ? (
+    <React.Fragment>
+      <ProfileLabelAndInput label="Email" value={user.username} onChange={onChangeEmail} disabled={true} />
+      <ProfileLabelAndInput label="First Name" value={user.first_name} onChange={onChangeFirstName} />
+      <ProfileLabelAndInput label="Last Name" value={user.last_name} onChange={onChangeLastName} />
+      <Button onClick={handleChangePassword}>Change Password</Button>
+      <br/><br/>
+    </React.Fragment>
+    ) : '';
+
+  return (
+    <div className="Profile">
+      <h2>Profile</h2>
+      <div align="center">
+        { loading && <Spin size="large" />}
       </div>
-    );
-  }
+      { labelAndInputs }
+      <Row type="flex">
+        <Button
+          type="default"
+          onClick={handleCancel}
+          className="ProfileButton">
+            Cancel
+        </Button>
+        <Button
+          type="primary"
+          onClick={handleSave}
+          className="ProfileButton">
+            Update
+        </Button>
+      </Row>
+    </div>
+  );
 }
 
 export default Profile;

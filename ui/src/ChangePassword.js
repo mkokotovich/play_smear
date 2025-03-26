@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Row, Col, Input, Modal, Spin, Button} from 'antd';
 import axios from 'axios';
 import getErrorString from './utils';
@@ -22,32 +23,32 @@ function ProfileLabelAndInput(props) {
   );
 }
 
-class ChangePassword extends Component {
-  state = {
-    oldPassword: undefined,
-    newPassword: undefined,
-    verifyNewPassword: undefined,
-    loading: false
+function ChangePassword(props) {
+  const [oldPassword, setOldPassword] = useState(undefined);
+  const [newPassword, setNewPassword] = useState(undefined);
+  const [verifyNewPassword, setVerifyNewPassword] = useState(undefined);
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate()
+
+  const onChangeOldPassword = (e) => {
+    setOldPassword(e.target.value);
   }
 
-  onChangeOldPassword = (e) => {
-    this.setState({ oldPassword: e.target.value });
+  const onChangeNewPassword = (e) => {
+    setNewPassword(e.target.value);
   }
 
-  onChangeNewPassword = (e) => {
-    this.setState({ newPassword: e.target.value });
+  const onChangeVerifyNewPassword = (e) => {
+    setVerifyNewPassword(e.target.value);
   }
 
-  onChangeVerifyNewPassword = (e) => {
-    this.setState({ verifyNewPassword: e.target.value });
+  const handleCancel = () => {
+    navigate(-1);
   }
 
-  handleCancel = () => {
-    this.props.history.goBack();
-  }
-
-  handleChange = () => {
-    if (!this.state.oldPassword) {
+  const handleChange = () => {
+    if (!oldPassword) {
       Modal.error({
         title: "Missing Current Password",
         content: "Please supply your current password",
@@ -55,7 +56,7 @@ class ChangePassword extends Component {
       });
       return;
     }
-    if (!this.state.newPassword) {
+    if (!newPassword) {
       Modal.error({
         title: "Missing New Password",
         content: "Please supply your desired new password",
@@ -63,7 +64,7 @@ class ChangePassword extends Component {
       });
       return;
     }
-    if (this.state.newPassword !== this.state.verifyNewPassword) {
+    if (newPassword !== verifyNewPassword) {
       Modal.error({
         title: "New Passwords Do Not Match",
         content: "New passwords do not match, please type them again",
@@ -71,23 +72,21 @@ class ChangePassword extends Component {
       });
       return;
     }
-    this.setState({loading: true});
+    setLoading(true);
     axios.post(`/api/users/v1/changepassword/`,
       {
-        old_password: this.state.oldPassword,
-        new_password: this.state.newPassword
+        old_password: oldPassword,
+        new_password: newPassword
       }
     )
       .then((response) => {
         console.log(response);
-        this.setState({
-          loading: false,
-        });
-        this.props.history.goBack();
+        setLoading(false);
+        navigate(-1);
       })
       .catch((error) => {
         console.log(error);
-        this.setState({loading: false});
+        setLoading(false);
         Modal.error({
           title: "Unable to change user's password",
           content: getErrorString(error.response.data),
@@ -96,54 +95,52 @@ class ChangePassword extends Component {
       });
   }
 
-  render() {
-    const labelAndInputs = (
-      <React.Fragment>
-        <ProfileLabelAndInput
-          label="Current Password"
-          value={this.state.oldPassword}
-          onChange={this.onChangeOldPassword}
-          password={true}
-        />
-        <ProfileLabelAndInput
-          label="New Password"
-          value={this.state.newPassword}
-          onChange={this.onChangeNewPassword}
-          password={true}
-        />
-        <ProfileLabelAndInput
-          label="Verify New Password"
-          value={this.state.verifyNewPassword}
-          onChange={this.onChangeVerifyNewPassword}
-          password={true}
-        />
-      </React.Fragment>
-      );
-
-    return (
-      <div className="ChangePassword">
-        <h2>Change Password</h2>
-        <div align="center">
-          { this.state.loading && <Spin size="large" />}
-        </div>
-        { labelAndInputs }
-        <Row type="flex">
-          <Button
-            type="default"
-            onClick={this.handleCancel}
-            className="ChangeButton">
-              Cancel
-          </Button>
-          <Button
-            type="primary"
-            onClick={this.handleChange}
-            className="ChangeButton">
-              Update
-          </Button>
-        </Row>
-      </div>
+  const labelAndInputs = (
+    <React.Fragment>
+      <ProfileLabelAndInput
+        label="Current Password"
+        value={oldPassword}
+        onChange={onChangeOldPassword}
+        password={true}
+      />
+      <ProfileLabelAndInput
+        label="New Password"
+        value={newPassword}
+        onChange={onChangeNewPassword}
+        password={true}
+      />
+      <ProfileLabelAndInput
+        label="Verify New Password"
+        value={verifyNewPassword}
+        onChange={onChangeVerifyNewPassword}
+        password={true}
+      />
+    </React.Fragment>
     );
-  }
+
+  return (
+    <div className="ChangePassword">
+      <h2>Change Password</h2>
+      <div align="center">
+        { loading && <Spin size="large" />}
+      </div>
+      { labelAndInputs }
+      <Row type="flex">
+        <Button
+          type="default"
+          onClick={handleCancel}
+          className="ChangeButton">
+            Cancel
+        </Button>
+        <Button
+          type="primary"
+          onClick={handleChange}
+          className="ChangeButton">
+            Update
+        </Button>
+      </Row>
+    </div>
+  );
 }
 
 export default ChangePassword;
