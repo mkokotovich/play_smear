@@ -1,3 +1,15 @@
+# Notes
+
+react-spring/web higher than 9.7.2 has a bug that interferes with @visx/xychart:
+https://github.com/airbnb/visx/issues/1725
+Should be fixed when this is merged:
+https://github.com/airbnb/visx/pull/1894
+
+React 19 broke react-beautiful-dnd and tawk.to/tawk-messenger-react, so keeping at 18 for now
+
+
+# Old readme
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
