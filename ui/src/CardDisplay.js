@@ -70,6 +70,7 @@ function CardDisplay(props) {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="droppable" direction="horizontal">
+
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}

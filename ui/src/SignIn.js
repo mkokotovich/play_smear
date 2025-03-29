@@ -2,7 +2,7 @@ import React, { useEffect} from 'react';
 import { Row, Col, Button, Dropdown, Menu } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import { signIn, signOut } from './auth_utils';
 import { UserOutlined } from '@ant-design/icons';
 
@@ -56,7 +56,7 @@ function SignIn(props) {
     // Check if token exists and isn't expired
     const token = localStorage.getItem('id_token');
     if (token) {
-      const decoded = decode(token);
+      const decoded = jwtDecode(token);
       const current_time = new Date().getTime() / 1000;
       if (decoded.exp && decoded.exp < current_time) {
 	/* Token is expired, sign out */
