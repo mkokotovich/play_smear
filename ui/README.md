@@ -6,6 +6,8 @@ Should be fixed when this is merged:
 https://github.com/airbnb/visx/pull/1894
 
 React 19 broke react-beautiful-dnd and tawk.to/tawk-messenger-react, so keeping at 18 for now
+Tawk might be forked: https://github.com/smlntsv/tawk-react
+react-beautiful-dnd might be dead: https://github.com/atlassian/react-beautiful-dnd/issues/2672
 
 
 # Old readme
