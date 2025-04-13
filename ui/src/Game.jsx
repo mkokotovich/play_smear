@@ -84,7 +84,7 @@ function reloadGameStatus(gameID, handNum, trickNum, setLoading, updateGame) {
     });
 }
 
-const useInterval = (fn: () => void, delay: number) => {
+const useInterval = (fn, delay) => {
   useEffect(() => {
     const id = setInterval(fn, delay)
     return () => clearInterval(id)

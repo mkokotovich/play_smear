@@ -1,8 +1,19 @@
 import React from 'react';
 
-const reqSvgs = require.context('./svgcards', true, /\.svg$/)
-const paths = reqSvgs.keys()
-const cards = paths.map(path => reqSvgs(path))
+const moduleStrings = import.meta.glob('./svgcards/*.svg', {
+  query: '?react',
+  import: "default",
+})
+const globalCardMap = new Map()
+for (const path in moduleStrings) {
+  moduleStrings[path]().then((mod) => {
+    globalCardMap.set(path, mod);
+  })
+}
+
+function EmptyComponent() {
+  return <></>;
+}
 
 function Card(props) {
   const {card, selected, small, clickCard} = props;
@@ -14,7 +25,8 @@ function Card(props) {
     }
   }
 
-  const cardFile = cards.find(filename => filename.includes(card));
+  const cardKey = Array.from(globalCardMap.keys()).find(filename => filename.includes(card));
+  const CardComponent = globalCardMap.get(cardKey) || EmptyComponent;
   const cardStyle = small ? {
       height: "auto",
       width: "15vw",
@@ -35,7 +47,7 @@ function Card(props) {
   };
   return (
     <div style={divStyle} onClick={handleClick}>
-      <img alt={cardFile} style={cardStyle} src={cardFile} />
+      <CardComponent style={cardStyle} />
     </div>
   );
 }

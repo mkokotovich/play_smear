@@ -5,7 +5,6 @@ WORKDIR /usr/src/app
 
 COPY ui/yarn.lock /usr/src/app/yarn.lock
 COPY ui/package.json /usr/src/app/package.json
-COPY ui/config-overrides.js /usr/src/app/config-overrides.js
 ENV PATH $PATH:/usr/src/app/node_modules/.bin/
 RUN yarn install
 
