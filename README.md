@@ -116,3 +116,46 @@ fly pg restart -a playsmear-db --skip-health-checks --force
 ```
 fly secrets set SECRET_NAME=123abc
 ```
+
+# Migrating DB
+
+For a while it seemed the fly.io postgres performance was going to be too poor to work. Luckily, it was fixed by updating the DB image:
+
+```
+flyctl image -a playsmear-db update
+```
+
+However, I tried updating test.playsmear.com to point to neon.tech. Latency isn't great, though, so performance was still not good enough.
+
+For test.playsmear.com
+
+Start fly proxy
+
+```
+fly proxy 15432:5432 -a testplaysmear-pg
+```
+
+Create a dump of the database
+
+```
+pg_dump -d testplaysmear -h localhost -p 15432 -U testplaysmear -Fc > testplaysmear.pgsql
+```
+
+Restore the database into neon.tech
+
+```
+PGSSLMODE=require pg_restore -h <hostname> -U postgres -d testplaysmear testplaysmear.pgsql
+```
+
+Take note of the old database URL:
+
+```
+fly ssh -a testplaysmear console
+env | grep DATABASE
+```
+
+Set the new database URL
+
+```
+fly secrets -a testplaysmear set DATABASE_URL=<url string from neon.tech>
+```
