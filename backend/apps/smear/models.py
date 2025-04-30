@@ -191,15 +191,18 @@ class Game(models.Model):
         return players[0]
 
     def advance_game(self):
+        current_hand = self.current_hand
         if self.state == Game.NEW_HAND:
-            hand = Hand.objects.create(game=self, num=self.hands.count() + 1)
+            num_hands = current_hand.num if current_hand else 0
+            hand = Hand.objects.create(game=self, num=num_hands + 1)
             hand.start_hand(dealer=self.next_dealer)
             self.next_dealer = self.next_player(self.next_dealer)
             self.set_state(Game.BIDDING, save=False)
             self.save()
+            # Trying to replace self.current_hand with hand breaks things, for some reason
             self.current_hand.advance_bidding()
         elif self.state == Game.BIDDING:
-            self.current_hand.advance_bidding()
+            current_hand.advance_bidding()
 
     def get_score_data(self):
         contestants_qs = self.teams.all() if self.num_teams else self.player_set.all()
@@ -309,7 +312,7 @@ class Player(models.Model):
         bid_value, trump_value = computer_bid(self, hand)
 
         LOG.info(f"{self} has {self.cards_in_hand}, bidding {bid_value}{' in ' + trump_value if bid_value else ''}")
-        return Bid.create_bid_for_player(bid_value, trump_value, self, self.game.current_hand)
+        return Bid.create_bid_for_player(bid_value, trump_value, self, hand)
 
     def play_card(self, trick):
         # avoid circular imports
@@ -533,10 +536,9 @@ class Hand(models.Model):
         self.award_low_trump()
         self.award_high_trump()
         self.save()
-        self.advance_hand()
+        self.advance_hand(current_trick=None)
 
-    def advance_hand(self):
-        current_trick = self.current_trick
+    def advance_hand(self, current_trick):
         num_tricks = current_trick.num if current_trick else 0
         if self.game.state == Game.BIDDING:
             self.advance_bidding()
@@ -693,6 +695,7 @@ class Hand(models.Model):
             self.dealer.decrement_score(2)
             self.game.add_to_contestants_current_hand_score(self.bidder.contestant_id, -2)
             self.finished = True
+            # TODO: is this call necessary?
             self._refresh_all_scores()
             return False
 
@@ -731,6 +734,7 @@ class Hand(models.Model):
         self.game.save()
 
         # Refresh the scores of all contestants to get the latest loaded from DB
+        # TODO is this call necessary?
         self._refresh_all_scores()
 
         return self._declare_winner_if_game_is_over(bid_won)
@@ -849,7 +853,7 @@ class Trick(models.Model):
 
         return None
 
-    def submit_card_to_play(self, card, player):
+    def submit_card_to_play(self, card, player, current_plays, play=None):
         """Handles validation of the card's legality
 
         Returns:
@@ -860,7 +864,7 @@ class Trick(models.Model):
         if player != self.active_player:
             raise ValidationError(f"It is not {player}'s turn to play")
 
-        all_plays = list(self.plays.all())
+        all_plays = current_plays or list(self.plays.all())
         lead_play = all_plays[0] if all_plays else None
         num_plays = len(all_plays)
         error_msg = self.is_card_invalid_to_play(card, player, lead_play)
@@ -875,11 +879,13 @@ class Trick(models.Model):
         self.save()
 
         # Officially "play" the card, if the play hasn't already been created in the view
-        play, created = Play.objects.get_or_create(
-            card=card.to_representation(),
-            player=player,
-            trick=self,
-        )
+        created = False
+        if not play:
+            play, created = Play.objects.get_or_create(
+                card=card.to_representation(),
+                player=player,
+                trick=self,
+            )
         if created:
             num_plays += 1
             all_plays.append(play)
@@ -899,8 +905,8 @@ class Trick(models.Model):
 
     def submit_play(self, play):
         card = Card(representation=play.card)
-        trick_finished, all_plays = self.submit_card_to_play(card, play.player)
-        self.advance_trick(trick_finished)
+        trick_finished, current_plays = self.submit_card_to_play(card, play.player, play=play, current_plays=None)
+        self.advance_trick(trick_finished_arg=trick_finished, current_plays=current_plays)
 
     def get_cards(self, all_plays_arg=None, as_rep=False):
         all_plays = all_plays_arg or self.plays.all()
@@ -915,20 +921,19 @@ class Trick(models.Model):
         self.active_player = player_who_leads
         self.save()
 
-    def advance_trick(self, trick_finished_arg=False):
+    def advance_trick(self, trick_finished_arg=False, current_plays=None):
         """Advances any computers playing"""
         trick_finished = trick_finished_arg
-        all_plays = None
         while not trick_finished:
             if self.active_player.is_computer:
                 # Have computer choose a card to play, then play it
                 card_to_play = self.active_player.play_card(self)
-                trick_finished, all_plays = self.submit_card_to_play(card_to_play, self.active_player)
+                trick_finished, current_plays = self.submit_card_to_play(card_to_play, self.active_player, current_plays)
             else:
                 # Waiting for a human to play, just return
                 return
 
-        self._finalize_trick(all_plays)
+        self._finalize_trick(current_plays)
 
     def find_winning_play(self, current_plays=None):
         plays = current_plays or list(self.plays.all())
@@ -968,7 +973,7 @@ class Trick(models.Model):
         self._award_cards_to_taker(all_plays_arg)
         LOG.info(f"Trick is finished. {self.taker} took the following cards: {self.get_cards(all_plays_arg=all_plays_arg)}")
         self.save()
-        self.hand.advance_hand()
+        self.hand.advance_hand(current_trick=self)
 
     def player_can_change_play(self, player):
         # TODO - do we want to allow async play submission?
