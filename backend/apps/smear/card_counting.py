@@ -36,17 +36,17 @@ def jack_or_jick_still_out(hand):
     return jboys_played < 2
 
 
-def is_teammate_taking_trick(hand, player):
+def is_teammate_taking_trick(hand, trick, player, plays):
     if hand.game.num_teams == 0:
         return False
 
-    current_winning_play = hand.current_trick.find_winning_play()
+    current_winning_play = trick.find_winning_play(plays)
     if current_winning_play.player.team != player.team:
         return False
 
     # Pretend that we are playing that card, if we would take the trick then
     # our teammate is taking the trick
-    return not could_be_defeated(hand, player, Card(representation=current_winning_play.card), already_played=True)
+    return not could_be_defeated(hand, trick, player, Card(representation=current_winning_play.card), plays, already_played=True)
 
 
 def update_if_out_of_cards(hand, player, card_played):
@@ -85,27 +85,27 @@ def update_if_out_of_cards(hand, player, card_played):
 
 
 # Returns true if it is known that no one else (besides teammates) in the trick can take this card
-def safe_to_play(hand, player, card):
+def safe_to_play(hand, trick, player, card, plays):
     # Before checking anything, make sure we can beat the current winning card
     # (or the current winning card belongs to a teammate)
-    current_winning_play = hand.current_trick.find_winning_play()
+    current_winning_play = trick.find_winning_play(plays)
     if not Card(representation=current_winning_play.card).is_less_than(
         card, hand.trump
-    ) and not is_teammate_taking_trick(hand, player):
+    ) and not is_teammate_taking_trick(hand, trick, player, plays):
         LOG.debug(f"safe_to_play {card} would be defeated by the current winning play")
         return False
 
-    return not could_be_defeated(hand, player, card)
+    return not could_be_defeated(hand, trick, player, card, plays)
 
 
-def could_be_defeated(hand, player, card, already_played=False):
+def could_be_defeated(hand, trick, player, card, plays, already_played=False):
     # Check to see if it is the highest remaining card of that suit
     suit_to_check = hand.trump if card.is_trump(hand.trump) else card.suit
     ignore_card = card if already_played else None
     highest_card_left_of_same_suit = highest_card_still_out(hand, suit_to_check, ignore_card=ignore_card)
     is_highest_left_of_same_suit = card.representation == highest_card_left_of_same_suit.representation
 
-    plays_so_far = hand.current_trick.plays.count()
+    plays_so_far = len(plays)
     # subtract one to account for me
     remaining_plays = hand.game.num_players - plays_so_far - 1
     current_player = player

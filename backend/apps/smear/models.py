@@ -451,10 +451,10 @@ class Hand(models.Model):
     def advance_bidding(self, finished_bidding_arg=False):
         finished_bidding = finished_bidding_arg
         while not finished_bidding:
-            bid_filter = self.bidder.bids.filter(hand=self)
-            if bid_filter.exists():
+            potential_bid = self.bidder.bids.filter(hand=self).first()
+            if potential_bid:
                 # A human's bid exists, submit it
-                finished_bidding = self.add_bid_to_hand(bid_filter[0])
+                finished_bidding = self.add_bid_to_hand(potential_bid)
             elif self.bidder.is_computer:
                 # Generate computer bid and submit it
                 bid = self.bidder.create_bid(self)
@@ -626,7 +626,7 @@ class Hand(models.Model):
     def _declare_winner_if_game_is_over(self, bid_won):
         # This function deals with players or teams. We will use the generic
         # noun contestants to describe either
-        teams = self.game.teams.exists()
+        teams = self.game.num_teams != 0
         winners = None
         bidding_contestant = self.bidder.team if teams else self.bidder
         contestants = self.game.teams.all() if teams else self.game.player_set.all()
@@ -681,7 +681,7 @@ class Hand(models.Model):
         return bid_won, teammate_ids
 
     def _refresh_all_scores(self):
-        contestants = self.game.teams.all() if self.game.teams.exists() else self.game.player_set.all()
+        contestants = self.game.teams.all() if self.game.num_teams != 0 else self.game.player_set.all()
         for contestant in contestants:
             contestant.refresh_from_db(fields=["score"])
 
@@ -821,14 +821,15 @@ class Trick(models.Model):
     def __str__(self):
         return f"{', '.join(self.plays.all())} ({self.id})"
 
-    def is_card_invalid_to_play(self, card, player):
+    def is_card_invalid_to_play(self, card, player, lead_play_arg=None):
         cards = player.get_cards()
 
         # First check to make sure the player didn't pull a card out of their sleave
         if card not in cards:
             return f"{card.pretty if card else 'None'} is not one of the player's cards"
 
-        lead_card = self.get_lead_play().card_obj if self.get_lead_play() else None
+        lead_play = lead_play_arg or self.get_lead_play()
+        lead_card = lead_play.card_obj if lead_play else None
         # If this is the first card, it's valid
         if lead_card is None:
             return
@@ -894,7 +895,7 @@ class Trick(models.Model):
         return [Card(representation=rep) for rep in cards] if not as_rep else cards
 
     def get_lead_play(self):
-        return self.plays.first() if self.plays.exists() else None
+        return self.plays.first()
 
     def start_trick(self, player_who_leads):
         LOG.info(f"Starting trick with {player_who_leads} leading")
@@ -915,8 +916,8 @@ class Trick(models.Model):
 
         self._finalize_trick()
 
-    def find_winning_play(self):
-        plays = list(self.plays.all())
+    def find_winning_play(self, current_plays=None):
+        plays = current_plays or list(self.plays.all())
         current_high = plays[0]
         for play in plays[1:]:
             if current_high.card_obj.is_less_than(play.card_obj, self.hand.trump):

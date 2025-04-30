@@ -55,8 +55,9 @@ def test_is_teammate_taking_trick_ace_trump():
     trick = TrickFactory(hand__game=game, hand__trump="hearts")
     Play.objects.create(trick=trick, card="AH", player=p1)
     Play.objects.create(trick=trick, card="0H", player=p2)
+    current_plays = trick.plays.all()
 
-    is_taking = card_counting.is_teammate_taking_trick(trick.hand, p3)
+    is_taking = card_counting.is_teammate_taking_trick(trick.hand, trick, p3, current_plays)
 
     assert is_taking is True
 
@@ -76,8 +77,9 @@ def test_is_teammate_taking_trick_winning_with_just_me_left():
     Play.objects.create(trick=trick, card="0H", player=p1)
     Play.objects.create(trick=trick, card="JH", player=p2)
     Play.objects.create(trick=trick, card="3H", player=p3)
+    current_plays = trick.plays.all()
 
-    is_taking = card_counting.is_teammate_taking_trick(trick.hand, p4)
+    is_taking = card_counting.is_teammate_taking_trick(trick.hand, trick, p4, current_plays)
 
     assert is_taking is True
 
@@ -97,7 +99,8 @@ def test_safe_to_play_with_jack_and_everyone_left_out_of_trump():
     trick.hand.players_out_of_suits["hearts"] = [str(p3.id)]
 
     Play.objects.create(trick=trick, card="0H", player=p1)
+    current_plays = trick.plays.all()
 
-    safe = card_counting.safe_to_play(trick.hand, p2, Card(representation="JH"))
+    safe = card_counting.safe_to_play(trick.hand, trick, p2, Card(representation="JH"), current_plays)
 
     assert safe is True
