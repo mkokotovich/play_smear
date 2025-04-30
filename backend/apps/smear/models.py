@@ -823,14 +823,13 @@ class Trick(models.Model):
     def __str__(self):
         return f"{', '.join(self.plays.all())} ({self.id})"
 
-    def is_card_invalid_to_play(self, card, player, lead_play_arg=None):
+    def is_card_invalid_to_play(self, card, player, lead_play):
         cards = player.get_cards()
 
         # First check to make sure the player didn't pull a card out of their sleave
         if card not in cards:
             return f"{card.pretty if card else 'None'} is not one of the player's cards"
 
-        lead_play = lead_play_arg or self.get_lead_play()
         lead_card = lead_play.card_obj if lead_play else None
         # If this is the first card, it's valid
         if lead_card is None:
@@ -862,7 +861,7 @@ class Trick(models.Model):
 
         all_plays = self.plays.all()
         lead_play = all_plays[0] if all_plays else None
-        num_before = len(all_plays)
+        num_plays = len(all_plays)
         error_msg = self.is_card_invalid_to_play(card, player, lead_play)
         if error_msg:
             LOG.error(f"{player} tried to play {card}")
@@ -880,6 +879,8 @@ class Trick(models.Model):
             player=player,
             trick=self,
         )
+        if created:
+            num_plays += 1
 
         # If lead_play is None, that means this is the lead_play
         if not lead_play:
@@ -892,8 +893,7 @@ class Trick(models.Model):
         self.hand.update_if_out_of_cards(player, card, lead_play)
         self.hand.save()
 
-        # +1 to account for the play we just created
-        return num_before + 1 == self.hand.game.num_players
+        return num_plays == self.hand.game.num_players
 
     def submit_play(self, play):
         card = Card(representation=play.card)

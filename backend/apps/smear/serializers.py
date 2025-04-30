@@ -65,7 +65,8 @@ class PlaySerializer(serializers.ModelSerializer):
         except ValueError as ex:
             raise ValidationError("invalid card, use short representation") from ex
 
-        error_msg = trick.is_card_invalid_to_play(card, player)
+        lead_play = trick.get_lead_play()
+        error_msg = trick.is_card_invalid_to_play(card, player, lead_play)
         if error_msg:
             raise ValidationError(f"Unable to play {card.pretty} ({error_msg}), please choose another card")
 

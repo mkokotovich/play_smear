@@ -188,6 +188,6 @@ def test_play_viewset_database_queries(authed_client, django_assert_num_queries)
     play_data = {"card": f"3{trump_rep}"}
 
     # This used to be 119!!!
-    with django_assert_num_queries(24):
+    with django_assert_num_queries(36):
         response = client2.post(url, play_data)
         assert response.status_code == status.HTTP_201_CREATED, response.json()

@@ -34,9 +34,9 @@ def test_is_card_invalid_to_play_allows_non_jick_if_jick_suit_is_lead():
 
     trick = TrickFactory(hand__game=game, hand__trump="hearts")
 
-    Play.objects.create(trick=trick, card="2D", player=p1)
+    lead_play = Play.objects.create(trick=trick, card="2D", player=p1)
 
-    assert trick.is_card_invalid_to_play(Card(representation="2S"), p2) is None
+    assert trick.is_card_invalid_to_play(Card(representation="2S"), p2, lead_play) is None
 
 
 @pytest.mark.django_db
@@ -51,7 +51,7 @@ def test_is_card_invalid_to_play_allows_non_jick_suit_if_jick_is_lead():
     trick = TrickFactory(hand__game=game, hand__trump="diamonds")
 
     # First player leads Jick
-    Play.objects.create(trick=trick, card="JH", player=p1)
+    lead_play = Play.objects.create(trick=trick, card="JH", player=p1)
 
     # Second player should be able to play non-trump, rather than hearts
-    assert trick.is_card_invalid_to_play(Card(representation="2S"), p2) is None
+    assert trick.is_card_invalid_to_play(Card(representation="2S"), p2, lead_play) is None
