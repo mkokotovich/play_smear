@@ -180,13 +180,14 @@ def test_play_viewset_database_queries(authed_client, django_assert_num_queries)
 
     # Player 1 leads Ace of Trump
     play_data = {"card": f"A{trump_rep}"}
-    with django_assert_num_queries(20):
+    with django_assert_num_queries(17):
         response = client1.post(url, play_data)
         assert response.status_code == status.HTTP_201_CREATED, response.json()
 
     # Player 2 plays a valid card
     play_data = {"card": f"3{trump_rep}"}
 
-    with django_assert_num_queries(41):
+    # This used to be 119!!!
+    with django_assert_num_queries(24):
         response = client2.post(url, play_data)
         assert response.status_code == status.HTTP_201_CREATED, response.json()

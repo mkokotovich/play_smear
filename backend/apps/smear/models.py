@@ -536,24 +536,26 @@ class Hand(models.Model):
         self.advance_hand()
 
     def advance_hand(self):
+        current_trick = self.current_trick
+        num_tricks = current_trick.num if current_trick else 0
         if self.game.state == Game.BIDDING:
             self.advance_bidding()
         elif self.game.state == Game.DECLARING_TRUMP:
-            trick = Trick.objects.create(hand=self, num=self.tricks.count() + 1)
+            trick = Trick.objects.create(hand=self, num=num_tricks + 1)
             trick.start_trick(self.bidder)
             self.game.set_state(Game.PLAYING_TRICK)
             trick.advance_trick()
         elif self.game.state == Game.PLAYING_TRICK:
             # game.advance_hand() is only called when trick is finished
             # Check to see if hand is finished, otherwise start next trick
-            if self.tricks.count() == 6:
+            if num_tricks == 6:
                 game_is_over = self._finalize_hand()
                 new_state = Game.GAME_OVER if game_is_over else Game.NEW_HAND
                 self.game.set_state(new_state)
                 self.game.advance_game()
             else:
-                last_taker = self.tricks.last().taker
-                trick = Trick.objects.create(hand=self, num=self.tricks.count() + 1)
+                last_taker = current_trick.taker
+                trick = Trick.objects.create(hand=self, num=num_tricks + 1)
                 trick.start_trick(last_taker)
                 trick.advance_trick()
 
@@ -733,7 +735,7 @@ class Hand(models.Model):
 
         return self._declare_winner_if_game_is_over(bid_won)
 
-    def update_if_out_of_cards(self, player, card_played):
+    def update_if_out_of_cards(self, player, card_played, lead_play):
         all_plays = Play.objects.filter(trick__hand=self)
         all_cards_played = [Card(representation=play.card) for play in all_plays]
 
@@ -753,7 +755,7 @@ class Hand(models.Model):
                 self.players_out_of_suits[suit_played] = [str(p.id) for p in self.game.players.all()]
 
         # Update if the player is out of the suit
-        lead_card = Card(representation=self.current_trick.get_lead_play().card)
+        lead_card = Card(representation=lead_play.card)
         player_is_out = None
         if lead_card.is_trump(self.trump):
             if not card_played.is_trump(self.trump):
@@ -858,7 +860,10 @@ class Trick(models.Model):
         if player != self.active_player:
             raise ValidationError(f"It is not {player}'s turn to play")
 
-        error_msg = self.is_card_invalid_to_play(card, player)
+        all_plays = self.plays.all()
+        lead_play = all_plays[0] if all_plays else None
+        num_before = len(all_plays)
+        error_msg = self.is_card_invalid_to_play(card, player, lead_play)
         if error_msg:
             LOG.error(f"{player} tried to play {card}")
             raise ValidationError(
@@ -876,14 +881,19 @@ class Trick(models.Model):
             trick=self,
         )
 
+        # If lead_play is None, that means this is the lead_play
+        if not lead_play:
+            lead_play = play
+
         # Let the player know to remove card from hand
         player.card_played(card)
 
         # Update card counting logic
-        self.hand.update_if_out_of_cards(player, card)
+        self.hand.update_if_out_of_cards(player, card, lead_play)
         self.hand.save()
 
-        return self.plays.count() == self.hand.game.num_players
+        # +1 to account for the play we just created
+        return num_before + 1 == self.hand.game.num_players
 
     def submit_play(self, play):
         card = Card(representation=play.card)
