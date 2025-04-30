@@ -854,12 +854,13 @@ class Trick(models.Model):
 
         Returns:
             trick_finished (bool): whether or not the trick is finished
+            all_plays (list): a list of all plays in the trick so far
 
         """
         if player != self.active_player:
             raise ValidationError(f"It is not {player}'s turn to play")
 
-        all_plays = self.plays.all()
+        all_plays = list(self.plays.all())
         lead_play = all_plays[0] if all_plays else None
         num_plays = len(all_plays)
         error_msg = self.is_card_invalid_to_play(card, player, lead_play)
@@ -881,6 +882,7 @@ class Trick(models.Model):
         )
         if created:
             num_plays += 1
+            all_plays.append(play)
 
         # If lead_play is None, that means this is the lead_play
         if not lead_play:
@@ -893,15 +895,16 @@ class Trick(models.Model):
         self.hand.update_if_out_of_cards(player, card, lead_play)
         self.hand.save()
 
-        return num_plays == self.hand.game.num_players
+        return num_plays == self.hand.game.num_players, all_plays
 
     def submit_play(self, play):
         card = Card(representation=play.card)
-        trick_finished = self.submit_card_to_play(card, play.player)
+        trick_finished, all_plays = self.submit_card_to_play(card, play.player)
         self.advance_trick(trick_finished)
 
-    def get_cards(self, as_rep=False):
-        cards = [play.card for play in self.plays.all()]
+    def get_cards(self, all_plays_arg=None, as_rep=False):
+        all_plays = all_plays_arg or self.plays.all()
+        cards = [play.card for play in all_plays]
         return [Card(representation=rep) for rep in cards] if not as_rep else cards
 
     def get_lead_play(self):
@@ -915,16 +918,17 @@ class Trick(models.Model):
     def advance_trick(self, trick_finished_arg=False):
         """Advances any computers playing"""
         trick_finished = trick_finished_arg
+        all_plays = None
         while not trick_finished:
             if self.active_player.is_computer:
                 # Have computer choose a card to play, then play it
                 card_to_play = self.active_player.play_card(self)
-                trick_finished = self.submit_card_to_play(card_to_play, self.active_player)
+                trick_finished, all_plays = self.submit_card_to_play(card_to_play, self.active_player)
             else:
                 # Waiting for a human to play, just return
                 return
 
-        self._finalize_trick()
+        self._finalize_trick(all_plays)
 
     def find_winning_play(self, current_plays=None):
         plays = current_plays or list(self.plays.all())
@@ -934,12 +938,12 @@ class Trick(models.Model):
                 current_high = play
         return current_high
 
-    def _award_cards_to_taker(self):
-        winning_play = self.find_winning_play()
+    def _award_cards_to_taker(self, all_plays_arg):
+        winning_play = self.find_winning_play(all_plays_arg)
         LOG.info(f"Winning play was {winning_play}")
         self.taker = winning_play.player
         taker_id = str(self.taker.id)
-        cards = self.get_cards()
+        cards = self.get_cards(all_plays_arg=all_plays_arg)
 
         # Give games points to taker
         game_points = sum(card.game_points for card in cards)
@@ -959,10 +963,10 @@ class Trick(models.Model):
         # Save hand
         self.hand.save()
 
-    def _finalize_trick(self):
+    def _finalize_trick(self, all_plays_arg):
         self.active_player = None
-        self._award_cards_to_taker()
-        LOG.info(f"Trick is finished. {self.taker} took the following cards: {self.get_cards()}")
+        self._award_cards_to_taker(all_plays_arg)
+        LOG.info(f"Trick is finished. {self.taker} took the following cards: {self.get_cards(all_plays_arg=all_plays_arg)}")
         self.save()
         self.hand.advance_hand()
 

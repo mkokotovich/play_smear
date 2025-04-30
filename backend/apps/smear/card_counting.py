@@ -49,41 +49,6 @@ def is_teammate_taking_trick(hand, trick, player, plays):
     return not could_be_defeated(hand, trick, player, Card(representation=current_winning_play.card), plays, already_played=True)
 
 
-def update_if_out_of_cards(hand, player, card_played):
-    all_plays = Play.objects.filter(trick__hand=hand)
-    all_cards_played = [Card(representation=play.card) for play in all_plays]
-
-    suit_played = hand.trump if card_played.is_trump(hand.trump) else card_played.suit
-    if card_played.is_trump(hand.trump):
-        if len(card for card in all_cards_played if card.is_trump(hand.trump)) == 14:
-            # If all trump have been played, everyone is out
-            hand.players_out_of_suits[suit_played] = [str(p.id) for p in hand.game.players.all()]
-    else:
-        # Only 12 cards exist in the jick suit (jick counts as trump)
-        expected_cards = 12 if suit_played == Card.jick_suit(hand.trump) else 13
-        if (
-            len(card for card in all_cards_played if not card.is_trump(hand.trump) and card.suit == suit_played)
-            == expected_cards
-        ):
-            # If all cards of this suit have been played, everyone is out
-            hand.players_out_of_suits[suit_played] = [str(p.id) for p in hand.game.players.all()]
-
-    # Update if the player is out of the suit
-    lead_card = Card(representation=hand.current_trick.get_lead_play().card)
-    player_is_out = None
-    if lead_card.is_trump(hand.trump):
-        if not card_played.is_trump(hand.trump):
-            player_is_out = hand.trump
-    else:
-        if not card_played.is_trump(hand.trump) and card_played.suit != lead_card.suit:
-            # If player is trumping in, can't tell if he/she is out of lead_suit
-            # So if it isn't trump, and isn't the lead_suit, must be out of lead_suit
-            player_is_out = lead_card.suit
-    existing_outs = hand.players_out_of_suites.get(suit_played, [])
-    new_outs = existing_outs if str(player.id) in existing_outs else [*existing_outs, str(player.id)]
-    hand.players_out_of_suites[player_is_out] = new_outs
-
-
 # Returns true if it is known that no one else (besides teammates) in the trick can take this card
 def safe_to_play(hand, trick, player, card, plays):
     # Before checking anything, make sure we can beat the current winning card
