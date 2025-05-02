@@ -77,6 +77,8 @@ def could_be_defeated(hand, trick, player, card, plays, already_played=False):
 
     while remaining_plays != 0:
         remaining_plays -= 1
+        # next_player is a db query
+        # TODO: rework so we don't need players, just IDs
         next_player = hand.game.next_player(current_player)
         current_player = next_player
 

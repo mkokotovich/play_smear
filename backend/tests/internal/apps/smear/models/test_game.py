@@ -92,6 +92,31 @@ def test_Game_autofill_teams(mocker, num_teams, num_players):
     assert total_members == game.num_players
 
 
+@pytest.mark.django_db
+def test_Game_next_player(mocker):
+    num_players = 6
+    game = GameFactory(num_players=num_players, num_teams=2)
+    game.create_initial_teams()
+    players = [Player.objects.create(game=game, user=UserFactory()) for i in range(0, num_players)]
+
+    game.autofill_teams()
+    game.set_seats()
+    game.set_plays_after()
+
+    for player in players:
+        player.refresh_from_db()
+
+    in_order = list(Player.objects.filter(game=game).order_by("seat"))
+
+    ids = []
+    for idx, p in enumerate(in_order):
+        assert p.seat == idx
+        ids.append(p.id)
+
+    game.refresh_from_db()
+    assert game.player_ids_in_order == ids
+
+
 # Set the "repeat" range() to a large number to test computer logic more thoroughly
 @pytest.mark.django_db()
 @pytest.mark.parametrize("repeat", range(1))

@@ -98,7 +98,7 @@ def test_choose_card_lead_play_when_bidder_AKQ(mocker, highest_trump):
     mock_player = PlayerFactory(game=mock_trick.hand.game, cards_in_hand=card_reps)
     mock_trick.hand.bidder = mock_player
 
-    card = choose_card(mock_player, mock_trick)
+    card = choose_card(mock_player, mock_trick, current_plays_arg=None)
 
     assert card.representation == highest_trump
 
@@ -114,7 +114,7 @@ def test_choose_card_lead_play_when_bidder_play_spare_trump(mocker, spare):
     mock_player = PlayerFactory(game=mock_trick.hand.game, cards_in_hand=card_reps)
     mock_trick.hand.bidder = mock_player
 
-    card = choose_card(mock_player, mock_trick)
+    card = choose_card(mock_player, mock_trick, current_plays_arg=None)
 
     assert card.representation == ("3S" if spare == "7S" else "7H")
 
@@ -130,7 +130,7 @@ def test_choose_card_lead_play_choose_AKQJ_off_suit(mocker, face_card):
     mock_player = PlayerFactory(game=mock_trick.hand.game, cards_in_hand=card_reps)
     mock_trick.hand.bidder = mock_player
 
-    card = choose_card(mock_player, mock_trick)
+    card = choose_card(mock_player, mock_trick, current_plays_arg=None)
 
     assert card.representation == face_card
 
@@ -145,7 +145,7 @@ def test_choose_card_lead_play_choose_non_10_off_suit(mocker):
     mock_player = PlayerFactory(game=mock_trick.hand.game, cards_in_hand=card_reps)
     mock_trick.hand.bidder = mock_player
 
-    card = choose_card(mock_player, mock_trick)
+    card = choose_card(mock_player, mock_trick, current_plays_arg=None)
 
     assert card.representation == "7H"
 
@@ -160,7 +160,7 @@ def test_choose_card_lead_play_choose_lowest_trump(mocker):
     mock_player = PlayerFactory(game=mock_trick.hand.game, cards_in_hand=card_reps)
     mock_trick.hand.bidder = mock_player
 
-    card = choose_card(mock_player, mock_trick)
+    card = choose_card(mock_player, mock_trick, current_plays_arg=None)
 
     assert card.representation == "9S"
 
@@ -175,7 +175,7 @@ def test_choose_card_lead_play_choose_anything(mocker):
     mock_player = PlayerFactory(game=mock_trick.hand.game, cards_in_hand=card_reps)
     mock_trick.hand.bidder = mock_player
 
-    card = choose_card(mock_player, mock_trick)
+    card = choose_card(mock_player, mock_trick, current_plays_arg=None)
 
     assert card.representation == "0S"
 
@@ -202,7 +202,9 @@ def test_choose_card_lead_jack_or_jick_if_they_are_high_trump_and_can_take_somet
     mock_player = PlayerFactory(game=mock_trick.hand.game, cards_in_hand=card_reps)
     mock_trick.active_player = mock_player
 
-    card = choose_card(mock_player, mock_trick)
+    plays = mock_trick.plays.all()
+
+    card = choose_card(mock_player, mock_trick, plays)
 
     assert card.representation == ("JS" if jick_out else "4H")
 
@@ -229,7 +231,8 @@ def test_choose_card_lead_jack_or_jick_if_they_are_high_trump_and_can_take_somet
     mock_player = PlayerFactory(game=mock_trick.hand.game, cards_in_hand=card_reps)
     mock_trick.active_player = mock_player
 
-    card = choose_card(mock_player, mock_trick)
+    plays = mock_trick.plays.all()
+    card = choose_card(mock_player, mock_trick, plays)
 
     # if jack is out, it could take our jick
     assert card.representation == ("4H" if jack_out else "JC")

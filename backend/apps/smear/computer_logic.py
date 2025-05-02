@@ -16,8 +16,8 @@ def computer_bid(player, hand):
     return bid_value, trump_value
 
 
-def computer_play_card(player, trick):
-    card = choose_card(player, trick)
+def computer_play_card(player, trick, current_plays_arg):
+    card = choose_card(player, trick, current_plays_arg)
 
     return card
 
@@ -630,10 +630,10 @@ def get_the_least_worst_card_to_lose(hand, trick, player, plays):
     return card
 
 
-def choose_card(player, trick):
+def choose_card(player, trick, current_plays_arg):
     is_bidder = trick.hand.bidder_id == player.id
     trump = trick.hand.trump
-    current_plays = trick.plays.all()
+    current_plays = current_plays_arg or []
 
     # First player, leading the trick...
     if not current_plays:

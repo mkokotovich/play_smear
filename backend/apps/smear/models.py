@@ -27,6 +27,7 @@ class Game(models.Model):
     passcode = models.CharField(max_length=256, blank=True, default="")
     single_player = models.BooleanField(blank=False, default=True)
     players = models.ManyToManyField("auth.User", through="Player")
+    player_ids_in_order = ArrayField(models.IntegerField(), default=list)
     state = models.CharField(max_length=1024, blank=True, default="")
     next_dealer = models.ForeignKey(
         "Player", related_name="games_next_dealer", on_delete=models.SET_NULL, null=True, blank=True
@@ -83,10 +84,17 @@ class Game(models.Model):
         scores[-1] = scores[-1] + score_delta
 
     def next_player(self, player):
-        # TODO determine if this is really more performant
-        # next_seat = (player.seat + 1) % self.num_players
-        # return self.player_set.get(seat=next_seat)
-        return player.plays_before
+        player_id = self.next_player_id(player.id)
+        return Player.objects.get(id=player_id)
+
+    def next_player_id(self, current_id):
+        for idx, player_id in enumerate(self.player_ids_in_order):
+            if player_id == current_id:
+                if idx + 1 == len(self.player_ids_in_order):
+                    return self.player_ids_in_order[0]
+                else:
+                    return self.player_ids_in_order[idx+1]
+        return None
 
     def create_initial_teams(self):
         teams = []
@@ -185,9 +193,11 @@ class Game(models.Model):
         players = list(self.player_set.all().order_by("seat"))
         prev_player = players[-1]
         for player in players:
+            self.player_ids_in_order.append(player.id)
             player.plays_after = prev_player
             prev_player = player
         Player.objects.bulk_update(players, ["plays_after"])
+        self.save()
         return players[0]
 
     def advance_game(self):
@@ -196,7 +206,7 @@ class Game(models.Model):
             num_hands = current_hand.num if current_hand else 0
             hand = Hand.objects.create(game=self, num=num_hands + 1)
             hand.start_hand(dealer=self.next_dealer)
-            self.next_dealer = self.next_player(self.next_dealer)
+            self.next_dealer_id = self.next_player_id(self.next_dealer_id)
             self.set_state(Game.BIDDING, save=False)
             self.save()
             # Trying to replace self.current_hand with hand breaks things, for some reason
@@ -314,11 +324,11 @@ class Player(models.Model):
         LOG.info(f"{self} has {self.cards_in_hand}, bidding {bid_value}{' in ' + trump_value if bid_value else ''}")
         return Bid.create_bid_for_player(bid_value, trump_value, self, hand)
 
-    def play_card(self, trick):
+    def play_card(self, trick, current_plays):
         # avoid circular imports
         from apps.smear.computer_logic import computer_play_card
 
-        card = computer_play_card(self, trick)
+        card = computer_play_card(self, trick, current_plays)
 
         LOG.info(f"{self} has {self.cards_in_hand}, playing {card}")
         return card
@@ -416,7 +426,7 @@ class Hand(models.Model):
         LOG.info(f"Starting hand {self.num} with dealer: {dealer}")
         # Set the dealer
         self.dealer = dealer
-        self.bidder = self.game.next_player(dealer)
+        self.bidder_id = self.game.next_player_id(dealer.id)
 
         # Deal out six cards
         deck = Deck()
@@ -438,7 +448,7 @@ class Hand(models.Model):
             raise ValueError(f"Unable to bid {new_bid.bid} when the current high bid is {self.high_bid.bid}")
         self.high_bid = self.high_bid if (self.high_bid and self.high_bid.bid >= new_bid.bid) else new_bid
         finished_bidding = self.bidder == self.dealer
-        self.bidder = self.game.next_player(self.bidder)
+        self.bidder_id = self.game.next_player_id(self.bidder_id)
         LOG.info(
             f"Submitted bid {new_bid}, high bid is now {self.high_bid}, bidder is now {self.bidder}, finished_bidding is {finished_bidding}"
         )
@@ -546,7 +556,7 @@ class Hand(models.Model):
             trick = Trick.objects.create(hand=self, num=num_tricks + 1)
             trick.start_trick(self.bidder)
             self.game.set_state(Game.PLAYING_TRICK)
-            trick.advance_trick()
+            trick.advance_trick(current_plays=None)
         elif self.game.state == Game.PLAYING_TRICK:
             # game.advance_hand() is only called when trick is finished
             # Check to see if hand is finished, otherwise start next trick
@@ -559,7 +569,7 @@ class Hand(models.Model):
                 last_taker = current_trick.taker
                 trick = Trick.objects.create(hand=self, num=num_tricks + 1)
                 trick.start_trick(last_taker)
-                trick.advance_trick()
+                trick.advance_trick(current_plays=None)
 
     def player_can_change_bid(self, player):
         next_bidder = self.bidder
@@ -739,8 +749,7 @@ class Hand(models.Model):
 
         return self._declare_winner_if_game_is_over(bid_won)
 
-    def update_if_out_of_cards(self, player, card_played, lead_play):
-        all_plays = Play.objects.filter(trick__hand=self)
+    def update_if_out_of_cards(self, player, card_played, lead_play, all_plays):
         all_cards_played = [Card(representation=play.card) for play in all_plays]
 
         suit_played = self.trump if card_played.is_trump(self.trump) else card_played.suit
@@ -875,8 +884,7 @@ class Trick(models.Model):
             )
 
         LOG.info(f"{player} played {card}")
-        self.active_player = self.hand.game.next_player(self.active_player)
-        self.save()
+        self.active_player_id = self.hand.game.next_player_id(self.active_player_id)
 
         # Officially "play" the card, if the play hasn't already been created in the view
         created = False
@@ -898,7 +906,7 @@ class Trick(models.Model):
         player.card_played(card)
 
         # Update card counting logic
-        self.hand.update_if_out_of_cards(player, card, lead_play)
+        self.hand.update_if_out_of_cards(player, card, lead_play, all_plays)
         self.hand.save()
 
         return num_plays == self.hand.game.num_players, all_plays
@@ -906,7 +914,7 @@ class Trick(models.Model):
     def submit_play(self, play):
         card = Card(representation=play.card)
         trick_finished, current_plays = self.submit_card_to_play(card, play.player, play=play, current_plays=None)
-        self.advance_trick(trick_finished_arg=trick_finished, current_plays=current_plays)
+        self.advance_trick(current_plays=current_plays, trick_finished_arg=trick_finished)
 
     def get_cards(self, all_plays_arg=None, as_rep=False):
         all_plays = all_plays_arg or self.plays.all()
@@ -921,18 +929,20 @@ class Trick(models.Model):
         self.active_player = player_who_leads
         self.save()
 
-    def advance_trick(self, trick_finished_arg=False, current_plays=None):
+    def advance_trick(self, current_plays, trick_finished_arg=False):
         """Advances any computers playing"""
         trick_finished = trick_finished_arg
         while not trick_finished:
             if self.active_player.is_computer:
                 # Have computer choose a card to play, then play it
-                card_to_play = self.active_player.play_card(self)
+                card_to_play = self.active_player.play_card(self, current_plays)
                 trick_finished, current_plays = self.submit_card_to_play(card_to_play, self.active_player, current_plays)
             else:
-                # Waiting for a human to play, just return
+                # Waiting for a human to play, save trick and return
+                self.save()
                 return
 
+        # finalize_trick will save the trick
         self._finalize_trick(current_plays)
 
     def find_winning_play(self, current_plays=None):

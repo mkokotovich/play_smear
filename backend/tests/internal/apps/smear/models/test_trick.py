@@ -15,10 +15,13 @@ def test_update_if_out_of_cards_did_not_follow_trump():
 
     trick = TrickFactory(hand__game=game, hand__trump="hearts")
 
+    all_plays = []
     lead_play = Play.objects.create(trick=trick, card="AH", player=p1)
-    Play.objects.create(trick=trick, card="2S", player=p2)
+    all_plays.append(lead_play)
+    play = Play.objects.create(trick=trick, card="2S", player=p2)
+    all_plays.append(play)
 
-    trick.hand.update_if_out_of_cards(p2, Card(representation="2S"), lead_play)
+    trick.hand.update_if_out_of_cards(p2, Card(representation="2S"), lead_play, all_plays)
 
     assert trick.hand.players_out_of_suits["hearts"] == [str(p2.id)]
 
