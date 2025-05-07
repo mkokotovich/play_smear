@@ -9,12 +9,13 @@ from tests.utils import NotNull
 
 
 @pytest.mark.django_db
-def test_game_viewset_list(authed_client):
+def test_game_viewset_list(authed_client, django_assert_num_queries):
     games = [GameFactory() for i in range(3)]
     url = reverse("games-list")
     client = authed_client(games[0].owner)
 
-    response = client.get(url)
+    with django_assert_num_queries(5):
+        response = client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
     response_json = response.json()
@@ -26,6 +27,17 @@ def test_game_viewset_list(authed_client):
         "previous": None,
     }
     assert expected_results == results
+
+
+@pytest.mark.django_db
+def test_game_viewset_details(authed_client, django_assert_num_queries):
+    game = GameFactory()
+    url = reverse("games-detail", args=(game.id,))
+    client = authed_client(game.owner)
+
+    with django_assert_num_queries(7):
+        response = client.get(url)
+        assert response.status_code == status.HTTP_200_OK
 
 
 @pytest.mark.django_db
@@ -61,7 +73,7 @@ def test_game_viewset_status_bidding(authed_client, django_assert_num_queries, m
 
     url = f"{reverse('games-detail', kwargs={'pk': game.id})}status/"
 
-    with django_assert_num_queries(11):
+    with django_assert_num_queries(9):
         response = client.get(url)
 
     assert response.status_code == status.HTTP_200_OK

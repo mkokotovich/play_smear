@@ -69,7 +69,7 @@ class GameViewSet(viewsets.ModelViewSet):
             else Game.objects.all()
         )
 
-        return base_queryset.order_by("-id").prefetch_related("players", "teams", "hands__tricks__plays")
+        return base_queryset.order_by("-id").prefetch_related("player_set", "teams", "hands__tricks__plays")
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -175,6 +175,15 @@ class GameViewSet(viewsets.ModelViewSet):
             "trick_num": request.query_params.get("trick_num"),
             "hand_num": request.query_params.get("hand_num"),
         }
+
+        hand_num = context["hand_num"]
+        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+        context["hand"] = hand
+
+        trick_num = context["trick_num"]
+        if game.state == Game.PLAYING_TRICK or trick_num:
+            trick = Trick.objects.get(hand=hand, num=trick_num) if trick_num else game.current_trick
+            context["trick"] = trick
 
         if context.get("trick_num"):
             # Not the best way to do this...

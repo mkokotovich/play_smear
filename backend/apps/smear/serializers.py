@@ -9,6 +9,12 @@ from apps.smear.models import Bid, Game, Hand, Play, Player, Team, Trick
 LOG = logging.getLogger(__name__)
 
 
+def sort_by_seat_if_present(players_unsorted):
+    def key_finder(player):
+        return player.seat if player.seat else 0
+    return sorted(players_unsorted, key=key_finder)
+
+
 class PlayerSummarySerializer(serializers.ModelSerializer):
     game_points_won = serializers.SerializerMethodField()
 
@@ -82,7 +88,9 @@ class StatusStartingSerializer(serializers.ModelSerializer):
         fields = ("teams", "players", "state")
 
     def get_players(self, game):
-        players = game.player_set.all().order_by("seat")
+        # Ordering by seat invalidates our prefetch_related, so we'll order in the app
+        players_unsorted = game.player_set.all()
+        players = sort_by_seat_if_present(players_unsorted)
         return PlayerSummarySerializer(players, many=True, read_only=True, context=self.context).data
 
 
@@ -140,18 +148,18 @@ class StatusBiddingSerializer(serializers.ModelSerializer):
         fields = ("state", "current_hand", "players", "teams")
 
     def get_current_hand(self, game):
-        hand_num = self.context.get("hand_num")
-        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+        hand = self.context.get("hand")
         return HandSummaryWithCardsSerializer(hand, read_only=True, context=self.context).data if hand else {}
 
     def get_players(self, game):
-        hand_num = self.context.get("hand_num")
-        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+        hand = self.context.get("hand")
         player_context = {
             **self.context,
             "game_points_by_player": hand.game_points_by_player,
         }
-        players = game.player_set.all().order_by("seat")
+        # Ordering by seat invalidates our prefetch_related, so we'll order in the app
+        players_unsorted = game.player_set.all()
+        players = sort_by_seat_if_present(players_unsorted)
         return PlayerSummarySerializer(players, many=True, read_only=True, context=player_context).data
 
 
@@ -175,15 +183,11 @@ class StatusPlayingTrickSerializer(serializers.ModelSerializer):
         fields = ("state", "current_hand", "current_trick", "players", "teams")
 
     def get_current_hand(self, game):
-        hand_num = self.context.get("hand_num")
-        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+        hand = self.context.get("hand")
         return HandSummaryWithCardsSerializer(hand, read_only=True, context=self.context).data if hand else {}
 
     def get_current_trick(self, game):
-        trick_num = self.context.get("trick_num")
-        hand_num = self.context.get("hand_num")
-        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
-        trick = Trick.objects.get(hand=hand, num=trick_num) if trick_num else game.current_trick
+        trick = self.context.get("trick")
         return TrickSummarySerializer(trick, read_only=True, context=self.context).data if trick else {}
 
     def get_state(self, game):
@@ -192,13 +196,14 @@ class StatusPlayingTrickSerializer(serializers.ModelSerializer):
         return Game.PLAYING_TRICK if trick_num else game.state
 
     def get_players(self, game):
-        hand_num = self.context.get("hand_num")
-        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+        hand = self.context.get("hand")
         player_context = {
             **self.context,
             "game_points_by_player": hand.game_points_by_player,
         }
-        players = game.player_set.all().order_by("seat")
+        # Ordering by seat invalidates our prefetch_related, so we'll order in the app
+        players_unsorted = game.player_set.all()
+        players = sort_by_seat_if_present(players_unsorted)
         return PlayerSummarySerializer(players, many=True, read_only=True, context=player_context).data
 
 
@@ -213,7 +218,9 @@ class GameSerializer(serializers.ModelSerializer):
         read_only_fields = ("owner", "passcode_required", "name")
 
     def get_players(self, game):
-        players = game.player_set.all().order_by("seat")
+        # Ordering by seat invalidates our prefetch_related, so we'll order in the app
+        players_unsorted = game.player_set.all()
+        players = sort_by_seat_if_present(players_unsorted)
         return PlayerSummarySerializer(players, many=True, read_only=True, context=self.context).data
 
 
@@ -222,15 +229,21 @@ class GameDetailSerializer(GameSerializer):
     current_trick = serializers.SerializerMethodField()
 
     def get_current_hand(self, game):
-        hand_num = self.context.get("hand_num")
-        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+        hand = self.context.get("hand")
+        if not hand:
+            hand_num = self.context.get("hand_num")
+            hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
         return HandSummaryWithCardsSerializer(hand, read_only=True, context=self.context).data if hand else {}
 
     def get_current_trick(self, game):
-        trick_num = self.context.get("trick_num")
-        hand_num = self.context.get("hand_num")
-        hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
-        trick = Trick.objects.get(hand=hand, num=trick_num) if trick_num else game.current_trick
+        trick = self.context.get("trick")
+        if not trick:
+            hand = self.context.get("hand")
+            if not hand:
+                hand_num = self.context.get("hand_num")
+                hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+            trick_num = self.context.get("trick_num")
+            trick = Trick.objects.get(hand=hand, num=trick_num) if trick_num else game.current_trick
         return TrickSummarySerializer(trick, read_only=True, context=self.context).data if trick else {}
 
 
