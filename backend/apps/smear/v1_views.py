@@ -69,7 +69,7 @@ class GameViewSet(viewsets.ModelViewSet):
             else Game.objects.all()
         )
 
-        return base_queryset.order_by("-id").prefetch_related("player_set", "teams", "hands__tricks__plays")
+        return base_queryset.order_by("-id").prefetch_related("player_set", "teams")
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -324,7 +324,7 @@ class BidViewSet(viewsets.ModelViewSet):
         game_id = self.kwargs.get("game_id")
         hand_id = self.kwargs.get("hand_id")
         qs = Bid.objects.filter(hand__game_id=game_id, hand_id=hand_id).order_by("-id")
-        return qs.select_related("player").prefetch_related("hand__game__players")
+        return qs.select_related("player")
 
     @transaction.atomic
     def perform_create(self, serializer):

@@ -3,18 +3,18 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 
 from apps.smear.serializers import GameSerializer
-from tests.internal.apps.smear.factories import GameFactory, PlayerFactory
+from tests.internal.apps.smear.factories import GameFactory, GameFactoryWithHandsAndTricks, PlayerFactory
 from tests.internal.apps.user.factories import UserFactory
 from tests.utils import NotNull
 
 
 @pytest.mark.django_db
 def test_game_viewset_list(authed_client, django_assert_num_queries):
-    games = [GameFactory() for i in range(3)]
+    games = [GameFactoryWithHandsAndTricks() for i in range(3)]
     url = reverse("games-list")
     client = authed_client(games[0].owner)
 
-    with django_assert_num_queries(5):
+    with django_assert_num_queries(4):
         response = client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
@@ -31,11 +31,11 @@ def test_game_viewset_list(authed_client, django_assert_num_queries):
 
 @pytest.mark.django_db
 def test_game_viewset_details(authed_client, django_assert_num_queries):
-    game = GameFactory()
+    game = GameFactoryWithHandsAndTricks()
     url = reverse("games-detail", args=(game.id,))
     client = authed_client(game.owner)
 
-    with django_assert_num_queries(7):
+    with django_assert_num_queries(9):
         response = client.get(url)
         assert response.status_code == status.HTTP_200_OK
 
@@ -60,20 +60,14 @@ def test_game_viewset_start(authed_client, owner):
 
 @pytest.mark.django_db
 def test_game_viewset_status_bidding(authed_client, django_assert_num_queries, mocker):
-    owner_user = UserFactory()
-    game = GameFactory(owner=owner_user, num_players=4, num_teams=2)
-    game.create_initial_teams()
-    p1 = PlayerFactory(user=owner_user, game=game, is_computer=False)
-    PlayerFactory(game=game, is_computer=True)
-    PlayerFactory(game=game, is_computer=True)
-    PlayerFactory(game=game, is_computer=True)
-    game.autofill_teams()
-    client = authed_client(owner_user)
+    game = GameFactoryWithHandsAndTricks()
     game.start_game()
+    p1 = game.player_set.first()
+    client = authed_client(p1.user)
 
     url = f"{reverse('games-detail', kwargs={'pk': game.id})}status/"
 
-    with django_assert_num_queries(9):
+    with django_assert_num_queries(7):
         response = client.get(url)
 
     assert response.status_code == status.HTTP_200_OK

@@ -9,14 +9,15 @@ from tests.utils import NotNull
 
 
 @pytest.mark.django_db
-def test_bid_viewset_list(authed_client):
+def test_bid_viewset_list(authed_client, django_assert_num_queries):
     hand = HandFactory()
     PlayerFactory(user=hand.game.owner, game=hand.game, team=None)
     bids = [hand.high_bid, *[BidFactory(hand=hand) for i in range(3)]]
     url = reverse("bids-list", kwargs={"game_id": hand.game.id, "hand_id": hand.id})
     client = authed_client(hand.game.owner)
 
-    response = client.get(url)
+    with django_assert_num_queries(5):
+        response = client.get(url)
 
     assert response.status_code == status.HTTP_200_OK
     response_json = response.json()

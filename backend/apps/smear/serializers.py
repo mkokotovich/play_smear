@@ -233,6 +233,7 @@ class GameDetailSerializer(GameSerializer):
         if not hand:
             hand_num = self.context.get("hand_num")
             hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+            self.context["hand"] = hand
         return HandSummaryWithCardsSerializer(hand, read_only=True, context=self.context).data if hand else {}
 
     def get_current_trick(self, game):
@@ -242,15 +243,17 @@ class GameDetailSerializer(GameSerializer):
             if not hand:
                 hand_num = self.context.get("hand_num")
                 hand = Hand.objects.get(game=game, num=hand_num) if hand_num else game.current_hand
+                self.context["hand"] = hand
             trick_num = self.context.get("trick_num")
             trick = Trick.objects.get(hand=hand, num=trick_num) if trick_num else game.current_trick
+            self.context["trick"] = trick
         return TrickSummarySerializer(trick, read_only=True, context=self.context).data if trick else {}
 
 
 class GameJoinSerializer(serializers.Serializer):
     passcode = serializers.CharField(max_length=512, required=False)
 
-
+ 
 class BidSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bid

@@ -1,5 +1,8 @@
 import factory
 
+from apps.smear.models import Hand
+from tests.internal.apps.user.factories import UserFactory
+
 
 class GameFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -60,6 +63,22 @@ class PlayerFactory(factory.django.DjangoModelFactory):
 
 class GameFactoryWithPlayer(GameFactory):
     membership = factory.RelatedFactory(PlayerFactory, "game")
+
+
+class GameFactoryWithHandsAndTricks(GameFactory):
+    @factory.post_generation
+    def hands(game, create, extracted, **kwargs):
+        if not create:
+            return
+
+        users = UserFactory.create_batch(4)
+        players = [PlayerFactory(user=u, game=game) for u in users]
+        for h in range(4):
+            hand = Hand.objects.create(game=game, num=h)
+            for t in range(6):
+                trick = TrickFactory(hand=hand, num=t)
+                for p in range(len(players)):
+                    PlayFactory(trick=trick, player=players[p])
 
 
 class BidFactory(factory.django.DjangoModelFactory):
