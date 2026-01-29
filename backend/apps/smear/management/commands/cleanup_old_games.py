@@ -29,8 +29,8 @@ def queryset_iterator(qs, batchsize=500, gc_collect=True):
 # Call from CLI via: $ python manage.py cleanup_old_games
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        # older_than = timezone.now() - timedelta(days=90)
-        older_than = timezone.now() - timedelta(seconds=1)
+        older_than = timezone.now() - timedelta(days=90)
+        #older_than = timezone.now() - timedelta(seconds=1)
         self.find_and_delete_old_games(older_than)
 
     def find_and_delete_old_games(self, older_than):
