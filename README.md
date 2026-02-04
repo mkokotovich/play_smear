@@ -54,11 +54,29 @@ python manage.py cleanup_old_games
 
 ## Vacuum to reclaim space in database
 
+Note, this will bring down the site for 3-5 minutes
+
+First get a psql shell, either through the application server:
+
 ```
 fly ssh console
-apt-get install -y postgresql-client
+apt-get update && apt-get install -y postgresql-client
 python manage.py dbshell
-vacuum full;
+```
+
+Or running locally:
+
+```
+fly proxy 15432:5432 -a playsmear-db
+# In another terminal: 
+psql -d playsmear -h localhost -p 15432 -U postgres
+# (enter DB password)
+```
+
+Then run the actual command:
+
+```
+vacuum full verbose analyze;
 ```
 
 ## Check to see which table is taking up the most space
