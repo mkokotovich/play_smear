@@ -69,7 +69,7 @@ function ResetPassword(props) {
       {
         email: values.email,
         token: values.token,
-        new_password: this.state.newPassword
+        new_password: newPassword
       }
     )
       .then((response) => {
