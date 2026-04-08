@@ -14,7 +14,7 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/playsmear
       - ENVIRON=local
       - DJANGO_SETTINGS_MODULE=api.settings.local
-      - MAILGUN_API_KEY=no.key.localhost
+      - RESEND_API_KEY=no.key.local
       - TAWK_KEY=abc123
   postgres:
     image: postgres:13
