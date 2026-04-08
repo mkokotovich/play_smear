@@ -74,7 +74,12 @@ function ResetPassword(props) {
     )
       .then((response) => {
         setLoading(false);
-        navigate("/");
+        Modal.success({
+          title: "Password Reset Successful",
+          content: "Your password has been reset. Click OK to continue.",
+          maskClosable: true,
+          onOk: () => navigate("/"),
+        });
       })
       .catch((error) => {
         console.log(error);
