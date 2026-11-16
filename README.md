@@ -52,6 +52,21 @@ fly ssh console
 python manage.py cleanup_old_games
 ```
 
+Or running locally:
+
+```
+fly proxy 15432:5432 -a playsmear-db
+```
+
+Then an another terminal use `fly ssh console` and then `env | grep DATABASE` to get the `DATABASE_URL` var.
+Change the host to localhost and the port to 15432.
+Export the updated `DATABASE_URL` in the shell
+Then using a virtualenv, run:
+
+```
+python manage.py cleanup_old_games
+```
+
 ## Vacuum to reclaim space in database
 
 Note, this will bring down the site for 3-5 minutes
